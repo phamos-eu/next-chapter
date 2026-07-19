@@ -22,7 +22,7 @@ add_to_apps_screen = [
 before_request = ["next_chapter.pwa.before_request"]
 
 # Vue SPA (frappe-ui) — same pattern as frappe/crm.
-# Note: Frappe scrubs "next-chapter" → next_chapter for www/*.py and www/*.html.
+# Page files: www/next-chapter.html (URL) + www/next_chapter.py (controller).
 website_route_rules = [
 	{"from_route": "/next-chapter/<path:app_path>", "to_route": "next-chapter"},
 ]

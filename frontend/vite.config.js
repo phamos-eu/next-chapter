@@ -17,8 +17,9 @@ export default defineConfig({
 			buildConfig: {
 				outDir: '../next_chapter/public/frontend',
 				baseUrl: '/assets/next_chapter/frontend/',
-				// Frappe scrubs route "next-chapter" → next_chapter.html
-				indexHtmlPath: '../next_chapter/www/next_chapter.html',
+				// HTML filename defines the URL (/next-chapter).
+				// Matching controller is next_chapter.py (hyphens → underscores).
+				indexHtmlPath: '../next_chapter/www/next-chapter.html',
 				emptyOutDir: true,
 				sourcemap: true,
 			},

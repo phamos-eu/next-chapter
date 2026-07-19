@@ -18,6 +18,9 @@ add_to_apps_screen = [
 	}
 ]
 
+# Serve /next-chapter-sw.js with Service-Worker-Allowed: / for Chrome installability
+before_request = ["next_chapter.pwa.before_request"]
+
 # Includes in <head>
 # ------------------
 

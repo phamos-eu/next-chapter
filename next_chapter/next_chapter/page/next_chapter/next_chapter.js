@@ -21,7 +21,15 @@ frappe.pages["next-chapter"].on_page_load = function (wrapper) {
 		document.head.appendChild(link);
 	}
 
-	new next_chapter.WritingApp(page);
+	const start = () => {
+		if (typeof next_chapter.setup_pwa === "function") {
+			next_chapter.setup_pwa();
+		}
+		new next_chapter.WritingApp(page);
+	};
+
+	// PWA manifest + service worker + install prompt wiring
+	frappe.require("/assets/next_chapter/js/pwa.js", start);
 };
 
 next_chapter.WritingApp = class WritingApp {
@@ -38,8 +46,17 @@ next_chapter.WritingApp = class WritingApp {
 			wizard: this.empty_wizard(),
 			save_state: "",
 			error: "",
+			installable: !!(next_chapter.can_install_pwa && next_chapter.can_install_pwa()),
 		};
 		this._save_timer = null;
+		$(document).on("next_chapter_pwa_installable.next_chapter", () => {
+			this.state.installable = true;
+			this.render();
+		});
+		$(document).on("next_chapter_pwa_installed.next_chapter", () => {
+			this.state.installable = false;
+			this.render();
+		});
 		this.bootstrap();
 	}
 
@@ -190,10 +207,12 @@ next_chapter.WritingApp = class WritingApp {
 						${is_last ? __("Start writing") : __("Continue")}
 					</button>
 				</div>
+				${this.install_button_html("nc-install-wizard")}
 			</div>
 		`);
 
 		this.bind_wizard();
+		this.bind_install_buttons();
 	}
 
 	field_html(name, label, type, value, placeholder) {
@@ -369,12 +388,31 @@ next_chapter.WritingApp = class WritingApp {
 					<button type="button" class="nc-btn nc-btn-primary" data-action="new-idea">${__(
 						"New Idea"
 					)}</button>
+					${this.install_button_html("nc-install-sidebar")}
 				</div>
 			</aside>
 			<section class="nc-editor">${editor_html}</section>
 		`);
 
 		this.bind_editor();
+		this.bind_install_buttons();
+	}
+
+	install_button_html(extra_class) {
+		if (!this.state.installable) {
+			return "";
+		}
+		return `<button type="button" class="nc-btn nc-btn-ghost nc-install-btn ${extra_class}" data-action="install-app">${__(
+			"Install app"
+		)}</button>`;
+	}
+
+	bind_install_buttons() {
+		this.$root.find('[data-action="install-app"]').on("click", () => {
+			if (typeof next_chapter.prompt_install === "function") {
+				next_chapter.prompt_install();
+			}
+		});
 	}
 
 	bind_editor() {

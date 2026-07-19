@@ -41,6 +41,19 @@ bench --site <site> clear-cache
 
 Then open the desktop **NextChapter** app, use the workspace sidebar **Write** link, or go to `/desk/next-chapter`.
 
+### Install as a Chrome app (macOS)
+
+NextChapter is set up as an installable PWA when you open the writing page over HTTPS:
+
+1. In Chrome, open `/desk/next-chapter` and stay on the page for a few seconds.
+2. Use either:
+   - the **Install app** button when it appears in NextChapter, or
+   - Chrome’s install icon in the address bar, or
+   - **Chrome menu → Cast, save, and share → Install NextChapter…** (wording varies slightly by Chrome version).
+3. NextChapter opens in its own window (`display: standalone`).
+
+Technical pieces: [`manifest.json`](next_chapter/public/manifest.json), root service worker at `/next-chapter-sw.js`, and 192/512 PNG icons.
+
 ### Dogfood path (acceptance)
 
 1. Open `/desk/next-chapter`.

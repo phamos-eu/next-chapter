@@ -230,10 +230,29 @@
 .nc-sidebar-footer {
 	padding: 0.75rem;
 	border-top: 1px solid var(--nc-line);
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
 .nc-sidebar-footer .nc-btn {
 	width: 100%;
+}
+
+.nc-install-btn {
+	margin-top: 0.75rem;
+}
+
+.nc-install-sidebar {
+	margin-top: 0;
+}
+
+@media (display-mode: standalone) {
+	.next-chapter-app {
+		height: 100vh;
+		border-radius: 0;
+		border: none;
+	}
 }
 
 .nc-editor {

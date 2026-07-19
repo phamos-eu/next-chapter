@@ -17,6 +17,12 @@ REQUIRED = [
 	APP / "api" / "chapter.py",
 	APP / "public" / "css" / "next_chapter.css",
 	APP / "public" / "images" / "next-chapter-logo.svg",
+	APP / "public" / "images" / "next-chapter-192.png",
+	APP / "public" / "images" / "next-chapter-512.png",
+	APP / "public" / "manifest.json",
+	APP / "public" / "js" / "pwa.js",
+	APP / "public" / "js" / "sw.js",
+	APP / "pwa.py",
 	APP / "next_chapter" / "doctype" / "implementation_story" / "implementation_story.json",
 	APP / "next_chapter" / "doctype" / "implementation_chapter" / "implementation_chapter.json",
 	APP / "next_chapter" / "page" / "next_chapter" / "next_chapter.json",
@@ -57,9 +63,31 @@ def main() -> int:
 		"add_to_apps_screen",
 		'app_home = "/desk/next-chapter"',
 		"app_logo_url",
+		"next_chapter.pwa.before_request",
 	):
 		if needle not in hooks:
-			errors.append(f"hooks.py missing v16 desktop hook: {needle}")
+			errors.append(f"hooks.py missing required hook: {needle}")
+
+	manifest = json.loads((APP / "public/manifest.json").read_text(encoding="utf-8"))
+	for key in ("name", "short_name", "start_url", "display", "icons"):
+		if key not in manifest:
+			errors.append(f"manifest.json missing {key}")
+	if manifest.get("display") not in {"standalone", "fullscreen", "minimal-ui"}:
+		errors.append("manifest.json display must be standalone/fullscreen/minimal-ui")
+	if manifest.get("start_url") != "/desk/next-chapter":
+		errors.append("manifest.json start_url must be /desk/next-chapter")
+	icon_sizes = {i.get("sizes") for i in manifest.get("icons", [])}
+	if "192x192" not in icon_sizes or "512x512" not in icon_sizes:
+		errors.append("manifest.json needs 192 and 512 icons")
+
+	sw = (APP / "public/js/sw.js").read_text(encoding="utf-8")
+	if "addEventListener(\"fetch\"" not in sw and "addEventListener('fetch'" not in sw:
+		errors.append("service worker must register a fetch handler")
+
+	pwa_js = (APP / "public/js/pwa.js").read_text(encoding="utf-8")
+	for needle in ("setup_pwa", "beforeinstallprompt", "/next-chapter-sw.js", "manifest.json"):
+		if needle not in pwa_js:
+			errors.append(f"pwa.js missing: {needle}")
 
 	for rel in (
 		"next_chapter/doctype/implementation_story/implementation_story.json",
@@ -124,6 +152,8 @@ def main() -> int:
 		"Brain dump",
 		"window.next_chapter",
 		'frappe.provide("next_chapter")',
+		"/assets/next_chapter/js/pwa.js",
+		"install-app",
 	):
 		if needle not in js:
 			errors.append(f"desk page JS missing: {needle}")
@@ -133,6 +163,8 @@ def main() -> int:
 		errors.append("README missing install or dogfood acceptance path")
 	if "/desk/next-chapter" not in readme:
 		errors.append("README should document /desk/next-chapter for v16")
+	if "Install as a Chrome app" not in readme:
+		errors.append("README should document Chrome PWA install")
 
 	license_head = (ROOT / "LICENSE").read_text(encoding="utf-8", errors="ignore")[:80]
 	if "AFFERO" not in license_head.upper() and "AGPL" not in license_head.upper():

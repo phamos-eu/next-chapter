@@ -21,12 +21,10 @@ add_to_apps_screen = [
 # Serve /next-chapter-sw.js with Service-Worker-Allowed: / for Chrome installability
 before_request = ["next_chapter.pwa.before_request"]
 
-# Vue SPA (frappe-ui) — same pattern as frappe/crm
-# Web page route for CRM-like UI
+# Vue SPA (frappe-ui) — same pattern as frappe/crm.
+# Note: Frappe scrubs "next-chapter" → next_chapter for www/*.py and www/*.html.
 website_route_rules = [
 	{"from_route": "/next-chapter/<path:app_path>", "to_route": "next-chapter"},
-	{"from_route": "/crm", "to_route": "next_chapter"},
-	{"from_route": "/crm/<path:app_path>", "to_route": "next_chapter"},
 ]
 
 # Includes in <head>

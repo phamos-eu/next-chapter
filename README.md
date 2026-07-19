@@ -64,7 +64,7 @@ On HTTPS, open `/next-chapter` — use **Install as app** or Chrome’s install 
 | `Implementation Story` | Company context |
 | `Implementation Chapter` | Idea / chapter + schedule + hide |
 | `NextChapter Settings` | WIP limits + session defaults |
-| SPA `/next-chapter` | Write / Board / Schedule (Vue + frappe-ui) |
+| SPA `/next-chapter` | Ideas / Board / Schedule (Vue + frappe-ui) |
 | `next_chapter/www/next-chapter.py` | Boot context (CRM-style) |
 | `frontend/` | SPA source |
 | `next_chapter.api.*` | Setup, chapter, ICS |

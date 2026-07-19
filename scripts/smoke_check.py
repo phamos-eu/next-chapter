@@ -72,18 +72,29 @@ def main() -> int:
 		if needle not in hooks:
 			errors.append(f"hooks.py missing required hook: {needle}")
 
-	spa_boot = APP / "www" / "next-chapter.py"
+	# Frappe scrubs route "next-chapter" → next_chapter for the www module/template.
+	spa_boot = APP / "www" / "next_chapter.py"
 	if not spa_boot.is_file():
-		errors.append("missing www/next-chapter.py (CRM-style SPA boot)")
+		errors.append("missing www/next_chapter.py (CRM-style SPA boot)")
 	else:
 		boot_src = spa_boot.read_text(encoding="utf-8")
 		for needle in ("get_context", "get_boot", "csrf_token"):
 			if needle not in boot_src:
-				errors.append(f"www/next-chapter.py missing: {needle}")
+				errors.append(f"www/next_chapter.py missing: {needle}")
+		if "get_dashboard_data" in boot_src:
+			errors.append("www/next_chapter.py must not call the old dashboard API")
 
-	spa_html = APP / "www" / "next-chapter.html"
+	spa_html = APP / "www" / "next_chapter.html"
 	if not spa_html.is_file():
-		errors.append("missing www/next-chapter.html — run yarn build in frontend/")
+		errors.append("missing www/next_chapter.html — run yarn build in frontend/")
+	else:
+		html = spa_html.read_text(encoding="utf-8")
+		if 'id="app"' not in html or "/assets/next_chapter/frontend/" not in html:
+			errors.append("www/next_chapter.html must be the Vue SPA shell")
+		if "total_stories" in html or "dashboard" in html.lower() and "Dashboard" in html:
+			# old Jinja dashboard template must not win over the SPA
+			if "get_dashboard_data" in html or "total_stories" in html:
+				errors.append("www/next_chapter.html still looks like the old dashboard template")
 
 	frontend_pkg = ROOT / "frontend" / "package.json"
 	if not frontend_pkg.is_file():

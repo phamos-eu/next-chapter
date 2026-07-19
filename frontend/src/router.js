@@ -12,9 +12,19 @@ const routes = [
 		component: () => import('@/pages/Setup.vue'),
 	},
 	{
-		path: '/write',
-		name: 'Write',
+		path: '/ideas',
+		name: 'Ideas',
+		component: () => import('@/pages/Ideas.vue'),
+	},
+	{
+		path: '/ideas/:name',
+		name: 'Idea',
 		component: () => import('@/pages/Write.vue'),
+	},
+	{
+		path: '/write',
+		name: 'WriteLegacy',
+		component: () => import('@/pages/Home.vue'),
 	},
 	{
 		path: '/board',

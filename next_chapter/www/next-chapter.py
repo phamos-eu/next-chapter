@@ -17,8 +17,11 @@ def get_context():
 		raise frappe.Redirect
 
 	frappe.db.commit()
+	boot = get_boot()
 	context = frappe._dict()
-	context.boot = get_boot()
+	context.boot = boot
+	# Also expose at template root so index.html can set window.csrf_token early.
+	context.csrf_token = boot.csrf_token
 	return context
 
 

@@ -10,24 +10,35 @@ import {
 	ErrorMessage,
 	FeatherIcon,
 	FormControl,
+	FrappeUI,
 	FrappeUIProvider,
 	Select,
 	TextInput,
 	Textarea,
 	Toast,
 	frappeRequest,
-	resourcesPlugin,
 	setConfig,
 } from 'frappe-ui'
 
 import App from './App.vue'
 import router from './router'
 
+function ensureCsrf() {
+	const bootToken =
+		window.csrf_token && window.csrf_token !== '{{ csrf_token }}'
+			? window.csrf_token
+			: window.frappe?.boot?.csrf_token
+	if (bootToken && bootToken !== '{{ csrf_token }}') {
+		window.csrf_token = bootToken
+	}
+}
+
+ensureCsrf()
 setConfig('resourceFetcher', frappeRequest)
 
 const app = createApp(App)
 app.use(router)
-app.use(resourcesPlugin)
+app.use(FrappeUI)
 
 const globals = {
 	Button,

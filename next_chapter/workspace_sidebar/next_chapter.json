@@ -53,9 +53,21 @@
    "link_type": "DocType",
    "show_arrow": 0,
    "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "setting",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Settings",
+   "link_to": "NextChapter Settings",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-07-19 19:20:00.000000",
+ "modified": "2026-07-19 20:40:00.000000",
  "modified_by": "Administrator",
  "module": "Next Chapter",
  "name": "NextChapter",

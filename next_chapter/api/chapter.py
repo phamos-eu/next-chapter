@@ -60,7 +60,7 @@ def _serialize(doc_or_row) -> dict:
 
 
 def _chapter_url(name: str) -> str:
-	return get_url(f"/next-chapter/write?chapter={name}")
+	return get_url(f"/next-chapter/ideas/{name}")
 
 
 @frappe.whitelist()

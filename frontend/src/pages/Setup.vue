@@ -143,9 +143,9 @@ async function next() {
 	saving.value = true
 	try {
 		await call('next_chapter.api.setup.complete_setup', { ...form })
-		await bootstrap()
+		await bootstrap(true)
 		toast.success('Your story is ready')
-		router.replace('/write')
+		router.replace('/ideas')
 	} catch (e) {
 		error.value = e.messages?.[0] || e.message || 'Could not create your story'
 	} finally {

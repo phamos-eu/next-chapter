@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive } from 'vue'
 import { call, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
 
@@ -22,6 +22,8 @@ export const STAGES = [
 
 const state = reactive({
 	loaded: false,
+	loading: false,
+	error: '',
 	needsSetup: false,
 	story: null,
 	chapters: [],
@@ -34,7 +36,7 @@ const state = reactive({
 	active: null,
 })
 
-const loading = ref(false)
+let bootstrapPromise = null
 
 function applyBootstrap(data) {
 	state.needsSetup = Boolean(data.needs_setup)
@@ -44,16 +46,10 @@ function applyBootstrap(data) {
 	state.wipLimits = data.wip_limits || {}
 	state.settings = data.settings || {}
 	state.loaded = true
+	state.error = ''
 
-	if (
-		state.active &&
-		!state.chapters.some((c) => c.name === state.active)
-	) {
+	if (state.active && !state.chapters.some((c) => c.name === state.active)) {
 		state.active = null
-	}
-	if (!state.active && state.chapters.length) {
-		const firstActive = state.chapters.find((c) => !c.is_hidden)
-		state.active = (firstActive || state.chapters[0]).name
 	}
 }
 
@@ -64,6 +60,10 @@ function replaceChapter(chapter) {
 	} else {
 		state.chapters.push(chapter)
 	}
+}
+
+function errorMessage(e, fallback = 'Something went wrong') {
+	return e?.messages?.[0] || e?.message || fallback
 }
 
 export function useWorkspace() {
@@ -92,22 +92,35 @@ export function useWorkspace() {
 			.sort((a, b) => dayjs(a.next_write_on).valueOf() - dayjs(b.next_write_on).valueOf()),
 	)
 
-	async function bootstrap() {
-		loading.value = true
-		try {
-			const data = await call('next_chapter.api.setup.get_bootstrap')
-			applyBootstrap(data)
-			return data
-		} finally {
-			loading.value = false
-		}
+	async function bootstrap(force = false) {
+		if (state.loaded && !force) return state
+		if (bootstrapPromise && !force) return bootstrapPromise
+
+		state.loading = true
+		state.error = ''
+		bootstrapPromise = (async () => {
+			try {
+				const data = await call('next_chapter.api.setup.get_bootstrap')
+				applyBootstrap(data || {})
+				return data
+			} catch (e) {
+				state.error = errorMessage(e, 'Could not load NextChapter')
+				state.loaded = false
+				throw e
+			} finally {
+				state.loading = false
+				bootstrapPromise = null
+			}
+		})()
+
+		return bootstrapPromise
 	}
 
 	async function createIdea(title = 'New idea') {
 		const chapter = await call('next_chapter.api.chapter.create_chapter', {
 			title,
 		})
-		state.chapters.push(chapter)
+		state.chapters.unshift(chapter)
 		state.active = chapter.name
 		state.listMode = 'active'
 		return chapter
@@ -128,7 +141,7 @@ export function useWorkspace() {
 			replaceChapter(chapter)
 			return chapter
 		} catch (e) {
-			toast.error(e.messages?.[0] || e.message || 'Could not move chapter')
+			toast.error(errorMessage(e, 'Could not move chapter'))
 			throw e
 		}
 	}
@@ -183,9 +196,15 @@ export function useWorkspace() {
 		return dayjs(value).format('HH:mm')
 	}
 
+	function plainSummary(html) {
+		return String(html || '')
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim()
+	}
+
 	return {
 		state,
-		loading,
 		activeChapter,
 		filteredChapters,
 		scheduledChapters,
@@ -199,5 +218,7 @@ export function useWorkspace() {
 		downloadIcs,
 		formatDateTime,
 		formatTime,
+		plainSummary,
+		errorMessage,
 	}
 }

@@ -1,21 +1,22 @@
 <template>
   <AppShell>
-    <div v-if="!state.loaded || loading" class="flex flex-1 items-center justify-center text-ink-gray-5">
-      Loading…
-    </div>
-    <div v-else class="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div class="border-b border-outline-gray-1 px-4 pt-2">
+    <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <header class="border-b border-outline-gray-1 px-5 pt-3">
+        <h1 class="text-xl font-semibold text-ink-gray-9">Schedule</h1>
+        <p class="mb-2 text-sm text-ink-gray-5">
+          Upcoming writing sessions across your ideas.
+        </p>
         <TabButtons v-model="horizon" :buttons="horizons" />
-      </div>
+      </header>
+
       <div class="min-h-0 flex-1 overflow-auto p-4">
         <div
           v-if="!scheduledChapters.length"
           class="flex h-full items-center justify-center text-ink-gray-5"
         >
-          No writing sessions scheduled yet. Set a time from the Write view.
+          No writing sessions scheduled yet. Set a time from an idea.
         </div>
 
-        <!-- List -->
         <div v-else-if="horizon === 'list'" class="space-y-2">
           <button
             v-for="chapter in scheduledChapters"
@@ -33,7 +34,6 @@
           </button>
         </div>
 
-        <!-- Day columns -->
         <div
           v-else-if="horizon === 'three' || horizon === 'ten'"
           class="grid gap-2"
@@ -62,7 +62,6 @@
           </div>
         </div>
 
-        <!-- Month -->
         <div v-else-if="horizon === 'month'">
           <div class="mb-3 font-semibold">{{ monthTitle }}</div>
           <div class="grid grid-cols-7 gap-1">
@@ -85,7 +84,6 @@
           </div>
         </div>
 
-        <!-- 90 days -->
         <div v-else class="space-y-3">
           <div
             v-for="week in weekBlocks"
@@ -121,14 +119,14 @@
           label="Add to calendar (.ics)"
           @click="downloadIcs(dialogChapter.name)"
         />
-        <Button variant="solid" label="Open chapter" @click="goWrite" />
+        <Button variant="solid" label="Open idea" @click="goWrite" />
       </template>
     </Dialog>
   </AppShell>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Badge, Button, Dialog, TabButtons } from 'frappe-ui'
 import dayjs from 'dayjs'
@@ -139,15 +137,7 @@ import { STAGE_COLORS, useWorkspace } from '@/composables/useWorkspace'
 dayjs.extend(isoWeek)
 
 const router = useRouter()
-const {
-	state,
-	loading,
-	scheduledChapters,
-	bootstrap,
-	downloadIcs,
-	formatDateTime,
-	formatTime,
-} = useWorkspace()
+const { scheduledChapters, downloadIcs, formatDateTime, formatTime } = useWorkspace()
 
 const horizon = ref('ten')
 const horizons = [
@@ -160,11 +150,6 @@ const horizons = [
 
 const dialogOpen = ref(false)
 const dialogChapter = ref(null)
-
-onMounted(async () => {
-	if (!state.loaded) await bootstrap()
-	if (state.needsSetup) router.replace('/setup')
-})
 
 const dayColumns = computed(() => {
 	const days = horizon.value === 'three' ? 3 : 10
@@ -207,8 +192,8 @@ const monthCells = computed(() => {
 
 const weekBlocks = computed(() => {
 	const end = dayjs().add(90, 'day')
-	const upcoming = scheduledChapters.value.filter((c) =>
-		dayjs(c.next_write_on).isBefore(end) || dayjs(c.next_write_on).isSame(end, 'day'),
+	const upcoming = scheduledChapters.value.filter(
+		(c) => dayjs(c.next_write_on).isBefore(end) || dayjs(c.next_write_on).isSame(end, 'day'),
 	)
 	const map = {}
 	upcoming.forEach((c) => {
@@ -231,8 +216,7 @@ function openChapter(chapter) {
 }
 
 function goWrite() {
-	state.active = dialogChapter.value.name
 	dialogOpen.value = false
-	router.push('/write')
+	router.push(`/ideas/${dialogChapter.value.name}`)
 }
 </script>

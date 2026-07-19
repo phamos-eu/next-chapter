@@ -185,8 +185,8 @@ def main() -> int:
 			if data.get("doctype") != "Workspace Sidebar":
 				errors.append("workspace_sidebar JSON must be Workspace Sidebar")
 			labels = {i.get("label") for i in data.get("items", [])}
-			if "Write" not in labels:
-				errors.append("Workspace Sidebar missing Write page link")
+			if "Ideas" not in labels:
+				errors.append("Workspace Sidebar missing Ideas link")
 
 	if not (APP / "next_chapter").is_dir():
 		errors.append("missing package folder next_chapter/next_chapter for scrubbed module")
@@ -195,6 +195,7 @@ def main() -> int:
 		ROOT / "frontend" / "src" / "main.js",
 		ROOT / "frontend" / "src" / "router.js",
 		ROOT / "frontend" / "src" / "composables" / "useWorkspace.js",
+		ROOT / "frontend" / "src" / "pages" / "Ideas.vue",
 		ROOT / "frontend" / "src" / "pages" / "Write.vue",
 		ROOT / "frontend" / "src" / "pages" / "Board.vue",
 		ROOT / "frontend" / "src" / "pages" / "Schedule.vue",
@@ -216,8 +217,10 @@ def main() -> int:
 		"next_chapter.api.chapter.set_stage",
 		"Add Idea",
 		"Brain Dump",
+		"Ideas",
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
+		"Could not open NextChapter",
 	):
 		if needle not in front:
 			errors.append(f"SPA source missing: {needle}")
@@ -228,7 +231,7 @@ def main() -> int:
 		"hide_chapter",
 		"set_writing_session",
 		"BEGIN:VCALENDAR",
-		"/next-chapter/write?chapter=",
+		"/next-chapter/ideas/",
 	):
 		if needle not in api:
 			errors.append(f"chapter API missing: {needle}")
@@ -237,9 +240,9 @@ def main() -> int:
 	labels = {i.get("label") for i in sidebar.get("items", [])}
 	if "Settings" not in labels:
 		errors.append("Workspace Sidebar missing Settings link")
-	write_item = next((i for i in sidebar.get("items", []) if i.get("label") == "Write"), None)
-	if not write_item or write_item.get("link_to") != "/next-chapter":
-		errors.append("Workspace Sidebar Write link must point to /next-chapter")
+	ideas_item = next((i for i in sidebar.get("items", []) if i.get("label") == "Ideas"), None)
+	if not ideas_item or ideas_item.get("link_to") != "/next-chapter/ideas":
+		errors.append("Workspace Sidebar Ideas link must point to /next-chapter/ideas")
 
 	readme = (ROOT / "README.md").read_text(encoding="utf-8")
 	if "bench get-app" not in readme or "Dogfood path" not in readme:

@@ -1,2 +1,0 @@
-import{u as o,o as a,a as r,c}from"./index-a95ff948.js";import{u as n}from"./useWorkspace-a3643dda.js";const u={class:"flex h-screen items-center justify-center text-ink-gray-5"},l={__name:"Home",setup(p){const t=o(),{state:e,bootstrap:s}=n();return a(async()=>{e.loaded||await s(),t.replace(e.needsSetup?"/setup":"/write")}),(i,_)=>(r(),c("div",u," Loading NextChapter… "))}};export{l as default};
-//# sourceMappingURL=Home-c5d04122.js.map

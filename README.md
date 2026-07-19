@@ -44,7 +44,7 @@ bench --site <site> migrate
 bench --site <site> clear-cache
 ```
 
-Open **`/next-chapter`**, or Apps → NextChapter, or NextChapter → Write. Settings: **NextChapter Settings** (Desk).
+Open **`/next-chapter`** (or `/next-chapter/ideas`), or Apps → NextChapter. Settings: **NextChapter Settings** (Desk).
 
 ### Chrome app (macOS)
 

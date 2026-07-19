@@ -240,7 +240,6 @@ def main() -> int:
 	labels = {i.get("label") for i in sidebar.get("items", [])}
 	if "Settings" not in labels:
 		errors.append("Workspace Sidebar missing Settings link")
-	write_item = next((i for i in sidebar.get("items", []) if i.get("label") == "Write"), None)
 	ideas_item = next((i for i in sidebar.get("items", []) if i.get("label") == "Ideas"), None)
 	if not ideas_item or ideas_item.get("link_to") != "/next-chapter/ideas":
 		errors.append("Workspace Sidebar Ideas link must point to /next-chapter/ideas")

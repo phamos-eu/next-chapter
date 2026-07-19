@@ -1,0 +1,143 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:STORY-{#####}",
+ "creation": "2026-07-19 19:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company_section",
+  "company_name",
+  "status",
+  "company_purpose",
+  "scale_section",
+  "employees_now",
+  "employees_1y",
+  "column_break_scale",
+  "employees_3y",
+  "employees_7y",
+  "context_section",
+  "company_stage",
+  "erp_motivation"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_section",
+   "fieldtype": "Section Break",
+   "label": "Company"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Company Name",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Active\nArchived",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company_purpose",
+   "fieldtype": "Text Editor",
+   "label": "Company Purpose"
+  },
+  {
+   "fieldname": "scale_section",
+   "fieldtype": "Section Break",
+   "label": "Scale"
+  },
+  {
+   "fieldname": "employees_now",
+   "fieldtype": "Int",
+   "label": "Employees Now",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "employees_1y",
+   "fieldtype": "Int",
+   "label": "Employees in 1 Year",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_scale",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employees_3y",
+   "fieldtype": "Int",
+   "label": "Employees in 3 Years",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "employees_7y",
+   "fieldtype": "Int",
+   "label": "Employees in 7 Years",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "context_section",
+   "fieldtype": "Section Break",
+   "label": "Context"
+  },
+  {
+   "fieldname": "company_stage",
+   "fieldtype": "Text Editor",
+   "label": "Company Stage Today"
+  },
+  {
+   "fieldname": "erp_motivation",
+   "fieldtype": "Text Editor",
+   "label": "Why a New ERP"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Implementation Chapter",
+   "link_fieldname": "story"
+  }
+ ],
+ "modified": "2026-07-19 19:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "NextChapter",
+ "name": "Implementation Story",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "company_name",
+ "track_changes": 1
+}

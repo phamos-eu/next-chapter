@@ -9,17 +9,8 @@ frappe.pages["next-chapter"].on_page_load = function (wrapper) {
 		single_column: true,
 	});
 
+	page.add_inner_message(__("Write your implementation story"));
 	$(page.body).html('<div class="next-chapter-app" id="next-chapter-root"></div>');
-
-	// Load display fonts once for the writing UI
-	if (!document.getElementById("nc-fonts")) {
-		const link = document.createElement("link");
-		link.id = "nc-fonts";
-		link.rel = "stylesheet";
-		link.href =
-			"https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap";
-		document.head.appendChild(link);
-	}
 
 	const start = () => {
 		if (typeof next_chapter.setup_pwa === "function") {
@@ -28,7 +19,6 @@ frappe.pages["next-chapter"].on_page_load = function (wrapper) {
 		new next_chapter.WritingApp(page);
 	};
 
-	// PWA manifest + service worker + install prompt wiring
 	frappe.require("/assets/next_chapter/js/pwa.js", start);
 };
 
@@ -36,12 +26,14 @@ next_chapter.WritingApp = class WritingApp {
 	constructor(page) {
 		this.page = page;
 		this.$root = $("#next-chapter-root");
+		this.content_control = null;
 		this.state = {
 			loading: true,
 			needs_setup: false,
 			story: null,
 			chapters: [],
 			active: null,
+			active_tab: "brain-dump",
 			wizard_step: 0,
 			wizard: this.empty_wizard(),
 			save_state: "",
@@ -51,11 +43,11 @@ next_chapter.WritingApp = class WritingApp {
 		this._save_timer = null;
 		$(document).on("next_chapter_pwa_installable.next_chapter", () => {
 			this.state.installable = true;
-			this.render();
+			this.refresh_install_ui();
 		});
 		$(document).on("next_chapter_pwa_installed.next_chapter", () => {
 			this.state.installable = false;
-			this.render();
+			this.refresh_install_ui();
 		});
 		this.bootstrap();
 	}
@@ -100,9 +92,12 @@ next_chapter.WritingApp = class WritingApp {
 	}
 
 	render_loading() {
-		this.$root.html(
-			`<div class="nc-wizard"><p class="nc-wizard-lead">${__("Loading…")}</p></div>`
-		);
+		this.destroy_controls();
+		this.$root.html(`
+			<div class="nc-centered text-muted">
+				${__("Loading…")}
+			</div>
+		`);
 	}
 
 	render() {
@@ -114,70 +109,77 @@ next_chapter.WritingApp = class WritingApp {
 			this.render_wizard();
 			return;
 		}
-		this.render_editor();
+		this.render_workspace();
 	}
 
-	/* ---------- Wizard ---------- */
+	/* ---------- Setup wizard (Frappe form styling) ---------- */
 
 	render_wizard() {
+		this.destroy_controls();
 		const step = this.state.wizard_step;
 		const w = this.state.wizard;
 		const steps = [
 			{
-				title: __("What is your company's name?"),
+				title: __("What is your company called?"),
+				help: __("We'll use this as the name of your implementation story."),
 				body: this.field_html(
 					"company_name",
 					__("Company name"),
 					"text",
 					w.company_name,
-					__("e.g. phamos GmbH")
+					__("e.g. Acme GmbH")
 				),
 			},
 			{
-				title: __("What is the purpose of the company?"),
+				title: __("What does the company do?"),
+				help: __("A short purpose statement is enough."),
 				body: this.field_html(
 					"company_purpose",
 					__("Purpose"),
 					"textarea",
 					w.company_purpose,
-					__("A few sentences on why the company exists.")
+					__("Why does the company exist?")
 				),
 			},
 			{
 				title: __("How many people — now and ahead?"),
+				help: __("Rough numbers are fine. This helps you think about scale."),
 				body: `<div class="nc-employee-grid">
-					${this.field_html("employees_now", __("Employees now"), "number", w.employees_now)}
+					${this.field_html("employees_now", __("Today"), "number", w.employees_now)}
 					${this.field_html("employees_1y", __("In 1 year"), "number", w.employees_1y)}
 					${this.field_html("employees_3y", __("In 3 years"), "number", w.employees_3y)}
 					${this.field_html("employees_7y", __("In 7 years"), "number", w.employees_7y)}
 				</div>`,
 			},
 			{
-				title: __("What stage is the company at today?"),
+				title: __("Where is the company today?"),
+				help: __("A few sentences about the current stage."),
 				body: this.field_html(
 					"company_stage",
-					__("Stage today"),
+					__("Current stage"),
 					"textarea",
 					w.company_stage,
-					__("Briefly describe where things stand.")
+					__("e.g. growing fast, processes still informal…")
 				),
 			},
 			{
-				title: __("Why implement a new ERP?"),
+				title: __("Why change systems?"),
+				help: __("What is pushing you toward a new ERP?"),
 				body: this.field_html(
 					"erp_motivation",
 					__("Motivation"),
 					"textarea",
 					w.erp_motivation,
-					__("What is pushing you toward a new system?")
+					__("What should get better?")
 				),
 			},
 			{
-				title: __("Three things you want to implement first"),
+				title: __("What would you like to tackle first?"),
+				help: __("Name up to three starting ideas. You can add more later."),
 				body: `<div class="nc-priority-list">
-					${this.field_html("priority_1", __("First"), "text", w.priority_1, __("Idea title"))}
-					${this.field_html("priority_2", __("Second"), "text", w.priority_2, __("Idea title"))}
-					${this.field_html("priority_3", __("Third"), "text", w.priority_3, __("Idea title"))}
+					${this.field_html("priority_1", __("First idea"), "text", w.priority_1, __("e.g. Ticketing"))}
+					${this.field_html("priority_2", __("Second idea"), "text", w.priority_2, __("Optional"))}
+					${this.field_html("priority_3", __("Third idea"), "text", w.priority_3, __("Optional"))}
 				</div>`,
 			},
 		];
@@ -186,28 +188,34 @@ next_chapter.WritingApp = class WritingApp {
 		const is_last = step === steps.length - 1;
 
 		this.$root.html(`
-			<div class="nc-wizard">
-				<h1 class="nc-brand">NextChapter</h1>
-				<p class="nc-wizard-lead">${__(
-					"A quiet place to write your ERPNext implementation story — starting with a few questions."
-				)}</p>
-				<div class="nc-step-meta">${__("Step {0} of {1}", [step + 1, steps.length])}</div>
-				<h2 class="nc-step-title">${current.title}</h2>
-				<div class="nc-step-body">${current.body}</div>
-				${this.state.error ? `<div class="nc-error">${frappe.utils.escape_html(this.state.error)}</div>` : ""}
+			<div class="nc-wizard frappe-card">
+				<div class="nc-wizard-head">
+					<div class="nc-wizard-kicker">${__("Get started")}</div>
+					<h2 class="nc-wizard-title">${current.title}</h2>
+					<p class="text-muted nc-wizard-help">${current.help}</p>
+					<div class="nc-wizard-progress text-muted">
+						${__("Step {0} of {1}", [step + 1, steps.length])}
+					</div>
+				</div>
+				<div class="nc-wizard-body">${current.body}</div>
+				${
+					this.state.error
+						? `<div class="alert alert-danger">${frappe.utils.escape_html(this.state.error)}</div>`
+						: ""
+				}
 				<div class="nc-wizard-actions">
 					${
 						step > 0
-							? `<button type="button" class="nc-btn nc-btn-ghost" data-action="wizard-back">${__(
+							? `<button type="button" class="btn btn-default" data-action="wizard-back">${__(
 									"Back"
 							  )}</button>`
-							: ""
+							: `<span></span>`
 					}
-					<button type="button" class="nc-btn nc-btn-primary" data-action="wizard-next">
+					<button type="button" class="btn btn-primary" data-action="wizard-next">
 						${is_last ? __("Start writing") : __("Continue")}
 					</button>
 				</div>
-				${this.install_button_html("nc-install-wizard")}
+				<div class="nc-wizard-install" data-role="install-slot">${this.install_button_html()}</div>
 			</div>
 		`);
 
@@ -219,14 +227,18 @@ next_chapter.WritingApp = class WritingApp {
 		const safe_val = frappe.utils.escape_html(value || "");
 		const ph = placeholder ? ` placeholder="${frappe.utils.escape_html(placeholder)}"` : "";
 		if (type === "textarea") {
-			return `<div class="nc-field">
-				<label for="nc-${name}">${label}</label>
-				<textarea id="nc-${name}" data-field="${name}" rows="4"${ph}>${safe_val}</textarea>
+			return `<div class="frappe-control">
+				<div class="form-group">
+					<label class="control-label" for="nc-${name}">${label}</label>
+					<textarea class="form-control" id="nc-${name}" data-field="${name}" rows="4"${ph}>${safe_val}</textarea>
+				</div>
 			</div>`;
 		}
-		return `<div class="nc-field">
-			<label for="nc-${name}">${label}</label>
-			<input id="nc-${name}" data-field="${name}" type="${type}" value="${safe_val}"${ph} />
+		return `<div class="frappe-control">
+			<div class="form-group">
+				<label class="control-label" for="nc-${name}">${label}</label>
+				<input class="form-control" id="nc-${name}" data-field="${name}" type="${type}" value="${safe_val}"${ph} />
+			</div>
 		</div>`;
 	}
 
@@ -277,7 +289,7 @@ next_chapter.WritingApp = class WritingApp {
 		if (step === 5) {
 			const titles = [w.priority_1, w.priority_2, w.priority_3].filter((t) => (t || "").trim());
 			if (!titles.length) {
-				this.state.error = __("Add at least one idea title to begin.");
+				this.state.error = __("Add at least one idea to begin.");
 				return false;
 			}
 		}
@@ -308,6 +320,7 @@ next_chapter.WritingApp = class WritingApp {
 				this.state.story = data.story;
 				this.state.chapters = data.chapters || [];
 				this.state.active = this.state.chapters[0] ? this.state.chapters[0].name : null;
+				this.state.active_tab = "brain-dump";
 				this.state.error = "";
 				this.render();
 			},
@@ -319,110 +332,256 @@ next_chapter.WritingApp = class WritingApp {
 		});
 	}
 
-	/* ---------- Editor ---------- */
+	/* ---------- Main workspace: left / center tabs / right ---------- */
 
-	render_editor() {
+	render_workspace() {
+		this.destroy_controls();
+
 		const chapters = this.state.chapters;
-		const active = chapters.find((c) => c.name === this.state.active) || chapters[0];
+		const active = chapters.find((c) => c.name === this.state.active) || chapters[0] || null;
 		if (active && this.state.active !== active.name) {
 			this.state.active = active.name;
 		}
 
-		const list_html = chapters
-			.map((c) => {
-				const active_cls = c.name === this.state.active ? " is-active" : "";
-				return `<button type="button" class="nc-chapter-item${active_cls}" data-chapter="${frappe.utils.escape_html(
-					c.name
-				)}">
-					<span class="nc-chapter-item-title">${frappe.utils.escape_html(c.title || __("Untitled"))}</span>
-					<span class="nc-chapter-item-meta">${frappe.utils.escape_html(c.writing_stage || "Idea")}</span>
-				</button>`;
-			})
-			.join("");
-
 		const company = (this.state.story && this.state.story.company_name) || "";
-
-		let editor_html = `<div class="nc-empty-editor">${__("Select or create an idea to start writing.")}</div>`;
-		if (active) {
-			const plain_content = next_chapter.html_to_plain(active.content || "");
-			editor_html = `
-				<div class="nc-editor-toolbar">
-					<select class="nc-writing-stage" data-role="writing-stage" aria-label="${__("Writing stage")}">
-						${["Idea", "Outline", "Draft"]
-							.map(
-								(s) =>
-									`<option value="${s}" ${
-										active.writing_stage === s ? "selected" : ""
-									}>${__(s)}</option>`
-							)
-							.join("")}
-					</select>
-					<div class="nc-save-state" data-role="save-state">${frappe.utils.escape_html(
-						this.state.save_state
-					)}</div>
-				</div>
-				<input class="nc-title-input" data-role="title" type="text" value="${frappe.utils.escape_html(
-					active.title || ""
-				)}" placeholder="${__("Idea title")}" />
-				<div class="nc-summary-label">${__("Brain dump")}</div>
-				<textarea class="nc-summary-input" data-role="summary" rows="3" placeholder="${__(
-					"Two sentences. Messy is fine."
-				)}">${frappe.utils.escape_html(active.summary || "")}</textarea>
-				<div class="nc-content-label">${__("Chapter")}</div>
-				<textarea class="nc-content-input" data-role="content" placeholder="${__(
-					"Write the introduction, then keep going…"
-				)}">${frappe.utils.escape_html(plain_content)}</textarea>
-			`;
-		}
+		const list_html = chapters.length
+			? chapters
+					.map((c) => {
+						const active_cls = c.name === this.state.active ? " active" : "";
+						return `<button type="button" class="nc-list-item${active_cls}" data-chapter="${frappe.utils.escape_html(
+							c.name
+						)}">
+						<span class="nc-list-item-title">${frappe.utils.escape_html(c.title || __("Untitled"))}</span>
+						<span class="nc-list-item-meta indicator-pill whitespace-nowrap ${this.stage_color(
+							c.writing_stage
+						)}">${frappe.utils.escape_html(this.friendly_stage(c.writing_stage))}</span>
+					</button>`;
+					})
+					.join("")
+			: `<div class="nc-empty-list text-muted">${__("No ideas yet. Add your first one.")}</div>`;
 
 		this.$root.html(`
-			<aside class="nc-sidebar">
-				<div class="nc-sidebar-header">
-					<div class="nc-brand">NextChapter</div>
-					<div class="nc-story-name" title="${frappe.utils.escape_html(company)}">${frappe.utils.escape_html(
-			company
-		)}</div>
-				</div>
-				<div class="nc-chapter-list">${list_html}</div>
-				<div class="nc-sidebar-footer">
-					<button type="button" class="nc-btn nc-btn-primary" data-action="new-idea">${__(
-						"New Idea"
-					)}</button>
-					${this.install_button_html("nc-install-sidebar")}
-				</div>
-			</aside>
-			<section class="nc-editor">${editor_html}</section>
+			<div class="nc-shell">
+				<aside class="nc-left">
+					<div class="nc-pane-header">
+						<div class="nc-pane-title">${__("Ideas")}</div>
+						<div class="nc-pane-subtitle text-muted" title="${frappe.utils.escape_html(company)}">
+							${frappe.utils.escape_html(company)}
+						</div>
+					</div>
+					<div class="nc-list">${list_html}</div>
+					<div class="nc-pane-footer">
+						<button type="button" class="btn btn-primary btn-sm btn-block" data-action="new-idea">
+							${__("Add Idea")}
+						</button>
+					</div>
+				</aside>
+
+				<section class="nc-center">
+					${active ? this.center_html(active) : this.empty_center_html()}
+				</section>
+
+				<aside class="nc-right">
+					${active ? this.right_html(active) : this.empty_right_html()}
+				</aside>
+			</div>
 		`);
 
-		this.bind_editor();
+		if (active) {
+			this.mount_content_editor(active);
+			this.bind_workspace();
+			this.show_tab(this.state.active_tab || "brain-dump");
+		} else {
+			this.bind_workspace();
+		}
 		this.bind_install_buttons();
 	}
 
-	install_button_html(extra_class) {
-		if (!this.state.installable) {
-			return "";
+	center_html(active) {
+		const tab = this.state.active_tab || "brain-dump";
+		return `
+			<div class="nc-center-header">
+				<input
+					type="text"
+					class="form-control nc-title-input"
+					data-role="title"
+					value="${frappe.utils.escape_html(active.title || "")}"
+					placeholder="${__("Give this idea a short name")}"
+				/>
+			</div>
+			<div class="form-tabs">
+				<ul class="nav form-tabs" role="tablist">
+					<li class="nav-item">
+						<button type="button" class="nav-link ${
+							tab === "brain-dump" ? "active" : ""
+						}" data-tab="brain-dump" role="tab">
+							${__("Brain Dump")}
+						</button>
+					</li>
+					<li class="nav-item">
+						<button type="button" class="nav-link ${
+							tab === "chapter" ? "active" : ""
+						}" data-tab="chapter" role="tab">
+							${__("Chapter")}
+						</button>
+					</li>
+				</ul>
+			</div>
+			<div class="nc-tab-panels">
+				<div class="nc-tab-panel ${tab === "brain-dump" ? "active" : ""}" data-panel="brain-dump">
+					<p class="nc-tab-help text-muted">
+						${__("Rough notes are welcome. Write a few sentences about what you have in mind.")}
+					</p>
+					<textarea
+						class="form-control nc-summary-input"
+						data-role="summary"
+						rows="12"
+						placeholder="${__("e.g. We need a simple way to track customer tickets and response times…")}"
+					>${frappe.utils.escape_html(active.summary || "")}</textarea>
+				</div>
+				<div class="nc-tab-panel ${tab === "chapter" ? "active" : ""}" data-panel="chapter">
+					<p class="nc-tab-help text-muted">
+						${__("Shape your notes into a clear chapter — what should happen, and why.")}
+					</p>
+					<div class="nc-text-editor-wrap" data-role="content-editor"></div>
+				</div>
+			</div>
+		`;
+	}
+
+	empty_center_html() {
+		return `
+			<div class="nc-centered">
+				<div class="text-muted">
+					${__("Select an idea on the left, or add a new one to start writing.")}
+				</div>
+			</div>
+		`;
+	}
+
+	right_html(active) {
+		const stage = active.writing_stage || "Idea";
+		return `
+			<div class="nc-pane-header">
+				<div class="nc-pane-title">${__("Details")}</div>
+				<div class="nc-save-state text-muted" data-role="save-state">${frappe.utils.escape_html(
+					this.state.save_state || __("All changes save automatically")
+				)}</div>
+			</div>
+			<div class="nc-right-body">
+				<div class="frappe-control">
+					<div class="form-group">
+						<label class="control-label">${__("Progress")}</label>
+						<select class="form-control" data-role="writing-stage">
+							${["Idea", "Outline", "Draft"]
+								.map(
+									(s) =>
+										`<option value="${s}" ${stage === s ? "selected" : ""}>${__(
+											this.friendly_stage(s)
+										)}</option>`
+								)
+								.join("")}
+						</select>
+						<p class="help-box small text-muted">
+							${__("Move this forward as your thinking gets clearer.")}
+						</p>
+					</div>
+				</div>
+
+				<div class="nc-side-card">
+					<div class="nc-side-card-title">${__("How to use this")}</div>
+					<ol class="nc-side-steps text-muted">
+						<li>${__("Start in Brain Dump — get thoughts out quickly.")}</li>
+						<li>${__("Open the Chapter tab when you are ready to write it up more clearly.")}</li>
+						<li>${__("Update Progress when it feels more like an outline or a draft.")}</li>
+					</ol>
+				</div>
+
+				<div class="nc-side-card nc-install-slot" data-role="install-slot">
+					${this.install_button_html()}
+				</div>
+			</div>
+		`;
+	}
+
+	empty_right_html() {
+		return `
+			<div class="nc-pane-header">
+				<div class="nc-pane-title">${__("Details")}</div>
+			</div>
+			<div class="nc-right-body text-muted">
+				${__("Idea details will show up here.")}
+			</div>
+		`;
+	}
+
+	friendly_stage(stage) {
+		const map = {
+			Idea: __("Idea"),
+			Outline: __("Outline"),
+			Draft: __("Draft"),
+		};
+		return map[stage] || stage || __("Idea");
+	}
+
+	stage_color(stage) {
+		if (stage === "Draft") return "green";
+		if (stage === "Outline") return "blue";
+		return "orange";
+	}
+
+	mount_content_editor(active) {
+		const $parent = this.$root.find('[data-role="content-editor"]');
+		if (!$parent.length) {
+			return;
 		}
-		return `<button type="button" class="nc-btn nc-btn-ghost nc-install-btn ${extra_class}" data-action="install-app">${__(
-			"Install app"
-		)}</button>`;
-	}
 
-	bind_install_buttons() {
-		this.$root.find('[data-action="install-app"]').on("click", () => {
-			if (typeof next_chapter.prompt_install === "function") {
-				next_chapter.prompt_install();
-			}
+		this.content_control = frappe.ui.form.make_control({
+			parent: $parent.get(0),
+			df: {
+				fieldtype: "Text Editor",
+				fieldname: "content",
+				label: "",
+				reqd: 0,
+				placeholder: __("Write freely. Headings, lists, and links are welcome."),
+			},
+			render_input: true,
+			only_input: true,
 		});
+		this.content_control.set_value(active.content || "");
+
+		// Quill change → autosave
+		const schedule = () => this.schedule_save();
+		if (this.content_control.quill) {
+			this.content_control.quill.on("text-change", schedule);
+		} else {
+			this.content_control.df.change = schedule;
+			$parent.on("input change", schedule);
+		}
 	}
 
-	bind_editor() {
-		this.$root.find(".nc-chapter-item").on("click", (e) => {
+	destroy_controls() {
+		if (this.content_control) {
+			try {
+				if (this.content_control.quill && this.content_control.quill.off) {
+					this.content_control.quill.off("text-change");
+				}
+			} catch (e) {
+				// ignore
+			}
+			this.content_control = null;
+		}
+	}
+
+	bind_workspace() {
+		this.$root.find(".nc-list-item").on("click", (e) => {
 			const name = $(e.currentTarget).data("chapter");
 			if (name === this.state.active) return;
 			this.flush_save(() => {
 				this.state.active = name;
+				this.state.active_tab = "brain-dump";
 				this.state.save_state = "";
-				this.render_editor();
+				this.render_workspace();
 			});
 		});
 
@@ -430,24 +589,37 @@ next_chapter.WritingApp = class WritingApp {
 			this.flush_save(() => this.create_idea());
 		});
 
+		this.$root.find("[data-tab]").on("click", (e) => {
+			const tab = $(e.currentTarget).data("tab");
+			this.show_tab(tab);
+		});
+
 		const schedule = () => this.schedule_save();
 		this.$root.find('[data-role="title"]').on("input", schedule);
 		this.$root.find('[data-role="summary"]').on("input", schedule);
-		this.$root.find('[data-role="content"]').on("input", schedule);
 		this.$root.find('[data-role="writing-stage"]').on("change", schedule);
+	}
+
+	show_tab(tab) {
+		this.state.active_tab = tab;
+		this.$root.find("[data-tab]").removeClass("active");
+		this.$root.find(`[data-tab="${tab}"]`).addClass("active");
+		this.$root.find(".nc-tab-panel").removeClass("active");
+		this.$root.find(`[data-panel="${tab}"]`).addClass("active");
 	}
 
 	create_idea() {
 		frappe.call({
 			method: "next_chapter.api.chapter.create_chapter",
-			args: { title: __("Untitled idea") },
+			args: { title: __("New idea") },
 			callback: (r) => {
 				const chapter = r.message;
 				if (!chapter) return;
 				this.state.chapters.push(chapter);
 				this.state.active = chapter.name;
+				this.state.active_tab = "brain-dump";
 				this.state.save_state = "";
-				this.render_editor();
+				this.render_workspace();
 				this.$root.find('[data-role="title"]').trigger("focus").select();
 			},
 		});
@@ -455,9 +627,9 @@ next_chapter.WritingApp = class WritingApp {
 
 	schedule_save() {
 		this.state.save_state = __("Saving…");
-		this.$root.find('[data-role="save-state"]').text(this.state.save_state).addClass("is-saving");
+		this.$root.find('[data-role="save-state"]').text(this.state.save_state);
 		clearTimeout(this._save_timer);
-		this._save_timer = setTimeout(() => this.save_active(), 500);
+		this._save_timer = setTimeout(() => this.save_active(), 600);
 	}
 
 	flush_save(done) {
@@ -469,6 +641,17 @@ next_chapter.WritingApp = class WritingApp {
 		this.save_active(done);
 	}
 
+	read_form_values() {
+		const title = this.$root.find('[data-role="title"]').val();
+		const summary = this.$root.find('[data-role="summary"]').val();
+		const writing_stage = this.$root.find('[data-role="writing-stage"]').val();
+		let content = "";
+		if (this.content_control) {
+			content = this.content_control.get_value() || "";
+		}
+		return { title, summary, content, writing_stage };
+	}
+
 	save_active(done) {
 		const name = this.state.active;
 		if (!name) {
@@ -476,94 +659,76 @@ next_chapter.WritingApp = class WritingApp {
 			return;
 		}
 
-		const title = this.$root.find('[data-role="title"]').val();
-		const summary = this.$root.find('[data-role="summary"]').val();
-		const content = this.$root.find('[data-role="content"]').val();
-		const writing_stage = this.$root.find('[data-role="writing-stage"]').val();
-
-		// Keep local state in sync even before server returns
+		const values = this.read_form_values();
 		const local = this.state.chapters.find((c) => c.name === name);
 		if (local) {
-			local.title = title;
-			local.summary = summary;
-			local.content = content;
-			local.writing_stage = writing_stage;
+			Object.assign(local, values);
 		}
 
 		frappe.call({
 			method: "next_chapter.api.chapter.save_chapter",
 			args: {
 				name,
-				title,
-				summary,
-				content,
-				writing_stage,
+				title: values.title,
+				summary: values.summary,
+				content: values.content,
+				writing_stage: values.writing_stage,
 			},
 			callback: (r) => {
 				const saved = r.message;
 				if (saved) {
 					const idx = this.state.chapters.findIndex((c) => c.name === saved.name);
 					if (idx >= 0) {
-						// Keep plain content in client state for the textarea
-						this.state.chapters[idx] = Object.assign({}, saved, {
-							content: content,
-							summary: summary,
+						this.state.chapters[idx] = Object.assign({}, this.state.chapters[idx], saved, {
+							content: values.content,
+							summary: values.summary,
 						});
 					}
-					// Refresh sidebar labels without full remount if possible
 					this.$root
-						.find(`.nc-chapter-item[data-chapter="${saved.name}"] .nc-chapter-item-title`)
+						.find(`.nc-list-item[data-chapter="${saved.name}"] .nc-list-item-title`)
 						.text(saved.title);
 					this.$root
-						.find(`.nc-chapter-item[data-chapter="${saved.name}"] .nc-chapter-item-meta`)
-						.text(saved.writing_stage);
+						.find(`.nc-list-item[data-chapter="${saved.name}"] .nc-list-item-meta`)
+						.text(this.friendly_stage(saved.writing_stage))
+						.attr("class", `nc-list-item-meta indicator-pill whitespace-nowrap ${this.stage_color(
+							saved.writing_stage
+						)}`);
 				}
 				this.state.save_state = __("Saved");
-				this.$root
-					.find('[data-role="save-state"]')
-					.text(this.state.save_state)
-					.removeClass("is-saving");
+				this.$root.find('[data-role="save-state"]').text(this.state.save_state);
 				done && done();
 			},
 			error: () => {
-				this.state.save_state = __("Save failed");
-				this.$root
-					.find('[data-role="save-state"]')
-					.text(this.state.save_state)
-					.removeClass("is-saving");
+				this.state.save_state = __("Could not save — try again");
+				this.$root.find('[data-role="save-state"]').text(this.state.save_state);
 				done && done();
 			},
 		});
 	}
-};
 
-next_chapter.html_to_plain = function (html) {
-	if (!html) return "";
-	if (html.indexOf("<") === -1) return html;
-
-	const tmp = document.createElement("div");
-	tmp.innerHTML = html;
-
-	const blocks = tmp.querySelectorAll("p, div, li, br");
-	if (!blocks.length) {
-		return (tmp.textContent || "").replace(/\u00a0/g, " ");
+	install_button_html() {
+		if (!this.state.installable) {
+			return "";
+		}
+		return `<button type="button" class="btn btn-default btn-sm btn-block" data-action="install-app">
+			${__("Install as app")}
+		</button>
+		<p class="help-box small text-muted">${__("Open NextChapter in its own window from Chrome.")}</p>`;
 	}
 
-	const lines = [];
-	tmp.childNodes.forEach((node) => {
-		if (node.nodeName === "BR") {
-			lines.push("");
-			return;
+	bind_install_buttons() {
+		this.$root.find('[data-action="install-app"]').on("click", () => {
+			if (typeof next_chapter.prompt_install === "function") {
+				next_chapter.prompt_install();
+			}
+		});
+	}
+
+	refresh_install_ui() {
+		const $slot = this.$root.find('[data-role="install-slot"]');
+		if ($slot.length) {
+			$slot.html(this.install_button_html());
+			this.bind_install_buttons();
 		}
-		if (node.nodeType === Node.TEXT_NODE) {
-			const t = (node.textContent || "").replace(/\u00a0/g, " ");
-			if (t) lines.push(t);
-			return;
-		}
-		if (node.nodeType === Node.ELEMENT_NODE) {
-			const t = (node.textContent || "").replace(/\u00a0/g, " ");
-			lines.push(t);
-		}
-	});
-	return lines.join("\n");
+	}
 };

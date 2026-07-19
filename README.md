@@ -22,9 +22,9 @@ This first slice is intentionally simple and single-user:
 
 1. Complete a short setup wizard (company context + three first ideas).
 2. Open the **NextChapter** desk page.
-3. Write: expand each Idea’s summary (brain dump) and content (introduction → full chapter).
-4. Add more Ideas as they appear.
-5. Optionally mark personal writing stage: Idea → Outline → Draft.
+3. Write in the middle panel: **Brain Dump** tab for rough notes, **Chapter** tab for the rich text write-up.
+4. Use the right panel for progress (Idea → Outline → Draft).
+5. Add more ideas from the left sidebar as they appear.
 
 **Not in this slice (planned later):** multi-party review, Lead / sales visibility when asking for help, full implementation status pipeline, PWA, Projects / Milestones / Issues.
 

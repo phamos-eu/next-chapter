@@ -16,10 +16,13 @@ REQUIRED = [
 	APP / "api" / "setup.py",
 	APP / "api" / "chapter.py",
 	APP / "public" / "css" / "next_chapter.css",
+	APP / "public" / "images" / "next-chapter-logo.svg",
 	APP / "next_chapter" / "doctype" / "implementation_story" / "implementation_story.json",
 	APP / "next_chapter" / "doctype" / "implementation_chapter" / "implementation_chapter.json",
 	APP / "next_chapter" / "page" / "next_chapter" / "next_chapter.json",
 	APP / "next_chapter" / "page" / "next_chapter" / "next_chapter.js",
+	APP / "next_chapter" / "workspace" / "next_chapter" / "next_chapter.json",
+	APP / "workspace_sidebar" / "next_chapter.json",
 	ROOT / "README.md",
 	ROOT / "LICENSE",
 	ROOT / "pyproject.toml",
@@ -37,10 +40,32 @@ def main() -> int:
 	if modules != "NextChapter":
 		errors.append(f"modules.txt expected 'NextChapter', got {modules!r}")
 
+	# pyproject / Frappe Cloud v16 declaration
+	pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+	if 'requires-python = ">=3.14"' not in pyproject:
+		errors.append("pyproject.toml must require Python >=3.14 for Frappe v16")
+	if "[tool.bench.frappe-dependencies]" not in pyproject:
+		errors.append("pyproject.toml missing [tool.bench.frappe-dependencies]")
+	if 'frappe = ">=16.0.0,<17.0.0"' not in pyproject and "frappe = " not in pyproject:
+		errors.append("pyproject.toml must declare frappe v16 dependency range")
+	elif ">=16.0.0" not in pyproject:
+		errors.append("pyproject.toml frappe dependency must include >=16.0.0")
+
+	hooks = (APP / "hooks.py").read_text(encoding="utf-8")
+	for needle in (
+		"add_to_apps_screen",
+		'app_home = "/desk/next-chapter"',
+		"app_logo_url",
+	):
+		if needle not in hooks:
+			errors.append(f"hooks.py missing v16 desktop hook: {needle}")
+
 	for rel in (
 		"next_chapter/doctype/implementation_story/implementation_story.json",
 		"next_chapter/doctype/implementation_chapter/implementation_chapter.json",
 		"next_chapter/page/next_chapter/next_chapter.json",
+		"next_chapter/workspace/next_chapter/next_chapter.json",
+		"workspace_sidebar/next_chapter.json",
 	):
 		data = json.loads((APP / rel).read_text(encoding="utf-8"))
 		if rel.endswith("implementation_story.json"):
@@ -58,7 +83,8 @@ def main() -> int:
 			):
 				if required not in fields:
 					errors.append(f"Story missing field: {required}")
-			# Writing-first slice: no sales/privacy fields yet
+			if data.get("sort_field") != "creation":
+				errors.append("Story sort_field should be creation (Frappe v16)")
 			for forbidden in ("lead", "visibility", "help_requested_on"):
 				if forbidden in fields:
 					errors.append(f"Story should not have deferred field yet: {forbidden}")
@@ -67,9 +93,20 @@ def main() -> int:
 			for required in ("story", "title", "sequence", "summary", "content", "writing_stage"):
 				if required not in fields:
 					errors.append(f"Chapter missing field: {required}")
-		if rel.endswith("next_chapter.json"):
+			if data.get("sort_field") != "creation":
+				errors.append("Chapter sort_field should be creation (Frappe v16)")
+		if rel.endswith("page/next_chapter/next_chapter.json"):
 			if data.get("page_name") != "next-chapter":
 				errors.append("Desk page_name must be next-chapter")
+		if rel.endswith("workspace/next_chapter/next_chapter.json"):
+			if data.get("app") != "next_chapter" or data.get("public") != 1:
+				errors.append("Workspace must be public app=next_chapter")
+		if rel.endswith("workspace_sidebar/next_chapter.json"):
+			if data.get("doctype") != "Workspace Sidebar":
+				errors.append("workspace_sidebar JSON must be Workspace Sidebar")
+			labels = {i.get("label") for i in data.get("items", [])}
+			if "Write" not in labels:
+				errors.append("Workspace Sidebar missing Write page link")
 
 	js = (APP / "next_chapter/page/next_chapter/next_chapter.js").read_text(encoding="utf-8")
 	for needle in (
@@ -78,6 +115,8 @@ def main() -> int:
 		"next_chapter.api.chapter.create_chapter",
 		"New Idea",
 		"Brain dump",
+		"window.next_chapter",
+		'frappe.provide("next_chapter")',
 	):
 		if needle not in js:
 			errors.append(f"desk page JS missing: {needle}")
@@ -85,6 +124,8 @@ def main() -> int:
 	readme = (ROOT / "README.md").read_text(encoding="utf-8")
 	if "bench get-app" not in readme or "Dogfood path" not in readme:
 		errors.append("README missing install or dogfood acceptance path")
+	if "/desk/next-chapter" not in readme:
+		errors.append("README should document /desk/next-chapter for v16")
 
 	license_head = (ROOT / "LICENSE").read_text(encoding="utf-8", errors="ignore")[:80]
 	if "AFFERO" not in license_head.upper() and "AGPL" not in license_head.upper():
@@ -96,8 +137,8 @@ def main() -> int:
 			print(f"  - {err}")
 		return 1
 
-	print("SMOKE OK — structure, DocTypes, desk page, README, AGPL license")
-	print("Install on a bench to exercise wizard → write → autosave end-to-end.")
+	print("SMOKE OK — v16 packaging, DocTypes, desk page, workspace/sidebar, README")
+	print("Install on a Frappe v16 bench (Python 3.14+) for end-to-end UI checks.")
 	return 0
 
 

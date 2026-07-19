@@ -19,6 +19,7 @@ def get_bootstrap():
 		return {"needs_setup": True, "story": None, "chapters": []}
 
 	story = frappe.get_doc("Implementation Story", story_name)
+	# Explicit order_by: v16 defaults get_all to creation; we still want sequence first.
 	chapters = frappe.get_all(
 		"Implementation Chapter",
 		filters={"story": story_name},

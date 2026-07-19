@@ -1,41 +1,8 @@
-import frappe
+# Copyright (c) 2026, phamos.eu and contributors
+# For license information, please see license.txt
 
+"""Install hooks for NextChapter.
 
-def after_install():
-	"""Ensure a Workspace shortcut exists for the writing desk page."""
-	try:
-		create_workspace_link()
-	except Exception:
-		frappe.log_error("NextChapter workspace setup failed", "next_chapter.install")
-
-
-def create_workspace_link():
-	if frappe.db.exists("Workspace", "NextChapter"):
-		return
-
-	workspace = frappe.get_doc(
-		{
-			"doctype": "Workspace",
-			"name": "NextChapter",
-			"title": "NextChapter",
-			"label": "NextChapter",
-			"module": "NextChapter",
-			"public": 1,
-			"is_hidden": 0,
-			"content": (
-				'[{"id":"nc1","type":"header","data":{"text":'
-				'"<span class=\\"h4\\"><b>NextChapter</b></span>","col":12}},'
-				'{"id":"nc2","type":"paragraph","data":{"text":'
-				'"Write your ERPNext implementation story — from ideas to chapters.","col":12}},'
-				'{"id":"nc3","type":"shortcut","data":{"shortcut_name":"Write","col":4}}]'
-			),
-			"shortcuts": [
-				{
-					"type": "Page",
-					"link_to": "next-chapter",
-					"label": "Write",
-				}
-			],
-		}
-	)
-	workspace.insert(ignore_permissions=True)
+Workspace and Workspace Sidebar ship as standard fixtures for Frappe v16
+(desktop + persistent sidebar). No runtime workspace bootstrap required.
+"""

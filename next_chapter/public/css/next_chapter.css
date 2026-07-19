@@ -10,7 +10,8 @@
 	--nc-accent-soft: #ccfbf1;
 	--nc-sidebar-width: 280px;
 	display: flex;
-	height: calc(100vh - var(--navbar-height, 48px) - var(--page-head-height, 0px) - 16px);
+	/* Compatible with Frappe v16 desk chrome (sidebar + top bar) */
+	height: calc(100vh - var(--navbar-height, 48px) - var(--page-head-height, 0px) - var(--desk-sidebar-padding, 16px));
 	min-height: 480px;
 	background:
 		radial-gradient(ellipse 80% 50% at 10% 0%, rgba(15, 118, 110, 0.08), transparent 55%),

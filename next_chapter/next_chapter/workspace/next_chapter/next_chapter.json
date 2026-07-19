@@ -1,0 +1,53 @@
+{
+ "app": "next_chapter",
+ "charts": [],
+ "content": "[{\"id\":\"nc1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>NextChapter</b></span>\",\"col\":12}},{\"id\":\"nc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Write\",\"col\":4}},{\"id\":\"nc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stories\",\"col\":4}},{\"id\":\"nc4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Chapters\",\"col\":4}}]",
+ "creation": "2026-07-19 19:20:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "book-open",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "NextChapter",
+ "links": [],
+ "modified": "2026-07-19 19:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "NextChapter",
+ "name": "NextChapter",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "restrict_to_domain": "",
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Teal",
+   "doc_view": "",
+   "label": "Write",
+   "link_to": "next-chapter",
+   "type": "Page"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stories",
+   "link_to": "Implementation Story",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Chapters",
+   "link_to": "Implementation Chapter",
+   "type": "DocType"
+  }
+ ],
+ "title": "NextChapter",
+ "type": "Workspace"
+}

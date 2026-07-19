@@ -6,7 +6,7 @@ app_email = "support@phamos.eu"
 app_license = "agpl-3.0"
 app_version = "0.0.1"
 app_logo_url = "/assets/next_chapter/images/next-chapter-logo.svg"
-app_home = "/desk/next-chapter"
+app_home = "/next-chapter"
 required_apps = ["frappe"]
 
 add_to_apps_screen = [
@@ -14,12 +14,17 @@ add_to_apps_screen = [
 		"name": "next_chapter",
 		"logo": "/assets/next_chapter/images/next-chapter-logo.svg",
 		"title": "NextChapter",
-		"route": "/desk/next-chapter",
+		"route": "/next-chapter",
 	}
 ]
 
 # Serve /next-chapter-sw.js with Service-Worker-Allowed: / for Chrome installability
 before_request = ["next_chapter.pwa.before_request"]
+
+# Vue SPA (frappe-ui) — same pattern as frappe/crm
+website_route_rules = [
+	{"from_route": "/next-chapter/<path:app_path>", "to_route": "next-chapter"},
+]
 
 # Includes in <head>
 # ------------------

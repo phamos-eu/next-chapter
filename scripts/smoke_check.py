@@ -63,12 +63,31 @@ def main() -> int:
 	hooks = (APP / "hooks.py").read_text(encoding="utf-8")
 	for needle in (
 		"add_to_apps_screen",
-		'app_home = "/desk/next-chapter"',
+		'app_home = "/next-chapter"',
 		"app_logo_url",
 		"next_chapter.pwa.before_request",
+		"website_route_rules",
+		"/next-chapter/<path:app_path>",
 	):
 		if needle not in hooks:
 			errors.append(f"hooks.py missing required hook: {needle}")
+
+	spa_boot = APP / "www" / "next-chapter.py"
+	if not spa_boot.is_file():
+		errors.append("missing www/next-chapter.py (CRM-style SPA boot)")
+	else:
+		boot_src = spa_boot.read_text(encoding="utf-8")
+		for needle in ("get_context", "get_boot", "csrf_token"):
+			if needle not in boot_src:
+				errors.append(f"www/next-chapter.py missing: {needle}")
+
+	spa_html = APP / "www" / "next-chapter.html"
+	if not spa_html.is_file():
+		errors.append("missing www/next-chapter.html — run yarn build in frontend/")
+
+	frontend_pkg = ROOT / "frontend" / "package.json"
+	if not frontend_pkg.is_file():
+		errors.append("missing frontend/package.json (Vue + frappe-ui SPA)")
 
 	manifest = json.loads((APP / "public/manifest.json").read_text(encoding="utf-8"))
 	for key in ("name", "short_name", "start_url", "display", "icons"):
@@ -76,8 +95,8 @@ def main() -> int:
 			errors.append(f"manifest.json missing {key}")
 	if manifest.get("display") not in {"standalone", "fullscreen", "minimal-ui"}:
 		errors.append("manifest.json display must be standalone/fullscreen/minimal-ui")
-	if manifest.get("start_url") != "/desk/next-chapter":
-		errors.append("manifest.json start_url must be /desk/next-chapter")
+	if manifest.get("start_url") != "/next-chapter":
+		errors.append("manifest.json start_url must be /next-chapter")
 	icon_sizes = {i.get("sizes") for i in manifest.get("icons", [])}
 	if "192x192" not in icon_sizes or "512x512" not in icon_sizes:
 		errors.append("manifest.json needs 192 and 512 icons")
@@ -172,65 +191,71 @@ def main() -> int:
 	if not (APP / "next_chapter").is_dir():
 		errors.append("missing package folder next_chapter/next_chapter for scrubbed module")
 
-	js = (APP / "next_chapter/page/next_chapter/next_chapter.js").read_text(encoding="utf-8")
-	helpers = (APP / "public/js/writing_workspace.js").read_text(encoding="utf-8")
-	front = js + "\n" + helpers
+	spa_sources = [
+		ROOT / "frontend" / "src" / "main.js",
+		ROOT / "frontend" / "src" / "router.js",
+		ROOT / "frontend" / "src" / "composables" / "useWorkspace.js",
+		ROOT / "frontend" / "src" / "pages" / "Write.vue",
+		ROOT / "frontend" / "src" / "pages" / "Board.vue",
+		ROOT / "frontend" / "src" / "pages" / "Schedule.vue",
+		ROOT / "frontend" / "src" / "pages" / "Setup.vue",
+		ROOT / "frontend" / "src" / "components" / "AppShell.vue",
+	]
+	front = ""
+	for path in spa_sources:
+		if not path.is_file():
+			errors.append(f"missing SPA source: {path.relative_to(ROOT)}")
+			continue
+		front += "\n" + path.read_text(encoding="utf-8")
 	for needle in (
 		"next_chapter.api.setup.complete_setup",
+		"next_chapter.api.setup.get_bootstrap",
 		"next_chapter.api.chapter.save_chapter",
 		"next_chapter.api.chapter.create_chapter",
 		"next_chapter.api.chapter.hide_chapter",
 		"next_chapter.api.chapter.set_stage",
 		"Add Idea",
 		"Brain Dump",
-		"Chapter",
-		"frappe.ui.form.make_control",
-		"Text Editor",
-		"nc-left",
-		"nc-right",
-		"data-view",
-		"board",
-		"schedule",
-		"window.next_chapter",
-		'frappe.provide("next_chapter")',
-		"/assets/next_chapter/js/pwa.js",
-		"/assets/next_chapter/js/writing_workspace.js",
-		"install-app",
+		"createWebHistory('/next-chapter')",
+		"frappe-ui",
 	):
 		if needle not in front:
-			errors.append(f"desk page JS missing: {needle}")
+			errors.append(f"SPA source missing: {needle}")
 
 	api = (APP / "api/chapter.py").read_text(encoding="utf-8")
-	for needle in ("download_ics", "hide_chapter", "set_writing_session", "BEGIN:VCALENDAR"):
+	for needle in (
+		"download_ics",
+		"hide_chapter",
+		"set_writing_session",
+		"BEGIN:VCALENDAR",
+		"/next-chapter/write?chapter=",
+	):
 		if needle not in api:
 			errors.append(f"chapter API missing: {needle}")
-
-	css = (APP / "public/css/next_chapter.css").read_text(encoding="utf-8")
-	for needle in (
-		"nc-shell",
-		"nc-left",
-		"nc-center",
-		"nc-right",
-		"form-tabs",
-		"nc-board",
-		"nc-schedule",
-		"nc-view-switcher",
-	):
-		if needle not in css:
-			errors.append(f"CSS missing layout piece: {needle}")
 
 	sidebar = json.loads((APP / "workspace_sidebar/next_chapter.json").read_text(encoding="utf-8"))
 	labels = {i.get("label") for i in sidebar.get("items", [])}
 	if "Settings" not in labels:
 		errors.append("Workspace Sidebar missing Settings link")
+	write_item = next((i for i in sidebar.get("items", []) if i.get("label") == "Write"), None)
+	if not write_item or write_item.get("link_to") != "/next-chapter":
+		errors.append("Workspace Sidebar Write link must point to /next-chapter")
 
 	readme = (ROOT / "README.md").read_text(encoding="utf-8")
 	if "bench get-app" not in readme or "Dogfood path" not in readme:
 		errors.append("README missing install or dogfood acceptance path")
-	if "/desk/next-chapter" not in readme:
-		errors.append("README should document /desk/next-chapter for v16")
+	if "/next-chapter" not in readme:
+		errors.append("README should document /next-chapter SPA entry")
+	if "frappe-ui" not in readme:
+		errors.append("README should mention frappe-ui SPA")
 	if "Chrome app" not in readme and "Install as a Chrome app" not in readme:
 		errors.append("README should document Chrome PWA install")
+
+	page_js = (APP / "next_chapter/page/next_chapter/next_chapter.js").read_text(
+		encoding="utf-8"
+	)
+	if "/next-chapter" not in page_js or "location.replace" not in page_js:
+		errors.append("Desk page should redirect to /next-chapter SPA")
 
 	license_head = (ROOT / "LICENSE").read_text(encoding="utf-8", errors="ignore")[:80]
 	if "AFFERO" not in license_head.upper() and "AGPL" not in license_head.upper():
@@ -242,7 +267,7 @@ def main() -> int:
 			print(f"  - {err}")
 		return 1
 
-	print("SMOKE OK — v16 packaging, DocTypes, desk page, workspace/sidebar, README")
+	print("SMOKE OK — v16 packaging, DocTypes, SPA boot, workspace/sidebar, README")
 	print("Install on a Frappe v16 bench (Python 3.14+) for end-to-end UI checks.")
 	return 0
 

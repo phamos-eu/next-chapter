@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/assets/next_chapter/images/next-chapter-logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>NextChapter</title>
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="NextChapter" />
+    <link rel="manifest" href="/assets/next_chapter/manifest.json" />
+    <link rel="apple-touch-icon" href="/assets/next_chapter/images/next-chapter-180.png" />
+  </head>
+  <body class="antialiased">
+    <div id="app"></div>
+    <div id="modals"></div>
+    <div id="popovers"></div>
+    <script>
+      window.csrf_token = '{{ csrf_token }}'
+      if (!window.frappe) window.frappe = {}
+      frappe.boot = {{ boot | tojson }}
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/next-chapter-sw.js', { scope: '/' }).catch(() => {})
+      }
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,15 +1,13 @@
 {
-  "id": "/desk/next-chapter",
+  "id": "/next-chapter",
   "name": "NextChapter",
   "short_name": "NextChapter",
-  "description": "Write your ERPNext implementation story — from ideas to chapters.",
-  "start_url": "/desk/next-chapter",
+  "description": "Writing-first ERPNext implementation planning",
+  "start_url": "/next-chapter",
   "scope": "/",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#f7f4ef",
+  "background_color": "#ffffff",
   "theme_color": "#0f766e",
-  "lang": "en",
   "icons": [
     {
       "src": "/assets/next_chapter/images/next-chapter-192.png",

@@ -4,6 +4,8 @@ Writing-first ERPNext implementation planning for [Frappe](https://frappeframewo
 
 NextChapter helps you go from free writing to focused work: catch Ideas, mature them through stages, schedule writing sessions, and narrow WIP on a board — without losing a low-barrier notes feel.
 
+The UI is a **Vue 3 + frappe-ui SPA** at `/next-chapter` (same pattern as [Frappe CRM](https://github.com/frappe/crm/blob/develop/crm/www/crm.py)).
+
 **License:** [AGPL-3.0-only](LICENSE)
 
 ## Requirements
@@ -13,6 +15,7 @@ NextChapter helps you go from free writing to focused work: catch Ideas, mature 
 | Frappe | **v16** (`>=16.0.0,<17.0.0`) |
 | Python | **≥ 3.14** |
 | Node.js | **≥ 24** (bench / asset builds) |
+| Yarn | for the `frontend/` SPA |
 
 Declared in [`pyproject.toml`](pyproject.toml) via `[tool.bench.frappe-dependencies]`.
 
@@ -41,11 +44,11 @@ bench --site <site> migrate
 bench --site <site> clear-cache
 ```
 
-Open `/desk/next-chapter`, or NextChapter → Write. Settings: **NextChapter Settings**.
+Open **`/next-chapter`**, or Apps → NextChapter, or NextChapter → Write. Settings: **NextChapter Settings** (Desk).
 
 ### Chrome app (macOS)
 
-On HTTPS, open `/desk/next-chapter` — use **Install as app** or Chrome’s install icon. See [`manifest.json`](next_chapter/public/manifest.json) and `/next-chapter-sw.js`.
+On HTTPS, open `/next-chapter` — use **Install as app** or Chrome’s install icon. See [`manifest.json`](next_chapter/public/manifest.json) and `/next-chapter-sw.js`.
 
 ### Dogfood path
 
@@ -61,16 +64,25 @@ On HTTPS, open `/desk/next-chapter` — use **Install as app** or Chrome’s ins
 | `Implementation Story` | Company context |
 | `Implementation Chapter` | Idea / chapter + schedule + hide |
 | `NextChapter Settings` | WIP limits + session defaults |
-| Desk page `next-chapter` | Write / Board / Schedule |
+| SPA `/next-chapter` | Write / Board / Schedule (Vue + frappe-ui) |
+| `next_chapter/www/next-chapter.py` | Boot context (CRM-style) |
+| `frontend/` | SPA source |
 | `next_chapter.api.*` | Setup, chapter, ICS |
 
 ## Development
 
 ```bash
-bench --site <site> migrate
-bench --site <site> clear-cache
+# Python / Desk packaging checks
 python3 scripts/smoke_check.py
+
+# SPA (from repo root)
+cd frontend
+yarn
+yarn dev          # proxied against a running bench site
+yarn build        # writes assets to next_chapter/public/frontend + www/next-chapter.html
 ```
+
+After `yarn build`, clear cache on the site so Desk/assets pick up the new bundle.
 
 ## About phamos
 

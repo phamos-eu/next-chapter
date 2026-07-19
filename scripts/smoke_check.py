@@ -148,8 +148,13 @@ def main() -> int:
 		"next_chapter.api.setup.complete_setup",
 		"next_chapter.api.chapter.save_chapter",
 		"next_chapter.api.chapter.create_chapter",
-		"New Idea",
-		"Brain dump",
+		"Add Idea",
+		"Brain Dump",
+		"Chapter",
+		"frappe.ui.form.make_control",
+		"Text Editor",
+		"nc-left",
+		"nc-right",
 		"window.next_chapter",
 		'frappe.provide("next_chapter")',
 		"/assets/next_chapter/js/pwa.js",
@@ -157,6 +162,11 @@ def main() -> int:
 	):
 		if needle not in js:
 			errors.append(f"desk page JS missing: {needle}")
+
+	css = (APP / "public/css/next_chapter.css").read_text(encoding="utf-8")
+	for needle in ("nc-shell", "nc-left", "nc-center", "nc-right", "form-tabs"):
+		if needle not in css:
+			errors.append(f"CSS missing layout piece: {needle}")
 
 	readme = (ROOT / "README.md").read_text(encoding="utf-8")
 	if "bench get-app" not in readme or "Dogfood path" not in readme:

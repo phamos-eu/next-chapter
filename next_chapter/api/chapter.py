@@ -76,7 +76,8 @@ def save_chapter(
 		doc.summary = summary
 
 	if content is not None:
-		doc.content = _plain_to_html(content)
+		# Text Editor (Quill) sends HTML; sanitize before storage.
+		doc.content = frappe.utils.sanitize_html(content or "")
 
 	if writing_stage is not None:
 		if writing_stage not in ALLOWED_STAGES:
@@ -94,18 +95,3 @@ def save_chapter(
 		"content": doc.content or "",
 		"modified": doc.modified,
 	}
-
-
-def _plain_to_html(value: str) -> str:
-	text = value or ""
-	# Already HTML from a previous save round-trip — keep as-is if clearly tagged.
-	stripped = text.strip()
-	if stripped.startswith("<") and ("</p>" in stripped or "<br" in stripped or "<div" in stripped):
-		return text
-
-	if not stripped:
-		return ""
-
-	parts = [frappe.utils.escape_html(line) for line in text.split("\n")]
-	# Preserve blank lines as empty paragraphs for readable editing round-trips.
-	return "".join(f"<p>{p if p else '<br>'}</p>" for p in parts)

@@ -4,7 +4,7 @@ from frappe import _
 def get_data():
 	return [
 		{
-			"module_name": "NextChapter",
+			"module_name": "Next Chapter",
 			"type": "module",
 			"label": _("NextChapter"),
 		}

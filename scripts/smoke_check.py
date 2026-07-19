@@ -37,8 +37,9 @@ def main() -> int:
 			errors.append(f"missing: {path.relative_to(ROOT)}")
 
 	modules = (APP / "modules.txt").read_text(encoding="utf-8").strip()
-	if modules != "NextChapter":
-		errors.append(f"modules.txt expected 'NextChapter', got {modules!r}")
+	# Frappe scrubs module titles: "Next Chapter" → next_chapter (package folder).
+	if modules != "Next Chapter":
+		errors.append(f"modules.txt expected 'Next Chapter', got {modules!r}")
 
 	# pyproject / Frappe Cloud v16 declaration
 	pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
@@ -68,6 +69,9 @@ def main() -> int:
 		"workspace_sidebar/next_chapter.json",
 	):
 		data = json.loads((APP / rel).read_text(encoding="utf-8"))
+		if data.get("module") and data.get("module") != "Next Chapter":
+			errors.append(f"{rel} module must be 'Next Chapter' (scrubs to next_chapter/)")
+
 		if rel.endswith("implementation_story.json"):
 			fields = {f["fieldname"] for f in data["fields"]}
 			for required in (
@@ -107,6 +111,9 @@ def main() -> int:
 			labels = {i.get("label") for i in data.get("items", [])}
 			if "Write" not in labels:
 				errors.append("Workspace Sidebar missing Write page link")
+
+	if not (APP / "next_chapter").is_dir():
+		errors.append("missing package folder next_chapter/next_chapter for scrubbed module")
 
 	js = (APP / "next_chapter/page/next_chapter/next_chapter.js").read_text(encoding="utf-8")
 	for needle in (

@@ -5,6 +5,18 @@ app_description = "Writing-first ERPNext implementation planning — ideas to ch
 app_email = "support@phamos.eu"
 app_license = "agpl-3.0"
 app_version = "0.0.1"
+app_logo_url = "/assets/next_chapter/images/next-chapter-logo.svg"
+app_home = "/desk/next-chapter"
+required_apps = ["frappe"]
+
+add_to_apps_screen = [
+	{
+		"name": "next_chapter",
+		"logo": "/assets/next_chapter/images/next-chapter-logo.svg",
+		"title": "NextChapter",
+		"route": "/desk/next-chapter",
+	}
+]
 
 # Includes in <head>
 # ------------------
@@ -47,7 +59,8 @@ app_include_css = "/assets/next_chapter/css/next_chapter.css"
 # ------------
 
 # before_install = "next_chapter.install.before_install"
-after_install = "next_chapter.install.after_install"
+# after_install uses standard Workspace + Workspace Sidebar fixtures in v16
+# after_install = "next_chapter.install.after_install"
 
 # Uninstallation
 # ------------

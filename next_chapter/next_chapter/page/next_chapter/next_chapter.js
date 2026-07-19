@@ -1,3 +1,7 @@
+// Frappe v16 loads Page JS as an IIFE — keep app state on window via frappe.provide.
+frappe.provide("next_chapter");
+const next_chapter = window.next_chapter;
+
 frappe.pages["next-chapter"].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
@@ -19,8 +23,6 @@ frappe.pages["next-chapter"].on_page_load = function (wrapper) {
 
 	new next_chapter.WritingApp(page);
 };
-
-frappe.provide("next_chapter");
 
 next_chapter.WritingApp = class WritingApp {
 	constructor(page) {

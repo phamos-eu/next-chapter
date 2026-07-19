@@ -1,0 +1,21 @@
+[project]
+name = "next_chapter"
+authors = [
+    { name = "phamos.eu", email = "support@phamos.eu"}
+]
+description = "Writing-first ERPNext implementation planning — ideas to chapters"
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+license = { text = "AGPL-3.0-only" }
+dependencies = []
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.bench.dev-dependencies]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"

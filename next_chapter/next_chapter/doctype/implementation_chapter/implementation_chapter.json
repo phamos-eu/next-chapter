@@ -11,6 +11,9 @@
   "sequence",
   "writing_stage",
   "column_break_meta",
+  "hidden_until",
+  "next_write_on",
+  "write_duration_mins",
   "summary",
   "content_section",
   "content"
@@ -46,13 +49,34 @@
    "fieldname": "writing_stage",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Writing Stage",
-   "options": "Idea\nOutline\nDraft",
+   "options": "Idea\nOutline\nDraft\nReady to write\nWriting\nDone",
    "reqd": 1
   },
   {
    "fieldname": "column_break_meta",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "Hidden from the Active list until this time.",
+   "fieldname": "hidden_until",
+   "fieldtype": "Datetime",
+   "label": "Hidden Until"
+  },
+  {
+   "description": "When you plan to continue writing.",
+   "fieldname": "next_write_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Next Write On"
+  },
+  {
+   "default": "60",
+   "fieldname": "write_duration_mins",
+   "fieldtype": "Int",
+   "label": "Write Duration (mins)",
+   "non_negative": 1
   },
   {
    "description": "Short brain dump — a sentence or two.",
@@ -74,7 +98,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-19 19:00:00.000000",
+ "modified": "2026-07-19 20:35:00.000000",
  "modified_by": "Administrator",
  "module": "Next Chapter",
  "name": "Implementation Chapter",

@@ -22,9 +22,11 @@ REQUIRED = [
 	APP / "public" / "manifest.json",
 	APP / "public" / "js" / "pwa.js",
 	APP / "public" / "js" / "sw.js",
+	APP / "public" / "js" / "writing_workspace.js",
 	APP / "pwa.py",
 	APP / "next_chapter" / "doctype" / "implementation_story" / "implementation_story.json",
 	APP / "next_chapter" / "doctype" / "implementation_chapter" / "implementation_chapter.json",
+	APP / "next_chapter" / "doctype" / "nextchapter_settings" / "nextchapter_settings.json",
 	APP / "next_chapter" / "page" / "next_chapter" / "next_chapter.json",
 	APP / "next_chapter" / "page" / "next_chapter" / "next_chapter.js",
 	APP / "next_chapter" / "workspace" / "next_chapter" / "next_chapter.json",
@@ -122,11 +124,38 @@ def main() -> int:
 					errors.append(f"Story should not have deferred field yet: {forbidden}")
 		if rel.endswith("implementation_chapter.json"):
 			fields = {f["fieldname"] for f in data["fields"]}
-			for required in ("story", "title", "sequence", "summary", "content", "writing_stage"):
+			for required in (
+				"story",
+				"title",
+				"sequence",
+				"summary",
+				"content",
+				"writing_stage",
+				"hidden_until",
+				"next_write_on",
+				"write_duration_mins",
+			):
 				if required not in fields:
 					errors.append(f"Chapter missing field: {required}")
+			stage_field = next(f for f in data["fields"] if f["fieldname"] == "writing_stage")
+			for stage in ("Idea", "Outline", "Draft", "Ready to write", "Writing", "Done"):
+				if stage not in (stage_field.get("options") or ""):
+					errors.append(f"Chapter writing_stage missing {stage}")
 			if data.get("sort_field") != "creation":
 				errors.append("Chapter sort_field should be creation (Frappe v16)")
+		if rel.endswith("nextchapter_settings.json"):
+			if not data.get("issingle"):
+				errors.append("NextChapter Settings must be a Single DocType")
+			fields = {f["fieldname"] for f in data["fields"]}
+			for required in (
+				"wip_outline",
+				"wip_draft",
+				"wip_ready_to_write",
+				"wip_writing",
+				"default_session_mins",
+			):
+				if required not in fields:
+					errors.append(f"Settings missing field: {required}")
 		if rel.endswith("page/next_chapter/next_chapter.json"):
 			if data.get("page_name") != "next-chapter":
 				errors.append("Desk page_name must be next-chapter")
@@ -144,10 +173,14 @@ def main() -> int:
 		errors.append("missing package folder next_chapter/next_chapter for scrubbed module")
 
 	js = (APP / "next_chapter/page/next_chapter/next_chapter.js").read_text(encoding="utf-8")
+	helpers = (APP / "public/js/writing_workspace.js").read_text(encoding="utf-8")
+	front = js + "\n" + helpers
 	for needle in (
 		"next_chapter.api.setup.complete_setup",
 		"next_chapter.api.chapter.save_chapter",
 		"next_chapter.api.chapter.create_chapter",
+		"next_chapter.api.chapter.hide_chapter",
+		"next_chapter.api.chapter.set_stage",
 		"Add Idea",
 		"Brain Dump",
 		"Chapter",
@@ -155,25 +188,48 @@ def main() -> int:
 		"Text Editor",
 		"nc-left",
 		"nc-right",
+		"data-view",
+		"board",
+		"schedule",
 		"window.next_chapter",
 		'frappe.provide("next_chapter")',
 		"/assets/next_chapter/js/pwa.js",
+		"/assets/next_chapter/js/writing_workspace.js",
 		"install-app",
 	):
-		if needle not in js:
+		if needle not in front:
 			errors.append(f"desk page JS missing: {needle}")
 
+	api = (APP / "api/chapter.py").read_text(encoding="utf-8")
+	for needle in ("download_ics", "hide_chapter", "set_writing_session", "BEGIN:VCALENDAR"):
+		if needle not in api:
+			errors.append(f"chapter API missing: {needle}")
+
 	css = (APP / "public/css/next_chapter.css").read_text(encoding="utf-8")
-	for needle in ("nc-shell", "nc-left", "nc-center", "nc-right", "form-tabs"):
+	for needle in (
+		"nc-shell",
+		"nc-left",
+		"nc-center",
+		"nc-right",
+		"form-tabs",
+		"nc-board",
+		"nc-schedule",
+		"nc-view-switcher",
+	):
 		if needle not in css:
 			errors.append(f"CSS missing layout piece: {needle}")
+
+	sidebar = json.loads((APP / "workspace_sidebar/next_chapter.json").read_text(encoding="utf-8"))
+	labels = {i.get("label") for i in sidebar.get("items", [])}
+	if "Settings" not in labels:
+		errors.append("Workspace Sidebar missing Settings link")
 
 	readme = (ROOT / "README.md").read_text(encoding="utf-8")
 	if "bench get-app" not in readme or "Dogfood path" not in readme:
 		errors.append("README missing install or dogfood acceptance path")
 	if "/desk/next-chapter" not in readme:
 		errors.append("README should document /desk/next-chapter for v16")
-	if "Install as a Chrome app" not in readme:
+	if "Chrome app" not in readme and "Install as a Chrome app" not in readme:
 		errors.append("README should document Chrome PWA install")
 
 	license_head = (ROOT / "LICENSE").read_text(encoding="utf-8", errors="ignore")[:80]

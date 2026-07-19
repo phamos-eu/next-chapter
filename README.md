@@ -2,7 +2,7 @@
 
 Writing-first ERPNext implementation planning for [Frappe](https://frappeframework.com/) **v16**.
 
-NextChapter helps you sit down and write: company context, then **Ideas** that grow from a short brain dump into chapter introductions and longer requirement prose — similar to a focused notes app, structured around an implementation story.
+NextChapter helps you go from free writing to focused work: catch Ideas, mature them through stages, schedule writing sessions, and narrow WIP on a board — without losing a low-barrier notes feel.
 
 **License:** [AGPL-3.0-only](LICENSE)
 
@@ -14,70 +14,55 @@ NextChapter helps you sit down and write: company context, then **Ideas** that g
 | Python | **≥ 3.14** |
 | Node.js | **≥ 24** (bench / asset builds) |
 
-Declared in [`pyproject.toml`](pyproject.toml) via `[tool.bench.frappe-dependencies]` for Frappe Cloud / bench compatibility checks.
+Declared in [`pyproject.toml`](pyproject.toml) via `[tool.bench.frappe-dependencies]`.
 
-## Writing-first MVP
+## What you can do
 
-This first slice is intentionally simple and single-user:
+1. Complete the setup wizard (company context + three first ideas).
+2. **Write** — left Ideas list (search, status pills, Active/Hidden), center **Brain Dump** / **Chapter** tabs, right progress + next writing time.
+3. Hide ideas until later (Later today / Tomorrow / Next week / Next month / Custom).
+4. Schedule a writing session and **download a `.ics`** calendar file with a link back to the chapter.
+5. **Schedule** view — List, Next 3 days, Next 10 days, Month, 90 days.
+6. **Board** — kanban by stage with WIP limits from **NextChapter Settings**.
 
-1. Complete a short setup wizard (company context + three first ideas).
-2. Open the **NextChapter** desk page.
-3. Write in the middle panel: **Brain Dump** tab for rough notes, **Chapter** tab for the rich text write-up.
-4. Use the right panel for progress (Idea → Outline → Draft).
-5. Add more ideas from the left sidebar as they appear.
+### Stages
 
-**Not in this slice (planned later):** multi-party review, Lead / sales visibility when asking for help, full implementation status pipeline, PWA, Projects / Milestones / Issues.
+`Idea` → `Outline` → `Draft` → `Ready to write` → `Writing` → `Done`
+
+Idea and Done are unlimited. Outline / Draft / Ready to write / Writing use WIP limits from Settings (defaults 8 / 5 / 3 / 1).
 
 ## Install
-
-On a Frappe **v16** bench:
 
 ```bash
 cd /path/to/frappe-bench
 bench get-app https://github.com/phamos-eu/next-chapter.git
 bench --site <site> install-app next_chapter
+bench --site <site> migrate
 bench --site <site> clear-cache
 ```
 
-Then open the desktop **NextChapter** app, use the workspace sidebar **Write** link, or go to `/desk/next-chapter`.
+Open `/desk/next-chapter`, or NextChapter → Write. Settings: **NextChapter Settings**.
 
-### Install as a Chrome app (macOS)
+### Chrome app (macOS)
 
-NextChapter is set up as an installable PWA when you open the writing page over HTTPS:
+On HTTPS, open `/desk/next-chapter` — use **Install as app** or Chrome’s install icon. See [`manifest.json`](next_chapter/public/manifest.json) and `/next-chapter-sw.js`.
 
-1. In Chrome, open `/desk/next-chapter` and stay on the page for a few seconds.
-2. Use either:
-   - the **Install app** button when it appears in NextChapter, or
-   - Chrome’s install icon in the address bar, or
-   - **Chrome menu → Cast, save, and share → Install NextChapter…** (wording varies slightly by Chrome version).
-3. NextChapter opens in its own window (`display: standalone`).
+### Dogfood path
 
-Technical pieces: [`manifest.json`](next_chapter/public/manifest.json), root service worker at `/next-chapter-sw.js`, and 192/512 PNG icons.
-
-### Dogfood path (acceptance)
-
-1. Open `/desk/next-chapter`.
-2. Complete the 6-step wizard → one **Implementation Story** and three **Implementation Chapters** are created.
-3. Select a chapter, write a short summary and longer content; wait for autosave (“Saved”).
-4. Click **New Idea**, write again, reload the page — content should still be there.
+1. Complete the wizard.
+2. Search / filter ideas; hide one and find it under **Hidden**.
+3. Set **Next writing session**, download `.ics`, open the URL from the event.
+4. Switch to **Schedule** (10 days) and **Board**; drag a card until a WIP limit blocks you.
 
 ## App structure
 
 | Piece | Purpose |
 |-------|---------|
-| `Implementation Story` | Company / engagement context from the wizard |
-| `Implementation Chapter` | An Idea that becomes a written chapter |
-| Desk page `next-chapter` | Wizard + Joplin-like list/editor |
-| Workspace + Workspace Sidebar | v16 desktop icon and persistent sidebar |
-| `next_chapter.api.*` | Setup and chapter create/save APIs (PWA-ready later) |
-
-## Frappe v16 notes
-
-- Desk routes use `/desk/...` (not `/app/...`).
-- `add_to_apps_screen` + `app_home` register the app on the v16 desktop.
-- Standard **Workspace** and **Workspace Sidebar** ship with the app.
-- Page JS is IIFE-safe (`frappe.provide` / `window.next_chapter`).
-- DocType list defaults use `sort_field = creation` per v16 guidance.
+| `Implementation Story` | Company context |
+| `Implementation Chapter` | Idea / chapter + schedule + hide |
+| `NextChapter Settings` | WIP limits + session defaults |
+| Desk page `next-chapter` | Write / Board / Schedule |
+| `next_chapter.api.*` | Setup, chapter, ICS |
 
 ## Development
 
@@ -89,4 +74,4 @@ python3 scripts/smoke_check.py
 
 ## About phamos
 
-Built to support implementation preparation work at [phamos.eu](https://phamos.eu). Later slices may connect into the phamos sales / consulting cycle; this MVP stays a private writing tool.
+Built for implementation preparation at [phamos.eu](https://phamos.eu).

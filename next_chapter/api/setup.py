@@ -5,35 +5,47 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
+from frappe.utils import get_datetime, now_datetime
 
+from next_chapter.api.chapter import CHAPTER_FIELDS, STAGES, _serialize
 from next_chapter.next_chapter.doctype.implementation_story.implementation_story import (
 	get_active_story_name,
+)
+from next_chapter.next_chapter.doctype.nextchapter_settings.nextchapter_settings import (
+	STAGE_WIP_FIELD,
+	get_settings_dict,
 )
 
 
 @frappe.whitelist()
 def get_bootstrap():
-	"""Return active story + chapters, or signal that setup is needed."""
+	"""Return active story + chapters + settings, or signal that setup is needed."""
 	story_name = get_active_story_name()
+	settings = get_settings_dict()
+	wip_limits = {
+		stage: (settings.get(field) or 0)
+		for stage, field in STAGE_WIP_FIELD.items()
+	}
+
 	if not story_name:
-		return {"needs_setup": True, "story": None, "chapters": []}
+		return {
+			"needs_setup": True,
+			"story": None,
+			"chapters": [],
+			"stages": STAGES,
+			"settings": settings,
+			"wip_limits": wip_limits,
+		}
 
 	story = frappe.get_doc("Implementation Story", story_name)
-	# Explicit order_by: v16 defaults get_all to creation; we still want sequence first.
-	chapters = frappe.get_all(
+	rows = frappe.get_all(
 		"Implementation Chapter",
 		filters={"story": story_name},
-		fields=[
-			"name",
-			"title",
-			"sequence",
-			"writing_stage",
-			"summary",
-			"content",
-			"modified",
-		],
+		fields=CHAPTER_FIELDS,
 		order_by="sequence asc, creation asc",
 	)
+	chapters = [_serialize(row) for row in rows]
+	_expire_hidden(chapters)
 
 	return {
 		"needs_setup": False,
@@ -43,7 +55,29 @@ def get_bootstrap():
 			"status": story.status,
 		},
 		"chapters": chapters,
+		"stages": STAGES,
+		"settings": settings,
+		"wip_limits": wip_limits,
 	}
+
+
+def _expire_hidden(chapters: list[dict]):
+	"""Clear expired hidden_until values so Active list stays accurate."""
+	now = now_datetime()
+	for chapter in chapters:
+		hidden_until = chapter.get("hidden_until")
+		if not hidden_until:
+			continue
+		if get_datetime(hidden_until) <= now:
+			frappe.db.set_value(
+				"Implementation Chapter",
+				chapter["name"],
+				"hidden_until",
+				None,
+				update_modified=False,
+			)
+			chapter["hidden_until"] = None
+			chapter["is_hidden"] = False
 
 
 @frappe.whitelist()
@@ -68,6 +102,9 @@ def complete_setup(
 	if not company_name:
 		frappe.throw(_("Company name is required."), frappe.ValidationError)
 
+	# Ensure settings single exists
+	get_settings_dict()
+
 	titles = [
 		(priority_1 or "").strip() or _("First priority"),
 		(priority_2 or "").strip() or _("Second priority"),
@@ -90,6 +127,7 @@ def complete_setup(
 	)
 	story.insert()
 
+	settings = get_settings_dict()
 	for idx, title in enumerate(titles, start=1):
 		frappe.get_doc(
 			{
@@ -100,6 +138,7 @@ def complete_setup(
 				"writing_stage": "Idea",
 				"summary": "",
 				"content": "",
+				"write_duration_mins": settings.get("default_session_mins") or 60,
 			}
 		).insert()
 

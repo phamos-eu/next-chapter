@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "creation": "2026-07-19 20:35:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "wip_section",
+  "wip_outline",
+  "wip_draft",
+  "column_break_wip",
+  "wip_ready_to_write",
+  "wip_writing",
+  "session_section",
+  "default_session_mins",
+  "reminder_mins"
+ ],
+ "fields": [
+  {
+   "fieldname": "wip_section",
+   "fieldtype": "Section Break",
+   "label": "Column Limits (WIP)"
+  },
+  {
+   "default": "8",
+   "description": "0 means unlimited. Idea and Done are always unlimited.",
+   "fieldname": "wip_outline",
+   "fieldtype": "Int",
+   "label": "Outline Limit",
+   "non_negative": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "wip_draft",
+   "fieldtype": "Int",
+   "label": "Draft Limit",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_wip",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "3",
+   "fieldname": "wip_ready_to_write",
+   "fieldtype": "Int",
+   "label": "Ready to Write Limit",
+   "non_negative": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "wip_writing",
+   "fieldtype": "Int",
+   "label": "Writing Limit",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "session_section",
+   "fieldtype": "Section Break",
+   "label": "Writing Sessions"
+  },
+  {
+   "default": "60",
+   "description": "Used for calendar end time when downloading .ics files.",
+   "fieldname": "default_session_mins",
+   "fieldtype": "Int",
+   "label": "Default Session Length (mins)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "15",
+   "description": "Reminder offset embedded in .ics files.",
+   "fieldname": "reminder_mins",
+   "fieldtype": "Int",
+   "label": "Calendar Reminder (mins)",
+   "non_negative": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-19 20:35:00.000000",
+ "modified_by": "Administrator",
+ "module": "Next Chapter",
+ "name": "NextChapter Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

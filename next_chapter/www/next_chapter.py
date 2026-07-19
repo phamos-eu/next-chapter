@@ -1,10 +1,10 @@
 # Copyright (c) 2026, phamos.eu and contributors
 # For license information, please see license.txt
-"""SPA entry for NextChapter — same pattern as frappe/crm www/crm.py.
+"""SPA controller for /next-chapter.
 
-Frappe scrubs the route name ``next-chapter`` to ``next_chapter`` when loading
-the Python module and HTML template, so this underscore filename is the one
-that must host the SPA boot context.
+Frappe maps the URL from the HTML filename (``next-chapter.html`` → ``/next-chapter``)
+and loads this controller by converting hyphens to underscores
+(``next-chapter`` → ``next_chapter.py``). Same pattern as frappe/crm.
 """
 
 from __future__ import annotations

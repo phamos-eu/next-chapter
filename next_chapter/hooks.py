@@ -21,6 +21,18 @@ add_to_apps_screen = [
 # Serve /next-chapter-sw.js with Service-Worker-Allowed: / for Chrome installability
 before_request = ["next_chapter.pwa.before_request"]
 
+# Website route rules
+website_route_rules = [
+	{
+		"from_route": "/next-chapter",
+		"to_route": "next_chapter"
+	},
+	{
+		"from_route": "/next-chapter/<path:app_path>",
+		"to_route": "next_chapter"
+	}
+]
+
 # Includes in <head>
 # ------------------
 
@@ -69,7 +81,7 @@ app_include_css = "/assets/next_chapter/css/next_chapter.css"
 # ------------
 
 # before_uninstall = "next_chapter.uninstall.before_uninstall"
-# after_uninstall = "next_chapter.uninstall.after_uninstall"
+# after_uninstall = "next_chapter.uninstall.after_install"
 
 # Desk Notifications
 # ------------------

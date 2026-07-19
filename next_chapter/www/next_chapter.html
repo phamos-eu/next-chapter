@@ -1,0 +1,724 @@
+{# NextChapter Dashboard Template #}
+
+<style>
+  :root {
+    /* espresso / frappe-ui light-theme tokens (pure-neutral grays) */
+    --ink-strong: oklch(0.168 0 0);
+    --ink: oklch(0.205 0 0);
+    --muted: oklch(0.586 0 0);
+    --faint: oklch(0.683 0 0);
+    --border: oklch(0.913 0 0);
+    --border-focus: oklch(0.83 0 0);
+    --bg: oklch(0.964 0 0);
+    --card: oklch(1 0 0);
+    --field: oklch(0.964 0 0);
+    --accent: oklch(0.205 0 0);
+    --accent-hover: oklch(0.341 0 0);
+    --danger: oklch(0.507 0.165 25.286);
+    --danger-bg: oklch(0.978 0.011 17.34);
+    --success-bg: oklch(0.965 0.03 155.987);
+    --success-ink: oklch(0.506 0.118 155.358);
+    --warning-bg: oklch(0.967 0.045 91.733);
+    --warning-ink: oklch(0.599 0.141 56.803);
+    --ring: oklch(0.586 0 0 / 0.15);
+    --primary: oklch(0.45 0.15 250);
+    --primary-hover: oklch(0.55 0.15 250);
+    --primary-bg: oklch(0.97 0.03 250);
+  }
+
+  * { box-sizing: border-box; }
+
+  .nextchapter-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+
+  .nextchapter-header {
+    margin-bottom: 32px;
+  }
+
+  .nextchapter-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .nextchapter-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nextchapter-logo img {
+    height: 40px;
+    width: auto;
+  }
+
+  .nextchapter-logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink-strong);
+    letter-spacing: -0.02em;
+  }
+
+  .nextchapter-tagline {
+    font-size: 16px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .nextchapter-user-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nextchapter-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-bg);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .nextchapter-user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-strong);
+  }
+
+  .nextchapter-main-content {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .nextchapter-main-content {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .nextchapter-sidebar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    height: fit-content;
+  }
+
+  .nextchapter-sidebar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nextchapter-nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nextchapter-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+
+  .nextchapter-nav-item:hover {
+    background: var(--field);
+    color: var(--ink-strong);
+  }
+
+  .nextchapter-nav-item.active {
+    background: var(--primary-bg);
+    color: var(--primary);
+  }
+
+  .nextchapter-nav-item svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .nextchapter-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .nextchapter-card {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.05);
+  }
+
+  .nextchapter-card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+
+  .nextchapter-card-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 22px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .nextchapter-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .nextchapter-stat-card {
+    background: var(--field);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .nextchapter-stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink-strong);
+    line-height: 1;
+  }
+
+  .nextchapter-stat-label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .nextchapter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .nextchapter-btn {
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .nextchapter-btn-primary {
+    color: oklch(1 0 0);
+    background: var(--primary);
+  }
+
+  .nextchapter-btn-primary:hover {
+    background: var(--primary-hover);
+  }
+
+  .nextchapter-btn-secondary {
+    color: var(--ink);
+    background: var(--field);
+  }
+
+  .nextchapter-btn-secondary:hover {
+    background: var(--border);
+  }
+
+  .nextchapter-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .nextchapter-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .nextchapter-empty-state-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: var(--field);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nextchapter-empty-state-icon svg {
+    width: 40px;
+    height: 40px;
+    color: var(--muted);
+  }
+
+  .nextchapter-empty-state-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    margin: 0 0 8px;
+  }
+
+  .nextchapter-empty-state-text {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .nextchapter-list-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .nextchapter-list-table th,
+  .nextchapter-list-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nextchapter-list-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    background: var(--field);
+  }
+
+  .nextchapter-list-table td {
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .nextchapter-list-table tr:hover td {
+    background: var(--field);
+  }
+
+  .nextchapter-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .nextchapter-badge-success {
+    background: var(--success-bg);
+    color: var(--success-ink);
+  }
+
+  .nextchapter-badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning-ink);
+  }
+
+  .nextchapter-badge-info {
+    background: var(--primary-bg);
+    color: var(--primary);
+  }
+
+  .nextchapter-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .nextchapter-search-box {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+  }
+
+  .nextchapter-search-box input {
+    width: 100%;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 8px 12px 8px 36px;
+    outline: none;
+    transition: all 0.12s;
+  }
+
+  .nextchapter-search-box input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 2px var(--ring);
+    background: var(--card);
+  }
+
+  .nextchapter-search-box svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--faint);
+  }
+
+  .nextchapter-filter-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .nextchapter-filter-btn {
+    padding: 8px 14px;
+    background: var(--field);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .nextchapter-filter-btn:hover {
+    border-color: var(--border-focus);
+    background: var(--card);
+  }
+
+  .nextchapter-filter-btn.active {
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .nextchapter-loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .nextchapter-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: nextchapter-spin 1s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes nextchapter-spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<div class="nextchapter-container">
+  <header class="nextchapter-header">
+    <div class="nextchapter-header-content">
+      <div class="nextchapter-logo">
+        <img src="/assets/next_chapter/images/next-chapter-logo.svg" alt="NextChapter Logo" />
+        <div>
+          <div class="nextchapter-logo-text">NextChapter</div>
+          <div class="nextchapter-tagline">Writing-First ERPNext Implementation Planning</div>
+        </div>
+      </div>
+      <div class="nextchapter-user-info">
+        <span class="nextchapter-user-name">{{ user_name }}</span>
+        <div class="nextchapter-user-avatar">{{ user_initial }}</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="nextchapter-main-content">
+    <aside class="nextchapter-sidebar">
+      <h2 class="nextchapter-sidebar-title">Menu</h2>
+      <nav class="nextchapter-nav-menu">
+        <a href="/next-chapter" class="nextchapter-nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/app/implementation-story" class="nextchapter-nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+          <span>Stories</span>
+        </a>
+        <a href="/app/implementation-chapter" class="nextchapter-nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          <span>Chapters</span>
+        </a>
+        <a href="/app/nextchapter-settings" class="nextchapter-nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          <span>Settings</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="nextchapter-content-area">
+      <div class="nextchapter-card">
+        <h1 class="nextchapter-card-title">Welcome to NextChapter</h1>
+        <p class="nextchapter-card-subtitle">
+          Transform your ERPNext implementation ideas into structured chapters and actionable stories.
+          This is your writing-first approach to implementation planning.
+        </p>
+
+        {% if not has_data %}
+        <div class="nextchapter-empty-state">
+          <div class="nextchapter-empty-state-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </div>
+          <h2 class="nextchapter-empty-state-title">No Content Yet</h2>
+          <p class="nextchapter-empty-state-text">
+            Start by creating your first Implementation Story or Chapter to begin planning your ERPNext implementation.
+          </p>
+          <div class="nextchapter-actions" style="justify-content: center; margin-top: 24px;">
+            <button class="nextchapter-btn nextchapter-btn-primary" onclick="window.location.href='/app/implementation-story/new'">
+              Create Story
+            </button>
+            <button class="nextchapter-btn nextchapter-btn-secondary" onclick="window.location.href='/app/implementation-chapter/new'">
+              Create Chapter
+            </button>
+          </div>
+        </div>
+        {% else %}
+        <div class="nextchapter-stats-grid">
+          <div class="nextchapter-stat-card">
+            <div class="nextchapter-stat-value">{{ total_stories }}</div>
+            <div class="nextchapter-stat-label">Implementation Stories</div>
+          </div>
+          <div class="nextchapter-stat-card">
+            <div class="nextchapter-stat-value">{{ total_chapters }}</div>
+            <div class="nextchapter-stat-label">Chapters</div>
+          </div>
+          <div class="nextchapter-stat-card">
+            <div class="nextchapter-stat-value">{{ completed_stories }}</div>
+            <div class="nextchapter-stat-label">Completed</div>
+          </div>
+          <div class="nextchapter-stat-card">
+            <div class="nextchapter-stat-value">{{ in_progress_stories }}</div>
+            <div class="nextchapter-stat-label">In Progress</div>
+          </div>
+        </div>
+
+        <div class="nextchapter-toolbar">
+          <div class="nextchapter-search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input type="text" placeholder="Search stories and chapters..." id="nextchapter-search-input" />
+          </div>
+          <div class="nextchapter-filter-buttons">
+            <button class="nextchapter-filter-btn active" data-filter="all">All</button>
+            <button class="nextchapter-filter-btn" data-filter="story">Stories</button>
+            <button class="nextchapter-filter-btn" data-filter="chapter">Chapters</button>
+          </div>
+        </div>
+
+        <div class="nextchapter-list-container" id="nextchapter-list-container">
+          <!-- Items will be loaded dynamically -->
+        </div>
+
+        <div class="nextchapter-loading" id="nextchapter-loading">
+          <div class="nextchapter-loading-spinner"></div>
+          <p style="margin-top: 12px; color: var(--muted);">Loading...</p>
+        </div>
+
+        <div class="nextchapter-actions">
+          <button class="nextchapter-btn nextchapter-btn-secondary" onclick="window.location.href='/app/implementation-story/new'">
+            New Story
+          </button>
+          <button class="nextchapter-btn nextchapter-btn-primary" onclick="window.location.href='/app/implementation-chapter/new'">
+            New Chapter
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Initialize the page
+    const userName = {{ user_name | tojson }};
+    const userInitial = userName ? userName.charAt(0).toUpperCase() : 'U';
+
+    // Update user info
+    const userNameEl = document.querySelector('.nextchapter-user-name');
+    const userAvatarEl = document.querySelector('.nextchapter-user-avatar');
+
+    if (userNameEl) userNameEl.textContent = userName || 'User';
+    if (userAvatarEl) userAvatarEl.textContent = userInitial;
+
+    // Handle filter buttons
+    const filterBtns = document.querySelectorAll('.nextchapter-filter-btn');
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        loadItems(this.dataset.filter);
+      });
+    });
+
+    // Handle search
+    const searchInput = document.getElementById('nextchapter-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        const activeFilter = document.querySelector('.nextchapter-filter-btn.active');
+        const filter = activeFilter ? activeFilter.dataset.filter : 'all';
+        loadItems(filter, this.value);
+      });
+    }
+
+    // Load items function
+    function loadItems(filter, search) {
+      const loading = document.getElementById('nextchapter-loading');
+      const container = document.getElementById('nextchapter-list-container');
+
+      if (loading) loading.style.display = 'block';
+      if (container) container.innerHTML = '';
+
+      // Simulate loading (in real implementation, this would be an API call)
+      setTimeout(() => {
+        if (loading) loading.style.display = 'none';
+
+        // This is placeholder data - in real implementation, fetch from API
+        const items = [
+          { type: 'story', name: 'User Management Implementation', status: 'In Progress', date: '2024-01-15' },
+          { type: 'story', name: 'Inventory Module Setup', status: 'Completed', date: '2024-01-10' },
+          { type: 'chapter', name: 'Chapter 1: Requirements Gathering', status: 'Completed', date: '2024-01-05' },
+          { type: 'chapter', name: 'Chapter 2: System Configuration', status: 'In Progress', date: '2024-01-12' },
+          { type: 'story', name: 'Payment Gateway Integration', status: 'Planned', date: '2024-01-20' },
+        ];
+
+        const filteredItems = items.filter(item => {
+          if (filter !== 'all' && item.type !== filter) return false;
+          if (search && !item.name.toLowerCase().includes(search.toLowerCase())) return false;
+          return true;
+        });
+
+        renderItems(filteredItems);
+      }, 500);
+    }
+
+    function renderItems(items) {
+      const container = document.getElementById('nextchapter-list-container');
+      if (!container) return;
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="nextchapter-empty-state" style="padding: 40px 20px;">
+            <p style="color: var(--muted);">No items found matching your criteria.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <table class="nextchapter-list-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      items.forEach(item => {
+        const statusClass = item.status === 'Completed' ? 'nextchapter-badge-success' : 
+                           item.status === 'In Progress' ? 'nextchapter-badge-info' : 'nextchapter-badge-warning';
+        const statusText = item.status;
+        const typeText = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+
+        html += `
+          <tr>
+            <td><strong>${item.name}</strong></td>
+            <td><span class="nextchapter-badge nextchapter-badge-info">${typeText}</span></td>
+            <td><span class="nextchapter-badge ${statusClass}">${statusText}</span></td>
+            <td>${item.date}</td>
+            <td>
+              <button class="nextchapter-btn nextchapter-btn-secondary" style="padding: 4px 10px; font-size: 12px;" 
+                      onclick="window.location.href='/app/${item.type}/${encodeURIComponent(item.name)}'">
+                View
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Initial load
+    {% if has_data %}
+    loadItems('all');
+    {% endif %}
+  })();
+</script>

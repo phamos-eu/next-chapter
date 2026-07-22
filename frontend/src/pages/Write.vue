@@ -15,14 +15,14 @@
             <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
             Ideas
           </button>
-          <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-4">
             <TextInput
               v-model="draft.title"
-              class="!border-0 !bg-transparent !px-0 text-2xl font-semibold"
+              class="overview-title min-w-0 flex-1 !border-0 !bg-transparent !px-0 !py-1"
               placeholder="Give this idea a short name"
               @update:model-value="scheduleSave"
             />
-            <div class="flex gap-2">
+            <div class="flex shrink-0 gap-2 pt-2">
               <Button variant="subtle" label="Edit" @click="openEdit" />
               <Button
                 v-if="draft.writing_stage !== 'Done'"
@@ -577,3 +577,19 @@ onBeforeUnmount(() => {
 	clearInterval(editTickTimer)
 })
 </script>
+
+<style scoped>
+.overview-title :deep(input) {
+	min-height: 3.25rem;
+	font-size: 2.25rem;
+	line-height: 1.2;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+@media (min-width: 640px) {
+	.overview-title :deep(input) {
+		min-height: 3.75rem;
+		font-size: 2.75rem;
+	}
+}
+</style>

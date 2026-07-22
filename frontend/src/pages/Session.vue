@@ -84,18 +84,15 @@
         </div>
 
         <div v-else class="space-y-6 text-center">
-          <p
-            v-if="breathPhase === 'prepare'"
-            class="text-xs font-normal tracking-wide text-ink-gray-4"
-          >
-            Inhale will start in
+          <p class="text-base font-medium tracking-wide text-ink-gray-8">
+            {{ breathPhaseLabel }}
           </p>
           <div
             class="mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-[#e4dfd7] bg-[#f0ede8]/80"
             :style="breathCircleStyle"
           >
             <span class="text-3xl font-light tabular-nums text-ink-gray-5">{{
-              phaseCountdown
+              phaseCountdown === '' ? '·' : phaseCountdown
             }}</span>
           </div>
           <p class="text-[11px] font-normal text-ink-gray-4/80">
@@ -637,6 +634,24 @@ const breathCircleStyle = computed(() => {
 		opacity: softOpacity,
 		transition: `transform ${Math.max(dur, 0.25)}s ease-in-out, opacity ${Math.max(dur, 0.25)}s ease-in-out`,
 	}
+})
+
+/** Plain cue so the counter alone is never the only instruction. */
+const breathPhaseLabel = computed(() => {
+	if (requiredBreathsDone.value) return 'Ready when you are'
+	// Soft gap after inhale/exhale: countdown blank, but cue already says Hold
+	if (
+		phaseCountdown.value === '' &&
+		(breathPhase.value === 'inhale' || breathPhase.value === 'exhale')
+	) {
+		return 'Hold'
+	}
+	if (breathPhase.value === 'prepare') return 'Inhale will start in'
+	if (breathPhase.value === 'inhale') return 'Inhale'
+	if (breathPhase.value === 'hold_in') return 'Hold'
+	if (breathPhase.value === 'exhale') return 'Exhale'
+	if (breathPhase.value === 'hold_out') return 'Hold'
+	return ''
 })
 
 const visibleNotes = computed(() => notes.filter((n) => n.state !== 'bubble'))

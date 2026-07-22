@@ -279,6 +279,7 @@ def main() -> int:
 		"Complete",
 		"Page pile",
 		"Inhale will start in",
+		"breathPhaseLabel",
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",

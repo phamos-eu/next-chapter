@@ -83,34 +83,33 @@
           </div>
         </div>
 
-        <div v-else class="space-y-5 text-center">
-          <template v-if="breathPhase === 'prepare'">
-            <p class="text-sm text-ink-gray-6">Inhale will start in</p>
-            <div class="text-4xl font-semibold text-ink-gray-9">{{ phaseCountdown }}</div>
-          </template>
-          <template v-else>
-            <p class="text-sm text-ink-gray-6">
-              {{ breathPhaseLabel }} · {{ phaseCountdown }}s
-            </p>
-            <div
-              class="mx-auto flex h-32 w-32 items-center justify-center rounded-full border border-[#d5cfc6] bg-[#efece6]"
-              :style="breathCircleStyle"
-            >
-              <span class="text-2xl font-medium text-ink-gray-8">{{ phaseCountdown }}</span>
-            </div>
-            <p class="text-xs text-ink-gray-4">
-              <span v-if="!requiredBreathsDone">
-                Breath {{ breathsCompleted + 1 }} of {{ requiredBreaths }}
-              </span>
-              <span v-else>Optional extras — enter when ready</span>
-            </p>
-            <Button
-              v-if="requiredBreathsDone"
-              variant="solid"
-              label="Enter Session"
-              @click="enterFocus"
-            />
-          </template>
+        <div v-else class="space-y-6 text-center">
+          <p
+            v-if="breathPhase === 'prepare'"
+            class="text-xs font-normal tracking-wide text-ink-gray-4"
+          >
+            Inhale will start in
+          </p>
+          <div
+            class="mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-[#e4dfd7] bg-[#f0ede8]/80"
+            :style="breathCircleStyle"
+          >
+            <span class="text-3xl font-light tabular-nums text-ink-gray-5">{{
+              phaseCountdown
+            }}</span>
+          </div>
+          <p class="text-[11px] font-normal text-ink-gray-4/80">
+            <span v-if="!requiredBreathsDone">
+              Breath {{ breathsCompleted + 1 }} of {{ requiredBreaths }}
+            </span>
+            <span v-else>Whenever you’re ready</span>
+          </p>
+          <Button
+            v-if="requiredBreathsDone"
+            variant="subtle"
+            label="Enter Session"
+            @click="enterFocus"
+          />
         </div>
 
         <div v-if="step < 3" class="mt-6 flex items-center justify-between">
@@ -152,50 +151,72 @@
       <Button variant="solid" label="Complete" @click="openComplete" />
     </header>
 
-    <div class="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 gap-3 px-4 pb-8 pt-2">
-      <!-- Page pile peek -->
-      <button
-        v-if="pagePileOn && pageIndex > 0"
-        type="button"
-        class="hidden w-20 shrink-0 self-stretch overflow-hidden rounded-xl border border-[#ddd8d0] bg-[#f3f0eb] text-left opacity-70 shadow-sm transition hover:opacity-100 md:block"
-        @click="pageIndex -= 1"
-      >
-        <span class="block rotate-[-6deg] p-2 text-[10px] leading-snug text-ink-gray-5">
-          <span class="mb-1 block font-medium">p.{{ pageIndex }}</span>
-          {{ (pages[pageIndex - 1] || '').slice(0, 80) }}{{ (pages[pageIndex - 1] || '').length > 80 ? '…' : '' }}
-        </span>
-      </button>
+    <div
+      class="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 gap-3 px-4 pb-8 pt-2"
+      @mousemove="onFocusPointer"
+    >
+      <!-- Writing surface + page stack -->
+      <div class="relative min-h-0 min-w-0 flex-1 overflow-visible">
+        <!-- Previous sheet peek (under stack) -->
+        <button
+          v-if="pagePileOn && pageIndex > 0"
+          type="button"
+          class="absolute inset-2 z-0 rounded-2xl border border-[#ddd8d0] bg-[#f0ebe4] shadow-sm transition hover:brightness-[0.98]"
+          :style="{ transform: 'translate(-14px, 12px) rotate(-1.2deg)' }"
+          aria-label="Previous page"
+          @click="goPrevPage"
+        >
+          <span
+            class="pointer-events-none block h-full overflow-hidden p-5 text-left text-xs leading-relaxed text-ink-gray-4 opacity-60"
+            :style="{ fontSize: `${Math.max(12, focusFontSize - 4)}px` }"
+          >
+            {{ peekText(pages[pageIndex - 1]) }}
+          </span>
+        </button>
 
-      <div
-        class="flex min-h-0 min-w-0 flex-1 flex-col rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]"
-      >
-        <textarea
-          ref="focusInput"
-          v-model="activePageText"
-          class="min-h-0 flex-1 resize-none border-0 bg-transparent leading-relaxed text-ink-gray-9 outline-none"
-          :style="{ fontSize: `${focusFontSize}px` }"
-          placeholder="Write. Nothing else is here."
-          @input="onFocusInput"
-        />
-        <div v-if="pagePileOn" class="mt-2 flex items-center justify-between text-xs text-ink-gray-5">
-          <button type="button" class="underline" :disabled="pageIndex <= 0" @click="pageIndex -= 1">
-            Prev page
-          </button>
-          <span>Page {{ pageIndex + 1 }} / {{ pages.length }}</span>
-          <button type="button" class="underline" @click="ensureNextPage">Next page</button>
+        <!-- Current page (top of stack) -->
+        <div
+          class="relative z-10 flex h-full min-h-0 flex-col rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-transform duration-300"
+          :class="pagePileOn && pageIndex > 0 ? 'ml-3 mt-2' : ''"
+        >
+          <textarea
+            ref="focusInput"
+            v-model="activePageText"
+            class="min-h-0 flex-1 resize-none border-0 bg-transparent leading-relaxed text-ink-gray-9 outline-none"
+            :style="{ fontSize: `${focusFontSize}px` }"
+            placeholder="Write. Nothing else is here."
+            @input="onFocusInput"
+          />
         </div>
+
+        <!-- Next sheet peek — thin edge only (does not cover writing) -->
+        <button
+          v-if="pagePileOn && pageIndex < pages.length - 1"
+          type="button"
+          class="absolute -right-1 top-6 z-20 h-[70%] w-9 overflow-hidden rounded-r-2xl border border-[#ddd8d0] bg-[#faf8f5] shadow-md transition hover:brightness-[1.02]"
+          :style="{ transform: 'translateX(6px) rotate(1.5deg)' }"
+          aria-label="Next page"
+          @click="goNextPage"
+        >
+          <span
+            class="pointer-events-none block h-full overflow-hidden p-2 text-[10px] leading-snug text-ink-gray-4 opacity-50"
+          >
+            {{ peekText(pages[pageIndex + 1]) }}
+          </span>
+        </button>
       </div>
 
+      <!-- Capture band: notes list + hover to spawn draft at cursor -->
       <aside
-        class="relative w-44 shrink-0"
-        @mouseenter="railHover = true"
-        @mouseleave="onRailLeave"
+        class="relative w-40 shrink-0"
+        @mouseenter="onCaptureEnter"
+        @mouseleave="onCaptureLeave"
       >
         <div
-          v-if="showCaptureHint"
-          class="mb-2 rounded-lg bg-ink-gray-9/75 px-2 py-1.5 text-[11px] text-surface-white"
+          v-if="showCaptureHint && !captureZoneActive"
+          class="mb-2 rounded-lg bg-ink-gray-9/60 px-2 py-1.5 text-[11px] text-surface-white"
         >
-          Hover to capture a side idea.
+          Hover here to capture a side idea.
         </div>
         <div class="flex max-h-full flex-col gap-2 overflow-y-auto pb-16">
           <div
@@ -213,20 +234,28 @@
               @focus="reviveNote(note)"
             />
           </div>
-          <div
-            v-if="railHover || showCaptureHint"
-            class="rounded-xl border border-dashed border-[#cfc9c0] bg-[#f3efe8]/80 p-2"
-          >
-            <textarea
-              v-model="draftNote"
-              :rows="draftRows"
-              class="w-full resize-none border-0 bg-transparent text-xs outline-none"
-              placeholder="New idea…"
-              @input="onDraftInput"
-            />
-          </div>
         </div>
       </aside>
+    </div>
+
+    <!-- Floating draft at cursor -->
+    <div
+      v-if="showDraftComposer"
+      class="pointer-events-auto fixed z-[25] w-52 rounded-xl border border-dashed border-[#cfc9c0] bg-[#f3efe8]/95 p-2 shadow-sm"
+      :style="draftComposerStyle"
+      @mousemove.stop="onDraftPointer"
+      @mouseenter="captureZoneActive = true"
+      @mouseleave="onDraftComposerLeave"
+    >
+      <textarea
+        ref="draftInput"
+        v-model="draftNote"
+        :rows="draftRows"
+        class="w-full resize-none border-0 bg-transparent text-xs outline-none"
+        placeholder="New idea…"
+        @input="onDraftInput"
+        @focus="draftPinned = true"
+      />
     </div>
 
     <div class="pointer-events-none absolute bottom-4 right-4 z-20 flex max-w-xs flex-wrap justify-end gap-2">
@@ -443,12 +472,18 @@ const scheduleSlots = reactive(['', '', ''])
 const priorFocusNote = ref('')
 const priorFocusNoteDraft = ref('')
 const focusNoteAction = ref('kept')
-const railHover = ref(false)
+const captureZoneActive = ref(false)
 const draftNote = ref('')
+const draftPinned = ref(false)
+const pointerX = ref(0)
+const pointerY = ref(0)
+const draftX = ref(0)
+const draftY = ref(0)
 const notes = reactive([])
 const showCaptureHint = ref(false)
 const captureDialog = ref(null)
 const focusInput = ref(null)
+const draftInput = ref(null)
 let breathTimer = null
 let countdownTimer = null
 let draftTimer = null
@@ -481,7 +516,7 @@ const steps = [
 	{ title: 'Clear the runway', help: 'Remove distraction triggers — and revisit last focus if any.' },
 	{ title: 'Body reset', help: 'Small rituals that help your nervous system settle.' },
 	{ title: 'Set the aim', help: 'More, similar, or less than last time — no numbers.' },
-	{ title: 'Arrive', help: 'Prepare, then breathe with live countdowns.' },
+	{ title: 'Arrive', help: 'A quiet breath — then write.' },
 ]
 const currentStep = computed(() => steps[step.value])
 const aimOptions = [
@@ -521,35 +556,45 @@ const progressBarStyle = computed(() => {
 	return { width: `${r * 100}%`, opacity: r === 0 ? 0 : Math.max(0.15, r) }
 })
 
-const breathPhaseLabel = computed(() => {
-	const map = {
-		prepare: 'Prepare',
-		inhale: 'Inhale',
-		hold_in: 'Hold',
-		exhale: 'Exhale',
-		hold_out: 'Hold',
-	}
-	return map[breathPhase.value] || ''
-})
 const breathCircleStyle = computed(() => {
 	const dur =
-		breathPhase.value === 'inhale'
-			? inhaleSeconds.value
-			: breathPhase.value === 'hold_in'
-				? holdInSeconds.value
-				: breathPhase.value === 'exhale'
-					? exhaleSeconds.value
-					: holdOutSeconds.value
+		breathPhase.value === 'prepare'
+			? prepareSeconds.value
+			: breathPhase.value === 'inhale'
+				? inhaleSeconds.value
+				: breathPhase.value === 'hold_in'
+					? holdInSeconds.value
+					: breathPhase.value === 'exhale'
+						? exhaleSeconds.value
+						: holdOutSeconds.value
+	const softOpacity =
+		breathPhase.value === 'hold_in' || breathPhase.value === 'hold_out'
+			? 0.55
+			: breathPhase.value === 'prepare'
+				? 0.75
+				: breathOpacity.value
 	return {
 		transform: `scale(${breathScale.value})`,
-		opacity: breathOpacity.value,
-		transition: `transform ${Math.max(dur, 0.2)}s linear, opacity ${Math.max(dur, 0.2)}s linear`,
+		opacity: softOpacity,
+		transition: `transform ${Math.max(dur, 0.25)}s ease-in-out, opacity ${Math.max(dur, 0.25)}s ease-in-out`,
 	}
 })
 
 const visibleNotes = computed(() => notes.filter((n) => n.state !== 'bubble'))
 const bubbledNotes = computed(() => notes.filter((n) => n.state === 'bubble'))
 const draftRows = computed(() => Math.min(8, Math.max(3, draftNote.value.split('\n').length)))
+const showDraftComposer = computed(
+	() =>
+		phase.value === 'focus' &&
+		(captureZoneActive.value || draftPinned.value || !!draftNote.value.trim()),
+)
+const draftComposerStyle = computed(() => {
+	const w = 208
+	const h = 40 + draftRows.value * 16
+	const x = clamp(draftX.value, 12, (typeof window !== 'undefined' ? window.innerWidth : 800) - w - 12)
+	const y = clamp(draftY.value, 12, (typeof window !== 'undefined' ? window.innerHeight : 600) - h - 12)
+	return { left: `${x}px`, top: `${y}px` }
+})
 const summaryMessage = computed(() => {
 	const g = wordGoal.value
 	const w = sessionWords.value
@@ -672,6 +717,22 @@ function splitPages(text) {
 	return out.length ? out : ['']
 }
 
+function peekText(text) {
+	const t = String(text || '').replace(/\s+/g, ' ').trim()
+	if (!t) return ''
+	return t.length > 160 ? `${t.slice(0, 157)}…` : t
+}
+
+function goPrevPage() {
+	if (pageIndex.value > 0) pageIndex.value -= 1
+	nextTick(() => focusInput.value?.focus())
+}
+
+function goNextPage() {
+	if (pageIndex.value < pages.value.length - 1) pageIndex.value += 1
+	nextTick(() => focusInput.value?.focus())
+}
+
 function onFocusInput() {
 	if (!pagePileOn.value) return
 	const w = countWords(activePageText.value)
@@ -681,9 +742,53 @@ function onFocusInput() {
 	}
 }
 
-function ensureNextPage() {
-	if (pageIndex.value >= pages.value.length - 1) pages.value.push('')
-	pageIndex.value += 1
+function placeDraftAtPointer(clientX, clientY) {
+	pointerX.value = clientX
+	pointerY.value = clientY
+	if (!draftPinned.value && !draftNote.value) {
+		draftX.value = clientX + 8
+		draftY.value = clientY + 8
+	}
+}
+
+function onFocusPointer(e) {
+	if (draftPinned.value || draftNote.value) return
+	// Right-side band (~last 200px) also updates position while moving toward capture
+	const fromRight = (typeof window !== 'undefined' ? window.innerWidth : 0) - e.clientX
+	if (fromRight < 220 || captureZoneActive.value) {
+		placeDraftAtPointer(e.clientX, e.clientY)
+	}
+}
+
+function onDraftPointer(e) {
+	if (draftPinned.value || draftNote.value) return
+	placeDraftAtPointer(e.clientX, e.clientY)
+}
+
+function onCaptureEnter(e) {
+	captureZoneActive.value = true
+	placeDraftAtPointer(e.clientX, e.clientY)
+	nextTick(() => draftInput.value?.focus())
+}
+
+function onCaptureLeave() {
+	// Delay so the pointer can enter the floating draft without dismissing it
+	setTimeout(() => {
+		if (draftNote.value.trim() || draftPinned.value) return
+		if (document.activeElement === draftInput.value) return
+		captureZoneActive.value = false
+		notes.forEach((n) => {
+			n.focused = false
+			if (n.text.trim() && n.state === 'solid') scheduleNoteFade(n)
+		})
+	}, 160)
+}
+
+function onDraftComposerLeave() {
+	if (draftNote.value.trim()) return
+	if (document.activeElement === draftInput.value) return
+	draftPinned.value = false
+	captureZoneActive.value = false
 }
 
 function openComplete() {
@@ -850,6 +955,7 @@ function onNoteInput(note) {
 	if (note.text.split('\n').length >= 3) captureDialog.value = note
 }
 function onDraftInput() {
+	draftPinned.value = true
 	clearTimeout(draftTimer)
 	draftTimer = setTimeout(async () => {
 		const text = draftNote.value.trim()
@@ -866,6 +972,8 @@ function onDraftInput() {
 		})
 		notes.push(note)
 		draftNote.value = ''
+		draftPinned.value = false
+		captureZoneActive.value = false
 		try {
 			const saved = await captureSideIdea({ parent: chapter.value.name, text })
 			note.chapterName = saved.name
@@ -878,17 +986,10 @@ function onDraftInput() {
 		if (seen >= 5) showCaptureHint.value = false
 	}, 1500)
 }
-function onRailLeave() {
-	railHover.value = false
-	notes.forEach((n) => {
-		n.focused = false
-		if (n.text.trim() && n.state === 'solid') scheduleNoteFade(n)
-	})
-}
 function restoreBubble(note) {
 	note.state = 'solid'
 	note.focused = true
-	railHover.value = true
+	captureZoneActive.value = true
 }
 function onCaptureDialogInput() {
 	if (captureDialog.value) onNoteInput(captureDialog.value)

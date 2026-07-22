@@ -18,9 +18,14 @@ from frappe.utils import (
 from next_chapter.next_chapter.doctype.implementation_story.implementation_story import (
 	get_active_story_name,
 )
+from next_chapter.api.session import apply_feedback_to_prefs, count_words
 from next_chapter.next_chapter.doctype.nextchapter_settings.nextchapter_settings import (
+	get_min_words_for_stage,
 	get_settings_dict,
 	get_wip_limit,
+)
+from next_chapter.next_chapter.doctype.nextchapter_user_preference.nextchapter_user_preference import (
+	get_user_prefs,
 )
 
 STAGES = [
@@ -144,11 +149,12 @@ def save_chapter(
 
 @frappe.whitelist()
 def set_stage(name: str, writing_stage: str):
-	"""Move a chapter to a new stage, enforcing WIP limits."""
+	"""Move a chapter to a new stage, enforcing WIP limits and word gates."""
 	doc = frappe.get_doc("Implementation Chapter", name)
 	if writing_stage not in ALLOWED_STAGES:
 		frappe.throw(_("Invalid writing stage."), frappe.ValidationError)
 	if writing_stage != doc.writing_stage:
+		_assert_word_gate(doc, writing_stage)
 		_assert_stage_allowed(writing_stage, exclude_name=doc.name)
 		doc.writing_stage = writing_stage
 		doc.save()
@@ -169,6 +175,32 @@ def _assert_stage_allowed(stage: str, exclude_name: str | None = None):
 		frappe.throw(
 			_("The {0} column is full ({1}/{1}). Finish or move something else first.").format(
 				stage, limit
+			),
+			frappe.ValidationError,
+		)
+
+
+def _assert_word_gate(doc, target_stage: str):
+	settings = get_settings_dict()
+	if settings.get("in_development"):
+		return
+	# Only gate forward moves in the funnel
+	order = STAGES
+	try:
+		cur_i = order.index(doc.writing_stage)
+		new_i = order.index(target_stage)
+	except ValueError:
+		return
+	if new_i <= cur_i:
+		return
+	min_words = get_min_words_for_stage(target_stage)
+	if min_words <= 0:
+		return
+	words = count_words(doc.content or doc.summary)
+	if words < min_words:
+		frappe.throw(
+			_("Need at least {0} words to move to stage {1} (currently {2}).").format(
+				min_words, target_stage, words
 			),
 			frappe.ValidationError,
 		)
@@ -291,25 +323,99 @@ def complete_writing_session(
 	word_goal: int | None = None,
 	content: str | None = None,
 	summary: str | None = None,
+	started_on: str | None = None,
+	aim_choice: str | None = None,
+	felt_productive: str | None = None,
+	aim_adjust: str | None = None,
+	distraction_level: str | None = None,
+	fade_adjust: str | None = None,
+	start_felt_long: str | None = None,
+	next_focus_note: str | None = None,
+	prior_focus_note_action: str | None = None,
+	was_scheduled: int | None = None,
+	schedule_slots: str | None = None,
 ):
-	"""Persist focus-session results and optionally save written text."""
+	"""Persist focus-session results, Writing Session log, and optional schedules."""
 	if not name:
 		frappe.throw(_("Chapter name is required."), frappe.ValidationError)
 
 	doc = frappe.get_doc("Implementation Chapter", name)
 	words = max(int(words_written or 0), 0)
+	goal = max(int(word_goal or 0), 0)
 	doc.last_session_words = words
 
 	if content is not None:
+		plain_words = count_words(content)
+		max_words = int(get_settings_dict().get("max_words") or 0)
+		if max_words and plain_words > max_words and not get_settings_dict().get("in_development"):
+			frappe.throw(
+				_("This idea has reached the maximum of {0} words.").format(max_words),
+				frappe.ValidationError,
+			)
 		doc.content = frappe.utils.sanitize_html(content or "")
 	if summary is not None:
 		doc.summary = summary
 
+	# Optional: set next_write_on from first upcoming slot
+	slots = []
+	if schedule_slots:
+		import json
+
+		try:
+			slots = json.loads(schedule_slots) if isinstance(schedule_slots, str) else schedule_slots
+		except Exception:
+			slots = []
+	if slots:
+		first = slots[0]
+		if first:
+			doc.next_write_on = get_datetime(first)
+
 	doc.save()
+
+	ended = now_datetime()
+	started = get_datetime(started_on) if started_on else ended
+	duration = max((ended - started).total_seconds() / 60.0, 0)
+
+	session = frappe.get_doc(
+		{
+			"doctype": "Writing Session",
+			"chapter": doc.name,
+			"user": frappe.session.user,
+			"started_on": started,
+			"ended_on": ended,
+			"duration_mins": duration,
+			"words_planned": goal,
+			"words_written": words,
+			"aim_choice": aim_choice or "",
+			"felt_productive": felt_productive or "",
+			"aim_adjust": aim_adjust or "",
+			"distraction_level": distraction_level or "",
+			"fade_adjust": fade_adjust or "",
+			"start_felt_long": start_felt_long or "",
+			"next_focus_note": next_focus_note or "",
+			"prior_focus_note_action": prior_focus_note_action or "",
+			"was_scheduled": 1 if was_scheduled else 0,
+		}
+	)
+	session.insert(ignore_permissions=True)
+
+	apply_feedback_to_prefs(
+		{
+			"fade_adjust": fade_adjust,
+			"aim_adjust": aim_adjust,
+			"start_felt_long": start_felt_long,
+			"next_focus_note": next_focus_note,
+		}
+	)
+
+	# Additional schedule slots beyond the first: store as next_write_on only for first;
+	# extras could be future work — for now we keep first on chapter.
 	return {
 		"chapter": _serialize(doc),
+		"session": session.name,
 		"words_written": words,
-		"word_goal": max(int(word_goal or 0), 0),
+		"word_goal": goal,
+		"prefs": get_user_prefs(),
 	}
 
 

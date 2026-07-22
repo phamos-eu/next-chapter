@@ -11,15 +11,27 @@
   "column_break_wip",
   "wip_3",
   "wip_1",
+  "gates_section",
+  "min_words_9",
+  "min_words_7",
+  "min_words_5",
+  "min_words_3",
+  "min_words_1",
+  "max_words",
   "session_section",
   "default_session_mins",
   "reminder_mins",
   "focus_font_size",
+  "edit_idle_secs",
+  "page_words",
+  "in_development",
   "ritual_section",
   "breath_count",
+  "breath_prepare_seconds",
   "inhale_seconds",
   "hold_seconds",
   "exhale_seconds",
+  "hold_after_exhale_seconds",
   "capture_section",
   "fade_idle_secs",
   "fade_duration_secs",
@@ -40,7 +52,7 @@
   },
   {
    "default": "9",
-   "description": "0 means unlimited. Stage ∞ and Done are always unlimited.",
+   "description": "0 means unlimited. Stage \u221e and Done are always unlimited.",
    "fieldname": "wip_9",
    "fieldtype": "Int",
    "label": "Stage 9 Limit",
@@ -133,10 +145,10 @@
   },
   {
    "default": "2",
-   "description": "Hold between inhale and exhale; circle fades during hold.",
+   "description": "Hold after inhale; circle fades.",
    "fieldname": "hold_seconds",
    "fieldtype": "Int",
-   "label": "Hold Seconds",
+   "label": "Hold After Inhale (secs)",
    "non_negative": 1,
    "reqd": 1
   },
@@ -227,11 +239,98 @@
    "fieldtype": "Table",
    "label": "Body Checklist",
    "options": "NextChapter Ritual Item"
+  },
+  {
+   "fieldname": "edit_idle_secs",
+   "fieldtype": "Int",
+   "label": "Edit Dialog Idle (secs)",
+   "default": "45",
+   "non_negative": 1,
+   "description": "Default inactivity before overview Edit dialog closes. Users can override."
+  },
+  {
+   "fieldname": "page_words",
+   "fieldtype": "Int",
+   "label": "Page Pile Words",
+   "default": "280",
+   "non_negative": 1,
+   "description": "Soft word threshold per page when page-pile mode is on."
+  },
+  {
+   "fieldname": "in_development",
+   "fieldtype": "Check",
+   "label": "In Development",
+   "default": "0",
+   "description": "When enabled, ritual and stage word gates can be skipped."
+  },
+  {
+   "fieldname": "breath_prepare_seconds",
+   "fieldtype": "Int",
+   "label": "Breath Prepare (secs)",
+   "default": "3",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "hold_after_exhale_seconds",
+   "fieldtype": "Int",
+   "label": "Hold After Exhale (secs)",
+   "default": "2",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "gates_section",
+   "fieldtype": "Section Break",
+   "label": "Stage Word Gates"
+  },
+  {
+   "fieldname": "min_words_9",
+   "fieldtype": "Int",
+   "label": "Min Words for Stage 9",
+   "default": "50",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "min_words_7",
+   "fieldtype": "Int",
+   "label": "Min Words for Stage 7",
+   "default": "120",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "min_words_5",
+   "fieldtype": "Int",
+   "label": "Min Words for Stage 5",
+   "default": "250",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "min_words_3",
+   "fieldtype": "Int",
+   "label": "Min Words for Stage 3",
+   "default": "400",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "min_words_1",
+   "fieldtype": "Int",
+   "label": "Min Words for Stage 1",
+   "default": "600",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "max_words",
+   "fieldtype": "Int",
+   "label": "Max Words (hard cap)",
+   "default": "5000",
+   "non_negative": 1,
+   "description": "0 = unlimited. Blocks content growth beyond this count."
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-07-22 15:45:00.000000",
+ "modified": "2026-07-22 17:10:00.000000",
  "modified_by": "Administrator",
  "module": "Next Chapter",
  "name": "NextChapter Settings",

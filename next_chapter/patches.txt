@@ -4,3 +4,4 @@
 
 [post_model_sync]
 next_chapter.patches.v0_0_1.migrate_growth_funnel_stages
+next_chapter.patches.v0_0_1.merge_summary_into_content

@@ -111,7 +111,7 @@
         <p class="mt-2 text-sm text-ink-gray-5">
           When: {{ formatDateTime(dialogChapter?.next_write_on) }}
         </p>
-        <p class="text-sm text-ink-gray-5">Status: {{ dialogChapter?.writing_stage }}</p>
+        <p class="text-sm text-ink-gray-5">Stage: {{ dialogChapter?.writing_stage }}</p>
       </template>
       <template #actions>
         <Button
@@ -119,7 +119,13 @@
           label="Add to calendar (.ics)"
           @click="downloadIcs(dialogChapter.name)"
         />
-        <Button variant="solid" label="Open idea" @click="goWrite" />
+        <Button variant="subtle" label="Open idea" @click="goWrite" />
+        <Button
+          v-if="dialogChapter?.writing_stage !== 'Done'"
+          variant="solid"
+          label="Start writing session"
+          @click="goSession"
+        />
       </template>
     </Dialog>
   </AppShell>
@@ -218,5 +224,10 @@ function openChapter(chapter) {
 function goWrite() {
 	dialogOpen.value = false
 	router.push(`/ideas/${dialogChapter.value.name}`)
+}
+
+function goSession() {
+	dialogOpen.value = false
+	router.push(`/session/${dialogChapter.value.name}`)
 }
 </script>

@@ -1,21 +1,23 @@
 frappe.provide("next_chapter");
 
 next_chapter.STAGES = [
-	"Idea",
-	"Outline",
-	"Draft",
-	"Ready to write",
-	"Writing",
+	"∞",
+	"9",
+	"7",
+	"5",
+	"3",
+	"1",
 	"Done",
 ];
 
 next_chapter.STAGE_COLORS = {
-	Idea: "orange",
-	Outline: "blue",
-	Draft: "cyan",
-	"Ready to write": "purple",
-	Writing: "green",
-	Done: "gray",
+	"∞": "gray",
+	"9": "blue",
+	"7": "cyan",
+	"5": "orange",
+	"3": "purple",
+	"1": "green",
+	Done: "green",
 };
 
 next_chapter.format_datetime = function (value) {

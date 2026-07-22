@@ -59,24 +59,6 @@
             </router-link>
           </div>
         </div>
-
-        <div>
-          <div class="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-ink-gray-4">
-            Mocks
-          </div>
-          <div class="flex flex-col gap-0.5">
-            <router-link
-              v-for="item in mockNav"
-              :key="item.to"
-              :to="item.to"
-              class="group flex items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-7 hover:bg-surface-gray-2"
-              active-class="!bg-surface-white !text-ink-gray-9 font-medium shadow-sm"
-            >
-              <FeatherIcon :name="item.icon" class="h-4 w-4 shrink-0 text-ink-gray-5 group-[.router-link-active]:text-ink-gray-9" />
-              <span class="truncate">{{ item.label }}</span>
-            </router-link>
-          </div>
-        </div>
       </nav>
 
       <div class="space-y-0.5 border-t border-outline-gray-1 p-2">
@@ -137,13 +119,8 @@ const primaryNav = computed(() => [
 ])
 
 const secondaryNav = [
-	{ to: '/board', label: 'Board', icon: 'columns' },
+	{ to: '/growth', label: 'Growth Funnel', icon: 'trending-up' },
 	{ to: '/schedule', label: 'Schedule', icon: 'calendar' },
-]
-
-const mockNav = [
-	{ to: '/mock/growth', label: 'Growth funnel', icon: 'trending-up' },
-	{ to: '/mock/session', label: 'Session ritual', icon: 'pen-tool' },
 ]
 
 async function ensureBoot() {

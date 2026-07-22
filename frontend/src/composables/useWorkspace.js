@@ -3,22 +3,26 @@ import { call, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
 
 export const STAGE_COLORS = {
-	Idea: 'gray',
-	Outline: 'blue',
-	Draft: 'orange',
-	'Ready to write': 'purple',
-	Writing: 'green',
+	'∞': 'gray',
+	'9': 'blue',
+	'7': 'cyan',
+	'5': 'orange',
+	'3': 'purple',
+	'1': 'green',
 	Done: 'green',
 }
 
-export const STAGES = [
-	'Idea',
-	'Outline',
-	'Draft',
-	'Ready to write',
-	'Writing',
-	'Done',
-]
+export const STAGE_META = {
+	'∞': { metaphor: 'Seed', job: 'Capture anything; no commitment' },
+	'9': { metaphor: 'Sprout', job: 'First filter — keep what still interests you' },
+	'7': { metaphor: 'Seedling', job: 'Clarify the point in a few sentences' },
+	'5': { metaphor: 'Young plant', job: 'Structure emerging' },
+	'3': { metaphor: 'Growing', job: 'Serious candidates' },
+	'1': { metaphor: 'Mature focus', job: 'The one you write deeply' },
+	Done: { metaphor: 'Harvest', job: 'Finished chapter' },
+}
+
+export const STAGES = ['∞', '9', '7', '5', '3', '1', 'Done']
 
 const state = reactive({
 	loaded: false,
@@ -182,6 +186,14 @@ export function useWorkspace() {
 		return chapter
 	}
 
+	async function completeWritingSession(payload) {
+		const result = await call('next_chapter.api.chapter.complete_writing_session', payload)
+		if (result?.chapter) {
+			replaceChapter(result.chapter)
+		}
+		return result
+	}
+
 	function downloadIcs(name) {
 		window.location.href = `/api/method/next_chapter.api.chapter.download_ics?name=${encodeURIComponent(name)}`
 	}
@@ -203,6 +215,15 @@ export function useWorkspace() {
 			.trim()
 	}
 
+	function countWords(text) {
+		const t = String(text || '')
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim()
+		if (!t) return 0
+		return t.split(/\s+/).length
+	}
+
 	return {
 		state,
 		activeChapter,
@@ -215,10 +236,12 @@ export function useWorkspace() {
 		hideChapter,
 		unhideChapter,
 		setSession,
+		completeWritingSession,
 		downloadIcs,
 		formatDateTime,
 		formatTime,
 		plainSummary,
+		countWords,
 		errorMessage,
 	}
 }

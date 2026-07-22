@@ -15,6 +15,7 @@
   "next_write_on",
   "write_duration_mins",
   "summary",
+  "last_session_words",
   "content_section",
   "content"
  ],
@@ -45,13 +46,13 @@
    "reqd": 1
   },
   {
-   "default": "Idea",
+   "default": "∞",
    "fieldname": "writing_stage",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Writing Stage",
-   "options": "Idea\nOutline\nDraft\nReady to write\nWriting\nDone",
+   "options": "∞\n9\n7\n5\n3\n1\nDone",
    "reqd": 1
   },
   {
@@ -83,6 +84,14 @@
    "fieldname": "summary",
    "fieldtype": "Small Text",
    "label": "Summary"
+  },
+  {
+   "default": "0",
+   "description": "Words written in the most recent focus session (for goal feedback).",
+   "fieldname": "last_session_words",
+   "fieldtype": "Int",
+   "label": "Last Session Words",
+   "non_negative": 1
   },
   {
    "fieldname": "content_section",

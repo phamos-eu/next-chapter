@@ -27,9 +27,13 @@ const routes = [
 		component: () => import('@/pages/Home.vue'),
 	},
 	{
+		path: '/growth',
+		name: 'GrowthFunnel',
+		component: () => import('@/pages/GrowthFunnel.vue'),
+	},
+	{
 		path: '/board',
-		name: 'Board',
-		component: () => import('@/pages/Board.vue'),
+		redirect: '/growth',
 	},
 	{
 		path: '/schedule',
@@ -37,19 +41,9 @@ const routes = [
 		component: () => import('@/pages/Schedule.vue'),
 	},
 	{
-		path: '/mock/growth',
-		name: 'MockGrowth',
-		component: () => import('@/pages/mock/MockGrowth.vue'),
-	},
-	{
-		path: '/mock/write/:stage',
-		name: 'MockWrite',
-		component: () => import('@/pages/mock/MockWrite.vue'),
-	},
-	{
-		path: '/mock/session',
-		name: 'MockSession',
-		component: () => import('@/pages/mock/MockSession.vue'),
+		path: '/session/:name',
+		name: 'Session',
+		component: () => import('@/pages/Session.vue'),
 	},
 ]
 

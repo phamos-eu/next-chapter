@@ -24,11 +24,12 @@ from next_chapter.next_chapter.doctype.nextchapter_settings.nextchapter_settings
 )
 
 STAGES = [
-	"Idea",
-	"Outline",
-	"Draft",
-	"Ready to write",
-	"Writing",
+	"∞",
+	"9",
+	"7",
+	"5",
+	"3",
+	"1",
 	"Done",
 ]
 ALLOWED_STAGES = set(STAGES)
@@ -43,6 +44,7 @@ CHAPTER_FIELDS = [
 	"hidden_until",
 	"next_write_on",
 	"write_duration_mins",
+	"last_session_words",
 	"modified",
 ]
 
@@ -51,6 +53,7 @@ def _serialize(doc_or_row) -> dict:
 	data = {field: doc_or_row.get(field) for field in CHAPTER_FIELDS}
 	data["summary"] = data.get("summary") or ""
 	data["content"] = data.get("content") or ""
+	data["last_session_words"] = int(data.get("last_session_words") or 0)
 	hidden_until = data.get("hidden_until")
 	if hidden_until:
 		data["is_hidden"] = get_datetime(hidden_until) > now_datetime()
@@ -85,7 +88,7 @@ def create_chapter(title: str | None = None, story: str | None = None):
 			"story": story_name,
 			"title": title,
 			"sequence": sequence,
-			"writing_stage": "Idea",
+			"writing_stage": "∞",
 			"summary": "",
 			"content": "",
 			"write_duration_mins": settings.get("default_session_mins") or 60,
@@ -226,6 +229,35 @@ def clear_writing_session(name: str):
 	doc.next_write_on = None
 	doc.save()
 	return _serialize(doc)
+
+
+@frappe.whitelist()
+def complete_writing_session(
+	name: str,
+	words_written: int | None = None,
+	word_goal: int | None = None,
+	content: str | None = None,
+	summary: str | None = None,
+):
+	"""Persist focus-session results and optionally save written text."""
+	if not name:
+		frappe.throw(_("Chapter name is required."), frappe.ValidationError)
+
+	doc = frappe.get_doc("Implementation Chapter", name)
+	words = max(int(words_written or 0), 0)
+	doc.last_session_words = words
+
+	if content is not None:
+		doc.content = frappe.utils.sanitize_html(content or "")
+	if summary is not None:
+		doc.summary = summary
+
+	doc.save()
+	return {
+		"chapter": _serialize(doc),
+		"words_written": words,
+		"word_goal": max(int(word_goal or 0), 0),
+	}
 
 
 @frappe.whitelist()

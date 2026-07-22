@@ -60,6 +60,14 @@ const state = reactive({
 
 let bootstrapPromise = null
 
+function applyUiScale(scale) {
+	const pct = Math.max(90, Math.min(140, Number(scale) || 110))
+	if (typeof document !== 'undefined') {
+		document.documentElement.style.fontSize = `${(16 * pct) / 100}px`
+		document.documentElement.style.setProperty('--nc-ui-scale', String(pct / 100))
+	}
+}
+
 function applyBootstrap(data) {
 	state.needsSetup = Boolean(data.needs_setup)
 	state.story = data.story || null
@@ -71,6 +79,7 @@ function applyBootstrap(data) {
 	state.prefs = data.prefs || {}
 	state.loaded = true
 	state.error = ''
+	applyUiScale(state.prefs.ui_scale ?? 110)
 
 	if (state.active && !state.chapters.some((c) => c.name === state.active)) {
 		state.active = null
@@ -265,9 +274,11 @@ export function useWorkspace() {
 		if (result?.prefs) {
 			state.prefs = result.prefs
 			if (Array.isArray(result.chapters)) state.chapters = result.chapters
+			if (updates.ui_scale != null) applyUiScale(result.prefs.ui_scale)
 			return result.prefs
 		}
 		state.prefs = result || {}
+		if (updates.ui_scale != null) applyUiScale(state.prefs.ui_scale)
 		return result
 	}
 
@@ -326,6 +337,7 @@ export function useWorkspace() {
 		captureSideIdea,
 		fetchChapterStats,
 		savePrefs,
+		applyUiScale,
 		effectiveSetting,
 		downloadIcs,
 		formatDateTime,

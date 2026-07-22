@@ -270,6 +270,8 @@ def main() -> int:
 		"Inhale will start in",
 		"ideas_sort",
 		"ideas_visible_limit",
+		"ui_scale",
+		"applyUiScale",
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
 		"Could not open NextChapter",

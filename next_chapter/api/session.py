@@ -225,6 +225,7 @@ def save_prefs(**kwargs):
 		"last_next_focus_note",
 		"ideas_sort",
 		"ideas_visible_limit",
+		"ui_scale",
 	}
 	updates = {k: kwargs[k] for k in allowed if k in kwargs}
 	prefs = save_user_prefs(updates)

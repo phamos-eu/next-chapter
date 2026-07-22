@@ -12,6 +12,7 @@ DEFAULT_PREFS = {
 	"aim_bias": "keep",
 	"ideas_sort": "modified_desc",
 	"ideas_visible_limit": 20,
+	"ui_scale": 110,
 }
 
 IDEAS_SORT_OPTIONS = {
@@ -51,6 +52,8 @@ def get_user_prefs(user: str | None = None) -> dict:
 	limit = int(doc.ideas_visible_limit or DEFAULT_PREFS["ideas_visible_limit"])
 	if limit < 1:
 		limit = DEFAULT_PREFS["ideas_visible_limit"]
+	scale = int(doc.ui_scale or DEFAULT_PREFS["ui_scale"])
+	scale = max(90, min(140, scale))
 
 	return {
 		"name": doc.name,
@@ -64,6 +67,7 @@ def get_user_prefs(user: str | None = None) -> dict:
 		"last_next_focus_note": doc.last_next_focus_note or "",
 		"ideas_sort": sort,
 		"ideas_visible_limit": limit,
+		"ui_scale": scale,
 	}
 
 
@@ -81,6 +85,7 @@ def save_user_prefs(updates: dict, user: str | None = None) -> dict:
 		"last_next_focus_note",
 		"ideas_sort",
 		"ideas_visible_limit",
+		"ui_scale",
 	):
 		if key in updates and updates[key] is not None:
 			doc.set(key, updates[key])
@@ -88,5 +93,7 @@ def save_user_prefs(updates: dict, user: str | None = None) -> dict:
 		doc.ideas_sort = DEFAULT_PREFS["ideas_sort"]
 	if int(doc.ideas_visible_limit or 0) < 1:
 		doc.ideas_visible_limit = DEFAULT_PREFS["ideas_visible_limit"]
+	scale = int(doc.ui_scale or DEFAULT_PREFS["ui_scale"])
+	doc.ui_scale = max(90, min(140, scale))
 	doc.save(ignore_permissions=True)
 	return get_user_prefs(user)

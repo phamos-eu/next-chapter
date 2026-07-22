@@ -119,11 +119,17 @@ const { state, bootstrap } = useWorkspace()
 const storyName = computed(() => state.story?.company_name || '')
 
 const ideaCount = computed(
-	() => state.chapters.filter((c) => !c.is_hidden).length,
+	() =>
+		state.chapters.filter((c) => !c.is_hidden && c.writing_stage !== 'Done').length,
+)
+
+const historyCount = computed(
+	() => state.chapters.filter((c) => c.writing_stage === 'Done').length,
 )
 
 const primaryNav = computed(() => [
 	{ to: '/ideas', label: 'Ideas', icon: 'book-open', count: ideaCount.value },
+	{ to: '/history', label: 'History', icon: 'archive', count: historyCount.value },
 ])
 
 const secondaryNav = [

@@ -18,7 +18,8 @@
   "ideas_sort",
   "ideas_visible_limit",
   "appearance_section",
-  "ui_scale"
+  "ui_scale",
+  "last_breath_gap_jitter"
  ],
  "fields": [
   {
@@ -109,12 +110,18 @@
    "label": "Appearance"
   },
   {
-   "default": "110",
+   "default": "125",
    "description": "UI text scale percent (100 = browser default).",
    "fieldname": "ui_scale",
    "fieldtype": "Int",
    "label": "UI Scale (%)",
    "non_negative": 1
+  },
+  {
+   "description": "Breath phase-gap jitter used in the last session (kept different next time).",
+   "fieldname": "last_breath_gap_jitter",
+   "fieldtype": "Float",
+   "label": "Last Breath Gap Jitter"
   }
  ],
  "index_web_pages_for_search": 0,

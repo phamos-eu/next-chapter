@@ -12,7 +12,8 @@ DEFAULT_PREFS = {
 	"aim_bias": "keep",
 	"ideas_sort": "modified_desc",
 	"ideas_visible_limit": 20,
-	"ui_scale": 110,
+	"ui_scale": 125,
+	"last_breath_gap_jitter": None,
 }
 
 IDEAS_SORT_OPTIONS = {
@@ -39,7 +40,7 @@ def get_user_prefs(user: str | None = None) -> dict:
 			{
 				"doctype": "NextChapter User Preference",
 				"user": user,
-				**DEFAULT_PREFS,
+				**{k: v for k, v in DEFAULT_PREFS.items() if v is not None},
 			}
 		)
 		doc.insert(ignore_permissions=True)
@@ -54,6 +55,11 @@ def get_user_prefs(user: str | None = None) -> dict:
 		limit = DEFAULT_PREFS["ideas_visible_limit"]
 	scale = int(doc.ui_scale or DEFAULT_PREFS["ui_scale"])
 	scale = max(90, min(140, scale))
+	jitter = doc.last_breath_gap_jitter
+	if jitter is not None and jitter != "":
+		jitter = float(jitter)
+	else:
+		jitter = None
 
 	return {
 		"name": doc.name,
@@ -68,6 +74,7 @@ def get_user_prefs(user: str | None = None) -> dict:
 		"ideas_sort": sort,
 		"ideas_visible_limit": limit,
 		"ui_scale": scale,
+		"last_breath_gap_jitter": jitter,
 	}
 
 
@@ -86,6 +93,7 @@ def save_user_prefs(updates: dict, user: str | None = None) -> dict:
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",
+		"last_breath_gap_jitter",
 	):
 		if key in updates and updates[key] is not None:
 			doc.set(key, updates[key])

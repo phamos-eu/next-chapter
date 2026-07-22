@@ -319,20 +319,27 @@
                 ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
                 : 'border-[#ddd8d0] bg-[#faf8f5]'
             "
-            @click="feedback.felt_productive = opt.id"
+            @click="selectComplete('felt_productive', opt.id)"
           >
             {{ opt.label }}
           </button>
         </div>
 
         <div v-else-if="currentCompleteStep.id === 'aim'" class="mt-4 grid grid-cols-3 gap-2">
-          <Button
+          <button
             v-for="opt in ['increase', 'keep', 'decrease']"
             :key="opt"
-            :variant="feedback.aim_adjust === opt ? 'solid' : 'subtle'"
-            :label="opt"
-            @click="feedback.aim_adjust = opt"
-          />
+            type="button"
+            class="rounded-xl border px-3 py-2 text-sm capitalize"
+            :class="
+              feedback.aim_adjust === opt
+                ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
+                : 'border-[#ddd8d0] bg-[#faf8f5]'
+            "
+            @click="selectComplete('aim_adjust', opt)"
+          >
+            {{ opt }}
+          </button>
         </div>
 
         <div v-else-if="currentCompleteStep.id === 'distraction'" class="mt-4 space-y-3">
@@ -359,32 +366,71 @@
           <template v-if="capturedSideIdeas">
             <p class="text-xs text-ink-gray-5">Fade timing next time</p>
             <div class="grid grid-cols-3 gap-2">
-              <Button
+              <button
                 v-for="opt in ['increase', 'keep', 'decrease']"
                 :key="opt"
-                :variant="feedback.fade_adjust === opt ? 'solid' : 'subtle'"
-                :label="opt"
-                @click="feedback.fade_adjust = opt"
-              />
+                type="button"
+                class="rounded-xl border px-3 py-2 text-sm capitalize"
+                :class="
+                  feedback.fade_adjust === opt
+                    ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
+                    : 'border-[#ddd8d0] bg-[#faf8f5]'
+                "
+                @click="selectComplete('fade_adjust', opt)"
+              >
+                {{ opt }}
+              </button>
             </div>
           </template>
         </div>
 
-        <div v-else-if="currentCompleteStep.id === 'next_topic'" class="mt-4 text-left">
+        <div v-else-if="currentCompleteStep.id === 'next_topic'" class="mt-4 space-y-3 text-left">
           <FormControl
             v-model="feedback.next_focus_note"
             type="textarea"
             label="Next topic"
           />
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              class="rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-3 py-2 text-sm"
+              @click="advanceComplete()"
+            >
+              Skip for now
+            </button>
+            <button
+              type="button"
+              class="rounded-xl border border-ink-gray-9 bg-ink-gray-9 px-3 py-2 text-sm text-white"
+              @click="advanceComplete()"
+            >
+              Use this note
+            </button>
+          </div>
         </div>
 
-        <div v-else-if="currentCompleteStep.id === 'plan'" class="mt-4 text-left">
+        <div v-else-if="currentCompleteStep.id === 'plan'" class="mt-4 space-y-3 text-left">
           <SessionPlanCalendar
             :model-value="planSlotValues"
             :booked="planBookedSessions"
             :draft-label="chapter?.title || 'This idea'"
             @update:model-value="onPlanSlotsUpdate"
           />
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              class="rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-3 py-2 text-sm"
+              @click="skipPlanAndAdvance"
+            >
+              Skip planning
+            </button>
+            <button
+              type="button"
+              class="rounded-xl border border-ink-gray-9 bg-ink-gray-9 px-3 py-2 text-sm text-white"
+              @click="advanceComplete()"
+            >
+              Keep plan
+            </button>
+          </div>
         </div>
 
         <div v-else-if="currentCompleteStep.id === 'start_long'" class="mt-4 space-y-3">
@@ -403,26 +449,21 @@
                   ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
                   : 'border-[#ddd8d0] bg-[#faf8f5]'
               "
-              @click="feedback.start_felt_long = opt.id"
+              @click="selectComplete('start_felt_long', opt.id)"
             >
               {{ opt.label }}
             </button>
           </div>
         </div>
 
-        <div class="mt-5 flex justify-between">
+        <div class="mt-5 flex justify-start">
           <Button
             v-if="completeStep > 0"
             variant="subtle"
             label="Back"
-            @click="completeStep -= 1"
+            @click="backComplete"
           />
           <Button v-else variant="ghost" label="Resume" @click="completeOpen = false" />
-          <Button
-            variant="solid"
-            :label="completeStep >= activeCompleteSteps.length - 1 ? 'Complete' : 'Continue'"
-            @click="nextComplete"
-          />
         </div>
       </div>
     </div>
@@ -453,6 +494,7 @@ const {
 	effectiveSetting,
 	errorMessage,
 	scheduledChapters,
+	savePrefs,
 } = useWorkspace()
 
 const phase = ref('loading')
@@ -706,9 +748,24 @@ function stopBreath() {
 	countdownTimer = null
 }
 
+/** Base gap + per-session jitter (fixed for this session, ≠ last session). */
+const sessionGapJitter = ref(0)
 const phaseGapSeconds = computed(() =>
-	Math.max(0, Number(state.settings.breath_phase_gap_seconds) || 0.8),
+	Math.max(0.15, (Number(state.settings.breath_phase_gap_seconds) || 0.8) + sessionGapJitter.value),
 )
+
+function pickBreathGapJitter() {
+	const last = Number(state.prefs.last_breath_gap_jitter)
+	const lastOk = Number.isFinite(last)
+	let jitter = 0
+	for (let i = 0; i < 8; i += 1) {
+		// ±0.35s around the site default — enough to feel organic
+		jitter = Math.round((Math.random() * 0.7 - 0.35) * 100) / 100
+		if (!lastOk || Math.abs(jitter - last) >= 0.08) break
+	}
+	sessionGapJitter.value = jitter
+	savePrefs({ last_breath_gap_jitter: jitter }).catch(() => {})
+}
 
 function runCountdown(seconds, onDone) {
 	phaseCountdown.value = seconds
@@ -737,6 +794,7 @@ function afterPhaseGap(next) {
 
 function startBreathCycle() {
 	stopBreath()
+	pickBreathGapJitter()
 	breathsCompleted.value = 0
 	breathPhase.value = 'prepare'
 	breathScale.value = 1
@@ -900,6 +958,11 @@ function openComplete() {
 		finishSession({ quiet: true })
 		return
 	}
+	feedback.felt_productive = ''
+	feedback.aim_adjust = ''
+	feedback.distraction_level = ''
+	feedback.fade_adjust = ''
+	feedback.start_felt_long = ''
 	if (focusNoteAction.value === 'edited' && priorFocusNoteDraft.value) {
 		feedback.next_focus_note = priorFocusNoteDraft.value
 	} else if (priorFocusNote.value && !feedback.next_focus_note) {
@@ -924,19 +987,55 @@ function onDistraction(id) {
 	feedback.distraction_level = id
 	if (!capturedSideIdeas.value) {
 		feedback.fade_adjust = 'keep'
+		advanceComplete()
 		return
 	}
 	if (id === 'quite') feedback.fade_adjust = 'increase'
 	else if (id === 'focused') feedback.fade_adjust = 'decrease'
 	else feedback.fade_adjust = 'keep'
+	// Two choices on this step: wait until fade_adjust is also confirmed via its tiles
 }
 
-function nextComplete() {
+function selectComplete(field, value) {
+	feedback[field] = value
+	if (currentCompleteStep.value?.id === 'distraction' && capturedSideIdeas.value) {
+		if (feedback.distraction_level && feedback.fade_adjust) advanceComplete()
+		return
+	}
+	advanceComplete()
+}
+
+function skipPlanAndAdvance() {
+	scheduleSlots[0] = ''
+	scheduleSlots[1] = ''
+	scheduleSlots[2] = ''
+	advanceComplete()
+}
+
+function advanceComplete() {
 	if (completeStep.value < activeCompleteSteps.value.length - 1) {
 		completeStep.value += 1
 		return
 	}
 	finishSession()
+}
+
+function backComplete() {
+	if (completeStep.value <= 0) return
+	const previous = activeCompleteSteps.value[completeStep.value - 1]
+	completeStep.value -= 1
+	// Redo the last entry on the step we return to
+	clearCompleteEntry(previous?.id)
+}
+
+function clearCompleteEntry(stepId) {
+	if (stepId === 'feel') feedback.felt_productive = ''
+	if (stepId === 'aim') feedback.aim_adjust = ''
+	if (stepId === 'distraction') {
+		feedback.distraction_level = ''
+		feedback.fade_adjust = ''
+	}
+	if (stepId === 'start_long') feedback.start_felt_long = ''
 }
 
 function stepIncluded(id) {

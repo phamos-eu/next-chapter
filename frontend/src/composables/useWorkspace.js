@@ -40,6 +40,25 @@ export const PAGE_PILE_STAGES = Object.keys(STAGE_META).filter(
 
 export const STAGES = ['∞', '9', '7', '5', '3', '1', 'Done']
 
+/** Done ideas shown on Ideas / Growth Funnel before pointing to History. */
+export const DONE_PREVIEW_LIMIT = 10
+
+/** Stable keys for stats that can be highlighted on an idea overview. */
+export const HIGHLIGHTABLE_STATS = [
+	{ key: 'total_sessions', label: 'Sessions (total)', group: 'Consistency' },
+	{ key: 'avg_sessions_per_week', label: 'Avg / week', group: 'Consistency' },
+	{ key: 'best_quiet', label: 'Best / quiet week', group: 'Consistency' },
+	{ key: 'total_words', label: 'Words written (total)', group: 'Output' },
+	{ key: 'planned_vs_actual', label: 'Last planned → actual', group: 'Output' },
+	{ key: 'recent_sessions', label: 'Recent sessions', group: 'Output' },
+	{ key: 'total_focus_mins', label: 'Total focus (mins)', group: 'Time' },
+	{ key: 'avg_session_mins', label: 'Avg session', group: 'Time' },
+	{ key: 'longest_session_mins', label: 'Longest session', group: 'Time' },
+	{ key: 'scheduled_sessions', label: 'Scheduled sessions', group: 'Planning' },
+	{ key: 'focus_note_keep_rate', label: 'Focus-note keep rate', group: 'Planning' },
+	{ key: 'aim_mix', label: 'Aim mix (more/sim/less)', group: 'Planning' },
+]
+
 const state = reactive({
 	loaded: false,
 	loading: false,
@@ -61,7 +80,7 @@ const state = reactive({
 let bootstrapPromise = null
 
 function applyUiScale(scale) {
-	const pct = Math.max(90, Math.min(140, Number(scale) || 110))
+	const pct = Math.max(90, Math.min(140, Number(scale) || 125))
 	if (typeof document !== 'undefined') {
 		document.documentElement.style.fontSize = `${(16 * pct) / 100}px`
 		document.documentElement.style.setProperty('--nc-ui-scale', String(pct / 100))
@@ -79,7 +98,7 @@ function applyBootstrap(data) {
 	state.prefs = data.prefs || {}
 	state.loaded = true
 	state.error = ''
-	applyUiScale(state.prefs.ui_scale ?? 110)
+	applyUiScale(state.prefs.ui_scale ?? 125)
 
 	if (state.active && !state.chapters.some((c) => c.name === state.active)) {
 		state.active = null
@@ -111,6 +130,14 @@ export function useWorkspace() {
 		const list = state.chapters.filter((c) => {
 			const hidden = Boolean(c.is_hidden)
 			if (state.listMode === 'hidden' ? !hidden : hidden) return false
+			// Done ideas are harvested — keep them out of Active unless filtering by Done
+			if (
+				state.listMode === 'active' &&
+				c.writing_stage === 'Done' &&
+				state.stageFilter !== 'Done'
+			) {
+				return false
+			}
 			if (state.stageFilter !== 'All' && c.writing_stage !== state.stageFilter) {
 				return false
 			}
@@ -131,15 +158,63 @@ export function useWorkspace() {
 			// modified_desc — recently edited first
 			return dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf()
 		})
+		// Done stage chip: preview only; full archive lives under History
+		if (state.listMode === 'active' && state.stageFilter === 'Done') {
+			return list.slice(0, DONE_PREVIEW_LIMIT)
+		}
 		return list
+	})
+
+	const historyChapters = computed(() =>
+		state.chapters
+			.filter((c) => c.writing_stage === 'Done')
+			.slice()
+			.sort(
+				(a, b) =>
+					dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf(),
+			),
+	)
+
+	const donePreviewTruncated = computed(() => {
+		if (state.listMode !== 'active' || state.stageFilter !== 'Done') return false
+		const total = state.chapters.filter(
+			(c) => !c.is_hidden && c.writing_stage === 'Done',
+		).length
+		return total > DONE_PREVIEW_LIMIT
 	})
 
 	const scheduledChapters = computed(() =>
 		state.chapters
-			.filter((c) => c.next_write_on && !c.is_hidden)
+			.filter((c) => c.next_write_on && !c.is_hidden && c.writing_stage !== 'Done')
 			.slice()
 			.sort((a, b) => dayjs(a.next_write_on).valueOf() - dayjs(b.next_write_on).valueOf()),
 	)
+
+	function chapterByName(name) {
+		if (!name) return null
+		return state.chapters.find((c) => c.name === name) || null
+	}
+
+	function cardsForStage(stage, { previewDone = true } = {}) {
+		const list = state.chapters
+			.filter((c) => !c.is_hidden && c.writing_stage === stage)
+			.slice()
+			.sort(
+				(a, b) =>
+					dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf(),
+			)
+		if (previewDone && stage === 'Done') {
+			return list.slice(0, DONE_PREVIEW_LIMIT)
+		}
+		return list
+	}
+
+	function doneStageTruncated() {
+		const total = state.chapters.filter(
+			(c) => !c.is_hidden && c.writing_stage === 'Done',
+		).length
+		return total > DONE_PREVIEW_LIMIT
+	}
 
 	async function bootstrap(force = false) {
 		if (state.loaded && !force) return state
@@ -186,7 +261,12 @@ export function useWorkspace() {
 	}
 
 	async function saveChapter(fields) {
-		const chapter = await call('next_chapter.api.chapter.save_chapter', fields)
+		const payload = { ...fields }
+		if (payload.highlighted_stats != null) {
+			payload.update_highlighted_stats = 1
+			payload.highlighted_stats = JSON.stringify(payload.highlighted_stats)
+		}
+		const chapter = await call('next_chapter.api.chapter.save_chapter', payload)
 		replaceChapter(chapter)
 		await refreshVisibility()
 		return chapter
@@ -269,6 +349,10 @@ export function useWorkspace() {
 		return call('next_chapter.api.session.chapter_stats', { chapter })
 	}
 
+	async function fetchChapterTimeline(chapter) {
+		return call('next_chapter.api.session.chapter_timeline', { chapter })
+	}
+
 	async function savePrefs(updates) {
 		const result = await call('next_chapter.api.session.save_prefs', updates)
 		if (result?.prefs) {
@@ -325,7 +409,12 @@ export function useWorkspace() {
 		state,
 		activeChapter,
 		filteredChapters,
+		historyChapters,
+		donePreviewTruncated,
 		scheduledChapters,
+		chapterByName,
+		cardsForStage,
+		doneStageTruncated,
 		bootstrap,
 		createIdea,
 		saveChapter,
@@ -336,6 +425,7 @@ export function useWorkspace() {
 		completeWritingSession,
 		captureSideIdea,
 		fetchChapterStats,
+		fetchChapterTimeline,
 		savePrefs,
 		applyUiScale,
 		effectiveSetting,

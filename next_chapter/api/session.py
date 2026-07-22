@@ -223,9 +223,18 @@ def save_prefs(**kwargs):
 		"breath_count",
 		"aim_bias",
 		"last_next_focus_note",
+		"ideas_sort",
+		"ideas_visible_limit",
 	}
 	updates = {k: kwargs[k] for k in allowed if k in kwargs}
-	return save_user_prefs(updates)
+	prefs = save_user_prefs(updates)
+	# Sort / limit changes should reshuffle auto-hidden ideas
+	if "ideas_sort" in updates or "ideas_visible_limit" in updates:
+		from next_chapter.api.chapter import reconcile_ideas_visibility
+
+		chapters = reconcile_ideas_visibility()
+		return {"prefs": prefs, "chapters": chapters}
+	return prefs
 
 
 def apply_feedback_to_prefs(feedback: dict):

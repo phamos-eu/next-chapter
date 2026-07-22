@@ -97,7 +97,9 @@ export function useWorkspace() {
 
 	const filteredChapters = computed(() => {
 		const q = state.search.trim().toLowerCase()
-		return state.chapters.filter((c) => {
+		const sort = state.prefs.ideas_sort || 'modified_desc'
+		const stageRank = Object.fromEntries(state.stages.map((s, i) => [s, i]))
+		const list = state.chapters.filter((c) => {
 			const hidden = Boolean(c.is_hidden)
 			if (state.listMode === 'hidden' ? !hidden : hidden) return false
 			if (state.stageFilter !== 'All' && c.writing_stage !== state.stageFilter) {
@@ -107,6 +109,20 @@ export function useWorkspace() {
 			const hay = `${c.title || ''} ${c.summary || ''}`.toLowerCase()
 			return hay.includes(q)
 		})
+		list.sort((a, b) => {
+			if (sort === 'title_asc') {
+				return (a.title || '').localeCompare(b.title || '')
+			}
+			if (sort === 'stage_asc') {
+				return (stageRank[a.writing_stage] ?? 99) - (stageRank[b.writing_stage] ?? 99)
+			}
+			if (sort === 'sequence_asc') {
+				return (a.sequence || 0) - (b.sequence || 0)
+			}
+			// modified_desc — recently edited first
+			return dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf()
+		})
+		return list
 	})
 
 	const scheduledChapters = computed(() =>
@@ -140,6 +156,15 @@ export function useWorkspace() {
 		return bootstrapPromise
 	}
 
+	async function refreshVisibility() {
+		try {
+			const chapters = await call('next_chapter.api.chapter.reconcile_visible_ideas')
+			if (Array.isArray(chapters)) state.chapters = chapters
+		} catch {
+			/* non-fatal */
+		}
+	}
+
 	async function createIdea(title = 'New idea') {
 		const chapter = await call('next_chapter.api.chapter.create_chapter', {
 			title,
@@ -147,12 +172,14 @@ export function useWorkspace() {
 		state.chapters.unshift(chapter)
 		state.active = chapter.name
 		state.listMode = 'active'
+		await refreshVisibility()
 		return chapter
 	}
 
 	async function saveChapter(fields) {
 		const chapter = await call('next_chapter.api.chapter.save_chapter', fields)
 		replaceChapter(chapter)
+		await refreshVisibility()
 		return chapter
 	}
 
@@ -187,6 +214,7 @@ export function useWorkspace() {
 	async function unhideChapter(name) {
 		const chapter = await call('next_chapter.api.chapter.unhide_chapter', { name })
 		replaceChapter(chapter)
+		await refreshVisibility()
 		return chapter
 	}
 
@@ -214,6 +242,7 @@ export function useWorkspace() {
 		if (result?.prefs) {
 			state.prefs = result.prefs
 		}
+		await refreshVisibility()
 		return result
 	}
 
@@ -232,9 +261,14 @@ export function useWorkspace() {
 	}
 
 	async function savePrefs(updates) {
-		const prefs = await call('next_chapter.api.session.save_prefs', updates)
-		state.prefs = prefs || {}
-		return prefs
+		const result = await call('next_chapter.api.session.save_prefs', updates)
+		if (result?.prefs) {
+			state.prefs = result.prefs
+			if (Array.isArray(result.chapters)) state.chapters = result.chapters
+			return result.prefs
+		}
+		state.prefs = result || {}
+		return result
 	}
 
 	function effectiveSetting(key, fallback = null) {

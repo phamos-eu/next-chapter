@@ -189,6 +189,7 @@ def main() -> int:
 				"hold_seconds",
 				"exhale_seconds",
 				"hold_after_exhale_seconds",
+				"breath_phase_gap_seconds",
 				"breath_prepare_seconds",
 				"focus_font_size",
 				"fade_idle_secs",
@@ -240,6 +241,7 @@ def main() -> int:
 		ROOT / "frontend" / "src" / "pages" / "Session.vue",
 		ROOT / "frontend" / "src" / "pages" / "Schedule.vue",
 		ROOT / "frontend" / "src" / "pages" / "Setup.vue",
+		ROOT / "frontend" / "src" / "pages" / "Settings.vue",
 		ROOT / "frontend" / "src" / "components" / "AppShell.vue",
 	]
 	front = ""
@@ -266,6 +268,8 @@ def main() -> int:
 		"Complete",
 		"Page pile",
 		"Inhale will start in",
+		"ideas_sort",
+		"ideas_visible_limit",
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
 		"Could not open NextChapter",

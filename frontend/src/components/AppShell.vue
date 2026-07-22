@@ -62,12 +62,20 @@
       </nav>
 
       <div class="space-y-0.5 border-t border-outline-gray-1 p-2">
+        <router-link
+          to="/settings"
+          class="flex items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-6 hover:bg-surface-gray-2 hover:text-ink-gray-8"
+          active-class="!bg-surface-white !text-ink-gray-9 font-medium shadow-sm"
+        >
+          <FeatherIcon name="settings" class="h-4 w-4" />
+          Settings
+        </router-link>
         <a
           class="flex items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-6 hover:bg-surface-gray-2 hover:text-ink-gray-8"
           href="/app/nextchapter-settings"
         >
-          <FeatherIcon name="settings" class="h-4 w-4" />
-          Settings
+          <FeatherIcon name="sliders" class="h-4 w-4" />
+          Site defaults
         </a>
         <a
           class="flex items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-gray-6 hover:bg-surface-gray-2 hover:text-ink-gray-8"

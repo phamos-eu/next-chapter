@@ -729,6 +729,10 @@ function stopBreath() {
 	countdownTimer = null
 }
 
+const phaseGapSeconds = computed(() =>
+	Math.max(0, Number(state.settings.breath_phase_gap_seconds) || 0.8),
+)
+
 function runCountdown(seconds, onDone) {
 	phaseCountdown.value = seconds
 	clearInterval(countdownTimer)
@@ -739,6 +743,19 @@ function runCountdown(seconds, onDone) {
 			onDone()
 		}
 	}, 1000)
+}
+
+/** Soft pause after inhale/exhale before hold countdown starts. */
+function afterPhaseGap(next) {
+	const gap = phaseGapSeconds.value
+	if (!gap) {
+		next()
+		return
+	}
+	// Keep the circle still; hide the ticking number during the gap
+	phaseCountdown.value = ''
+	clearTimeout(breathTimer)
+	breathTimer = setTimeout(next, gap * 1000)
 }
 
 function startBreathCycle() {
@@ -755,24 +772,24 @@ function runPhase(name) {
 	if (name === 'inhale') {
 		breathScale.value = 1.2
 		breathOpacity.value = 1
-		runCountdown(inhaleSeconds.value, () => runPhase('hold_in'))
+		runCountdown(inhaleSeconds.value, () => afterPhaseGap(() => runPhase('hold_in')))
 	} else if (name === 'hold_in') {
 		breathScale.value = 1.2
 		breathOpacity.value = 0.45
 		const s = Math.max(holdInSeconds.value, 0)
-		if (!s) return runPhase('exhale')
-		runCountdown(s, () => runPhase('exhale'))
+		if (!s) return afterPhaseGap(() => runPhase('exhale'))
+		runCountdown(s, () => afterPhaseGap(() => runPhase('exhale')))
 	} else if (name === 'exhale') {
 		breathScale.value = 1
 		breathOpacity.value = 1
-		runCountdown(exhaleSeconds.value, () => runPhase('hold_out'))
+		runCountdown(exhaleSeconds.value, () => afterPhaseGap(() => runPhase('hold_out')))
 	} else {
 		breathScale.value = 1
 		breathOpacity.value = 0.5
 		const s = Math.max(holdOutSeconds.value, 0)
 		const done = () => {
 			breathsCompleted.value += 1
-			runPhase('inhale')
+			afterPhaseGap(() => runPhase('inhale'))
 		}
 		if (!s) return done()
 		runCountdown(s, done)

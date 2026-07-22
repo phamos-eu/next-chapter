@@ -30,6 +30,7 @@ DEFAULTS = {
 	"hold_seconds": 2,
 	"exhale_seconds": 6,
 	"hold_after_exhale_seconds": 2,
+	"breath_phase_gap_seconds": 0.8,
 	"fade_idle_secs": 3,
 	"fade_duration_secs": 2,
 	"fade_idle_min_secs": 2,

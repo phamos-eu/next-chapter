@@ -41,6 +41,11 @@ const routes = [
 		component: () => import('@/pages/Schedule.vue'),
 	},
 	{
+		path: '/settings',
+		name: 'Settings',
+		component: () => import('@/pages/Settings.vue'),
+	},
+	{
 		path: '/session/:name',
 		name: 'Session',
 		component: () => import('@/pages/Session.vue'),

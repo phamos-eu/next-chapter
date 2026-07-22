@@ -260,11 +260,14 @@ def main() -> int:
 		"next_chapter.api.chapter.complete_writing_session",
 		"next_chapter.api.chapter.capture_side_idea",
 		"next_chapter.api.session.chapter_stats",
+		"next_chapter.api.session.chapter_timeline",
 		"next_chapter.api.session.save_prefs",
 		"Add Idea",
 		"Ideas",
 		"Growth Funnel",
 		"Start writing session",
+		"chapter_timeline",
+		"Timeline",
 		"Complete",
 		"Page pile",
 		"Inhale will start in",
@@ -299,7 +302,13 @@ def main() -> int:
 		errors.append("missing api/session.py")
 	else:
 		session_src = session_api.read_text(encoding="utf-8")
-		for needle in ("list_sessions", "chapter_stats", "save_prefs", "apply_feedback_to_prefs"):
+		for needle in (
+			"list_sessions",
+			"chapter_stats",
+			"chapter_timeline",
+			"save_prefs",
+			"apply_feedback_to_prefs",
+		):
 			if needle not in session_src:
 				errors.append(f"session API missing: {needle}")
 

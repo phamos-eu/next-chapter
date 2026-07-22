@@ -37,7 +37,12 @@
         </p>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#ddd8d0] pb-0">
           <TabButtons v-model="overviewTab" :buttons="overviewTabs" />
-          <div class="pb-2 text-xs text-ink-gray-5">{{ saveState }}</div>
+          <div class="pb-2 text-xs text-ink-gray-5">
+            <span v-if="timelineIdeaCount" class="mr-2 text-ink-gray-6">
+              {{ timelineIdeaCount }} captured
+            </span>
+            {{ saveState }}
+          </div>
         </div>
       </div>
 
@@ -113,6 +118,93 @@
               />
             </svg>
           </div>
+        </div>
+
+        <!-- Timeline: sessions + ideas captured during them -->
+        <div
+          v-else-if="overviewTab === 'timeline'"
+          class="mx-auto flex h-full min-h-0 max-w-2xl flex-col overflow-hidden"
+        >
+          <p class="mb-3 shrink-0 text-sm text-ink-gray-5">
+            Ideas you captured while writing this one — open any to continue it.
+          </p>
+          <div
+            v-if="!timelineGroups.length"
+            class="flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-6 text-center text-sm text-ink-gray-5"
+          >
+            Nothing captured yet. During a writing session, jot side ideas — they
+            will show up here as links.
+          </div>
+          <ol
+            v-else
+            class="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1"
+          >
+            <li
+              v-for="(group, gi) in timelineGroups"
+              :key="group.kind === 'session' ? group.session.name : `u-${gi}`"
+              class="relative pl-5"
+            >
+              <span
+                class="absolute left-0 top-2 h-2.5 w-2.5 rounded-full bg-[#c4bdb0]"
+                aria-hidden="true"
+              />
+              <div
+                v-if="gi < timelineGroups.length - 1"
+                class="absolute bottom-0 left-[4px] top-5 w-px bg-[#ddd8d0]"
+                aria-hidden="true"
+              />
+              <div class="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <template v-if="group.kind === 'session'">
+                  <span class="text-sm font-medium text-ink-gray-9">
+                    {{ formatSessionWhen(group.session) }}
+                  </span>
+                  <span class="text-xs text-ink-gray-5">
+                    {{ formatSessionMeta(group.session) }}
+                  </span>
+                </template>
+                <template v-else>
+                  <span class="text-sm font-medium text-ink-gray-9">
+                    Captured outside a logged session
+                  </span>
+                  <span class="text-xs text-ink-gray-5">
+                    {{ group.ideas.length }} idea{{ group.ideas.length === 1 ? '' : 's' }}
+                  </span>
+                </template>
+              </div>
+              <ul class="space-y-1.5">
+                <li v-for="idea in group.ideas" :key="idea.name">
+                  <button
+                    type="button"
+                    class="group flex w-full items-start gap-2 rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-3 py-2.5 text-left transition hover:border-[#c4bdb0] hover:bg-white"
+                    @click="openSpawnedIdea(idea)"
+                  >
+                    <span
+                      class="mt-0.5 shrink-0 rounded bg-[#efece7] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-gray-6"
+                    >
+                      {{ idea.writing_stage }}
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span
+                        class="block truncate text-sm font-medium text-ink-gray-9 group-hover:underline"
+                      >
+                        {{ idea.title }}
+                      </span>
+                      <span
+                        v-if="ideaSnippet(idea)"
+                        class="mt-0.5 block line-clamp-2 text-xs text-ink-gray-5"
+                      >
+                        {{ ideaSnippet(idea) }}
+                      </span>
+                    </span>
+                    <FeatherIcon
+                      name="chevron-right"
+                      class="mt-0.5 h-4 w-4 shrink-0 text-ink-gray-4 group-hover:text-ink-gray-7"
+                    />
+                  </button>
+                </li>
+              </ul>
+            </li>
+          </ol>
         </div>
 
         <!-- Details / excess options -->
@@ -272,9 +364,11 @@ const {
 	setSession,
 	downloadIcs,
 	fetchChapterStats,
+	fetchChapterTimeline,
 	savePrefs,
 	countWords,
 	effectiveSetting,
+	formatDateTime,
 } = useWorkspace()
 
 const chapter = computed(
@@ -284,6 +378,7 @@ const chapter = computed(
 const overviewTab = ref('writing')
 const overviewTabs = [
 	{ label: 'Writing', value: 'writing' },
+	{ label: 'Timeline', value: 'timeline' },
 	{ label: 'Stats', value: 'stats' },
 	{ label: 'Details', value: 'details' },
 ]
@@ -298,6 +393,7 @@ const saveState = ref('All changes save automatically')
 let saveTimer = null
 
 const stats = ref(null)
+const timeline = ref(null)
 const editOpen = ref(false)
 const editText = ref('')
 const editInput = ref(null)
@@ -348,6 +444,14 @@ const nextGate = computed(() => {
 	const min = Number(state.wordGates[stage] || 0)
 	if (!min) return null
 	return { stage, min }
+})
+
+const timelineIdeaCount = computed(() => Number(timeline.value?.total_ideas || 0))
+
+/** Groups that have at least one captured idea (sessions without captures stay out). */
+const timelineGroups = computed(() => {
+	const groups = timeline.value?.groups || []
+	return groups.filter((g) => (g.ideas || []).length > 0)
 })
 
 const statColumns = computed(() => {
@@ -485,6 +589,42 @@ function sparkPoints(values) {
 		.join(' ')
 }
 
+function formatSessionWhen(session) {
+	const when = session?.ended_on || session?.started_on || session?.creation
+	return when ? formatDateTime(when) : 'Session'
+}
+
+function formatSessionMeta(session) {
+	const parts = []
+	const mins = Number(session?.duration_mins || 0)
+	if (mins) parts.push(`${Math.round(mins)} min`)
+	const words = Number(session?.words_written || 0)
+	if (words) parts.push(`${words} words`)
+	const n = (timeline.value?.ideas || []).filter((i) => i.session === session?.name)
+		.length
+	if (n) parts.push(`${n} captured`)
+	return parts.join(' · ')
+}
+
+function ideaSnippet(idea) {
+	const summary = String(idea?.summary || '')
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+	if (!summary) return ''
+	const title = String(idea?.title || '').trim()
+	if (summary === title || summary.startsWith(title)) {
+		const rest = summary.slice(title.length).replace(/^[\s.…—-]+/, '')
+		return rest || ''
+	}
+	return summary
+}
+
+function openSpawnedIdea(idea) {
+	if (!idea?.name) return
+	router.push(`/ideas/${idea.name}`)
+}
+
 watch(
 	chapter,
 	async (ch) => {
@@ -501,6 +641,11 @@ watch(
 			stats.value = await fetchChapterStats(ch.name)
 		} catch {
 			stats.value = null
+		}
+		try {
+			timeline.value = await fetchChapterTimeline(ch.name)
+		} catch {
+			timeline.value = null
 		}
 	},
 	{ immediate: true },

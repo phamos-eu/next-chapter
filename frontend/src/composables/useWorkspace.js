@@ -269,6 +269,10 @@ export function useWorkspace() {
 		return call('next_chapter.api.session.chapter_stats', { chapter })
 	}
 
+	async function fetchChapterTimeline(chapter) {
+		return call('next_chapter.api.session.chapter_timeline', { chapter })
+	}
+
 	async function savePrefs(updates) {
 		const result = await call('next_chapter.api.session.save_prefs', updates)
 		if (result?.prefs) {
@@ -336,6 +340,7 @@ export function useWorkspace() {
 		completeWritingSession,
 		captureSideIdea,
 		fetchChapterStats,
+		fetchChapterTimeline,
 		savePrefs,
 		applyUiScale,
 		effectiveSetting,

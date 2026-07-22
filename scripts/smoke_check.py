@@ -275,6 +275,7 @@ def main() -> int:
 		"ideas_visible_limit",
 		"ui_scale",
 		"applyUiScale",
+		"writing_stage === 'Done'",
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
 		"Could not open NextChapter",

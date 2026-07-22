@@ -262,8 +262,13 @@ def reconcile_ideas_visibility(story: str | None = None, user: str | None = None
 		hu = row.get("hidden_until")
 		return bool(hu and get_datetime(hu) > now)
 
-	# Only rank ideas that are not manually snoozed
-	rankable = [r for r in rows if not snoozed(r)]
+	# Rank only non-snoozed, non-Done ideas. Done is harvested and must not
+	# consume Active slots or appear via auto-hide.
+	rankable = [
+		r
+		for r in rows
+		if not snoozed(r) and (r.get("writing_stage") or "") != "Done"
+	]
 	stage_rank = {s: i for i, s in enumerate(STAGES)}
 
 	def sort_key(row):
@@ -293,6 +298,21 @@ def reconcile_ideas_visibility(story: str | None = None, user: str | None = None
 				update_modified=False,
 			)
 			row["auto_hidden"] = want_auto
+			changed = True
+
+	# Clear auto_hidden on Done ideas that are not manually snoozed
+	for row in rows:
+		if (row.get("writing_stage") or "") != "Done" or snoozed(row):
+			continue
+		if int(row.get("auto_hidden") or 0):
+			frappe.db.set_value(
+				"Implementation Chapter",
+				row.name,
+				"auto_hidden",
+				0,
+				update_modified=False,
+			)
+			row["auto_hidden"] = 0
 			changed = True
 
 	if changed:

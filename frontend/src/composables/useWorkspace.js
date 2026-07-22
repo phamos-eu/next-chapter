@@ -111,6 +111,14 @@ export function useWorkspace() {
 		const list = state.chapters.filter((c) => {
 			const hidden = Boolean(c.is_hidden)
 			if (state.listMode === 'hidden' ? !hidden : hidden) return false
+			// Done ideas are harvested — keep them out of Active unless filtering by Done
+			if (
+				state.listMode === 'active' &&
+				c.writing_stage === 'Done' &&
+				state.stageFilter !== 'Done'
+			) {
+				return false
+			}
 			if (state.stageFilter !== 'All' && c.writing_stage !== state.stageFilter) {
 				return false
 			}
@@ -136,7 +144,7 @@ export function useWorkspace() {
 
 	const scheduledChapters = computed(() =>
 		state.chapters
-			.filter((c) => c.next_write_on && !c.is_hidden)
+			.filter((c) => c.next_write_on && !c.is_hidden && c.writing_stage !== 'Done')
 			.slice()
 			.sort((a, b) => dayjs(a.next_write_on).valueOf() - dayjs(b.next_write_on).valueOf()),
 	)

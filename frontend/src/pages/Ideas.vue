@@ -46,7 +46,7 @@
           <p class="max-w-sm text-sm text-ink-gray-5">
             {{
               state.listMode === 'hidden'
-                ? 'Hidden ideas will show up here until their snooze ends.'
+                ? 'Snoozed ideas and ones beyond your visible limit appear here.'
                 : 'Add your first idea — a short name is enough to start.'
             }}
           </p>

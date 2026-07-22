@@ -47,6 +47,7 @@ CHAPTER_FIELDS = [
 	"summary",
 	"content",
 	"hidden_until",
+	"auto_hidden",
 	"next_write_on",
 	"write_duration_mins",
 	"last_session_words",
@@ -60,11 +61,10 @@ def _serialize(doc_or_row) -> dict:
 	data["summary"] = data.get("summary") or ""
 	data["content"] = data.get("content") or ""
 	data["last_session_words"] = int(data.get("last_session_words") or 0)
+	data["auto_hidden"] = int(data.get("auto_hidden") or 0)
 	hidden_until = data.get("hidden_until")
-	if hidden_until:
-		data["is_hidden"] = get_datetime(hidden_until) > now_datetime()
-	else:
-		data["is_hidden"] = False
+	snoozed = bool(hidden_until and get_datetime(hidden_until) > now_datetime())
+	data["is_hidden"] = snoozed or bool(data["auto_hidden"])
 	return data
 
 
@@ -219,8 +219,86 @@ def hide_chapter(name: str, until: str | None = None, preset: str | None = None)
 def unhide_chapter(name: str):
 	doc = frappe.get_doc("Implementation Chapter", name)
 	doc.hidden_until = None
+	doc.auto_hidden = 0
 	doc.save()
 	return _serialize(doc)
+
+
+@frappe.whitelist()
+def reconcile_visible_ideas():
+	"""Whitelist wrapper so the SPA can refresh auto-hidden state after edits."""
+	return reconcile_ideas_visibility()
+
+
+def reconcile_ideas_visibility(story: str | None = None, user: str | None = None) -> list[dict]:
+	"""Keep the top N ideas (by user sort) Active; auto-hide the rest.
+
+	Manual snoozes (`hidden_until`) are left alone. Auto-hidden ideas can
+	return when they rank inside the visible limit again (e.g. after edit).
+	"""
+	from next_chapter.next_chapter.doctype.implementation_story.implementation_story import (
+		get_active_story_name,
+	)
+	from next_chapter.next_chapter.doctype.nextchapter_user_preference.nextchapter_user_preference import (
+		get_user_prefs,
+	)
+
+	story_name = story or get_active_story_name()
+	if not story_name:
+		return []
+
+	prefs = get_user_prefs(user)
+	limit = int(prefs.get("ideas_visible_limit") or 20)
+	sort = prefs.get("ideas_sort") or "modified_desc"
+
+	rows = frappe.get_all(
+		"Implementation Chapter",
+		filters={"story": story_name},
+		fields=CHAPTER_FIELDS,
+	)
+	now = now_datetime()
+
+	def snoozed(row) -> bool:
+		hu = row.get("hidden_until")
+		return bool(hu and get_datetime(hu) > now)
+
+	# Only rank ideas that are not manually snoozed
+	rankable = [r for r in rows if not snoozed(r)]
+	stage_rank = {s: i for i, s in enumerate(STAGES)}
+
+	def sort_key(row):
+		if sort == "title_asc":
+			return ((row.get("title") or "").lower(), row.get("name"))
+		if sort == "stage_asc":
+			return (stage_rank.get(row.get("writing_stage"), 99), row.get("name"))
+		if sort == "sequence_asc":
+			return (int(row.get("sequence") or 0), row.get("name"))
+		# modified_desc (default): newest edit first
+		return (get_datetime(row.get("modified") or now), row.get("name"))
+
+	reverse = sort == "modified_desc"
+	rankable.sort(key=sort_key, reverse=reverse)
+
+	visible_names = {r.name for r in rankable[:limit]}
+	changed = False
+	for row in rankable:
+		want_auto = 0 if row.name in visible_names else 1
+		cur = int(row.get("auto_hidden") or 0)
+		if cur != want_auto:
+			frappe.db.set_value(
+				"Implementation Chapter",
+				row.name,
+				"auto_hidden",
+				want_auto,
+				update_modified=False,
+			)
+			row["auto_hidden"] = want_auto
+			changed = True
+
+	if changed:
+		frappe.db.commit()
+
+	return [_serialize(r) for r in rows]
 
 
 def _resolve_hide_until(until: str | None = None, preset: str | None = None):

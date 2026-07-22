@@ -9,7 +9,7 @@
       class="absolute right-4 top-4 rounded bg-amber-100 px-2 py-1 text-xs text-amber-800"
     >
       In Development
-      <button class="ml-2 underline" type="button" @click="enterFocus">Skip to write</button>
+      <button class="ml-2 underline" type="button" @click="skipRitualToFocus">Skip to write</button>
     </div>
 
     <div class="mx-auto w-full max-w-lg text-center">
@@ -83,34 +83,33 @@
           </div>
         </div>
 
-        <div v-else class="space-y-5 text-center">
-          <template v-if="breathPhase === 'prepare'">
-            <p class="text-sm text-ink-gray-6">Inhale will start in</p>
-            <div class="text-4xl font-semibold text-ink-gray-9">{{ phaseCountdown }}</div>
-          </template>
-          <template v-else>
-            <p class="text-sm text-ink-gray-6">
-              {{ breathPhaseLabel }} · {{ phaseCountdown }}s
-            </p>
-            <div
-              class="mx-auto flex h-32 w-32 items-center justify-center rounded-full border border-[#d5cfc6] bg-[#efece6]"
-              :style="breathCircleStyle"
-            >
-              <span class="text-2xl font-medium text-ink-gray-8">{{ phaseCountdown }}</span>
-            </div>
-            <p class="text-xs text-ink-gray-4">
-              <span v-if="!requiredBreathsDone">
-                Breath {{ breathsCompleted + 1 }} of {{ requiredBreaths }}
-              </span>
-              <span v-else>Optional extras — enter when ready</span>
-            </p>
-            <Button
-              v-if="requiredBreathsDone"
-              variant="solid"
-              label="Enter Session"
-              @click="enterFocus"
-            />
-          </template>
+        <div v-else class="space-y-6 text-center">
+          <p
+            v-if="breathPhase === 'prepare'"
+            class="text-xs font-normal tracking-wide text-ink-gray-4"
+          >
+            Inhale will start in
+          </p>
+          <div
+            class="mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-[#e4dfd7] bg-[#f0ede8]/80"
+            :style="breathCircleStyle"
+          >
+            <span class="text-3xl font-light tabular-nums text-ink-gray-5">{{
+              phaseCountdown
+            }}</span>
+          </div>
+          <p class="text-[11px] font-normal text-ink-gray-4/80">
+            <span v-if="!requiredBreathsDone">
+              Breath {{ breathsCompleted + 1 }} of {{ requiredBreaths }}
+            </span>
+            <span v-else>Whenever you’re ready</span>
+          </p>
+          <Button
+            v-if="requiredBreathsDone"
+            variant="subtle"
+            label="Enter Session"
+            @click="enterFocus"
+          />
         </div>
 
         <div v-if="step < 3" class="mt-6 flex items-center justify-between">
@@ -152,50 +151,72 @@
       <Button variant="solid" label="Complete" @click="openComplete" />
     </header>
 
-    <div class="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 gap-3 px-4 pb-8 pt-2">
-      <!-- Page pile peek -->
-      <button
-        v-if="pagePileOn && pageIndex > 0"
-        type="button"
-        class="hidden w-20 shrink-0 self-stretch overflow-hidden rounded-xl border border-[#ddd8d0] bg-[#f3f0eb] text-left opacity-70 shadow-sm transition hover:opacity-100 md:block"
-        @click="pageIndex -= 1"
-      >
-        <span class="block rotate-[-6deg] p-2 text-[10px] leading-snug text-ink-gray-5">
-          <span class="mb-1 block font-medium">p.{{ pageIndex }}</span>
-          {{ (pages[pageIndex - 1] || '').slice(0, 80) }}{{ (pages[pageIndex - 1] || '').length > 80 ? '…' : '' }}
-        </span>
-      </button>
+    <div
+      class="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 gap-3 px-4 pb-8 pt-2"
+      @mousemove="onFocusPointer"
+    >
+      <!-- Writing surface + page stack -->
+      <div class="relative min-h-0 min-w-0 flex-1 overflow-visible">
+        <!-- Previous sheet peek (under stack) -->
+        <button
+          v-if="pagePileOn && pageIndex > 0"
+          type="button"
+          class="absolute inset-2 z-0 rounded-2xl border border-[#ddd8d0] bg-[#f0ebe4] shadow-sm transition hover:brightness-[0.98]"
+          :style="{ transform: 'translate(-14px, 12px) rotate(-1.2deg)' }"
+          aria-label="Previous page"
+          @click="goPrevPage"
+        >
+          <span
+            class="pointer-events-none block h-full overflow-hidden p-5 text-left text-xs leading-relaxed text-ink-gray-4 opacity-60"
+            :style="{ fontSize: `${Math.max(12, focusFontSize - 4)}px` }"
+          >
+            {{ peekText(pages[pageIndex - 1]) }}
+          </span>
+        </button>
 
-      <div
-        class="flex min-h-0 min-w-0 flex-1 flex-col rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]"
-      >
-        <textarea
-          ref="focusInput"
-          v-model="activePageText"
-          class="min-h-0 flex-1 resize-none border-0 bg-transparent leading-relaxed text-ink-gray-9 outline-none"
-          :style="{ fontSize: `${focusFontSize}px` }"
-          placeholder="Write. Nothing else is here."
-          @input="onFocusInput"
-        />
-        <div v-if="pagePileOn" class="mt-2 flex items-center justify-between text-xs text-ink-gray-5">
-          <button type="button" class="underline" :disabled="pageIndex <= 0" @click="pageIndex -= 1">
-            Prev page
-          </button>
-          <span>Page {{ pageIndex + 1 }} / {{ pages.length }}</span>
-          <button type="button" class="underline" @click="ensureNextPage">Next page</button>
+        <!-- Current page (top of stack) -->
+        <div
+          class="relative z-10 flex h-full min-h-0 flex-col rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-transform duration-300"
+          :class="pagePileOn && pageIndex > 0 ? 'ml-3 mt-2' : ''"
+        >
+          <textarea
+            ref="focusInput"
+            v-model="activePageText"
+            class="min-h-0 flex-1 resize-none border-0 bg-transparent leading-relaxed text-ink-gray-9 outline-none"
+            :style="{ fontSize: `${focusFontSize}px` }"
+            placeholder="Write. Nothing else is here."
+            @input="onFocusInput"
+          />
         </div>
+
+        <!-- Next sheet peek: only when a real newer page already exists -->
+        <button
+          v-if="showNextPagePeek"
+          type="button"
+          class="absolute -right-1 top-6 z-20 h-[70%] w-9 overflow-hidden rounded-r-2xl border border-[#ddd8d0] bg-[#faf8f5] shadow-md transition hover:brightness-[1.02]"
+          :style="{ transform: 'translateX(6px) rotate(1.5deg)' }"
+          aria-label="Next page"
+          @click="goNextPage"
+        >
+          <span
+            class="pointer-events-none block h-full overflow-hidden p-2 text-[10px] leading-snug text-ink-gray-4 opacity-50"
+          >
+            {{ peekText(pages[pageIndex + 1]) }}
+          </span>
+        </button>
       </div>
 
+      <!-- Capture band: notes list + hover to spawn draft at cursor -->
       <aside
-        class="relative w-44 shrink-0"
-        @mouseenter="railHover = true"
-        @mouseleave="onRailLeave"
+        class="relative w-40 shrink-0"
+        @mouseenter="onCaptureEnter"
+        @mouseleave="onCaptureLeave"
       >
         <div
-          v-if="showCaptureHint"
-          class="mb-2 rounded-lg bg-ink-gray-9/75 px-2 py-1.5 text-[11px] text-surface-white"
+          v-if="showCaptureHint && !captureZoneActive"
+          class="mb-2 rounded-lg bg-ink-gray-9/60 px-2 py-1.5 text-[11px] text-surface-white"
         >
-          Hover to capture a side idea.
+          Hover here to capture a side idea.
         </div>
         <div class="flex max-h-full flex-col gap-2 overflow-y-auto pb-16">
           <div
@@ -213,20 +234,28 @@
               @focus="reviveNote(note)"
             />
           </div>
-          <div
-            v-if="railHover || showCaptureHint"
-            class="rounded-xl border border-dashed border-[#cfc9c0] bg-[#f3efe8]/80 p-2"
-          >
-            <textarea
-              v-model="draftNote"
-              :rows="draftRows"
-              class="w-full resize-none border-0 bg-transparent text-xs outline-none"
-              placeholder="New idea…"
-              @input="onDraftInput"
-            />
-          </div>
         </div>
       </aside>
+    </div>
+
+    <!-- Floating draft at cursor -->
+    <div
+      v-if="showDraftComposer"
+      class="pointer-events-auto fixed z-[25] w-52 rounded-xl border border-dashed border-[#cfc9c0] bg-[#f3efe8]/95 p-2 shadow-sm"
+      :style="draftComposerStyle"
+      @mousemove.stop="onDraftPointer"
+      @mouseenter="captureZoneActive = true"
+      @mouseleave="onDraftComposerLeave"
+    >
+      <textarea
+        ref="draftInput"
+        v-model="draftNote"
+        :rows="draftRows"
+        class="w-full resize-none border-0 bg-transparent text-xs outline-none"
+        placeholder="New idea…"
+        @input="onDraftInput"
+        @focus="draftPinned = true"
+      />
     </div>
 
     <div class="pointer-events-none absolute bottom-4 right-4 z-20 flex max-w-xs flex-wrap justify-end gap-2">
@@ -263,16 +292,19 @@
       </div>
     </div>
 
-    <!-- Complete wizard -->
+    <!-- Complete wizard (steps filtered by what happened in the session) -->
     <div
-      v-if="completeOpen"
+      v-if="completeOpen && currentCompleteStep"
       class="absolute inset-0 z-40 flex items-center justify-center bg-ink-gray-9/35 p-4"
     >
-      <div class="w-full max-w-md rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-lg">
-        <h2 class="text-lg font-semibold text-ink-gray-9">{{ completeSteps[completeStep].title }}</h2>
-        <p class="mt-1 text-sm text-ink-gray-5">{{ completeSteps[completeStep].help }}</p>
+      <div
+        class="w-full rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-lg"
+        :class="currentCompleteStep.id === 'plan' ? 'max-w-3xl' : 'max-w-md'"
+      >
+        <h2 class="text-lg font-semibold text-ink-gray-9">{{ currentCompleteStep.title }}</h2>
+        <p class="mt-1 text-sm text-ink-gray-5">{{ currentCompleteStep.help }}</p>
 
-        <div v-if="completeStep === 0" class="mt-4 grid gap-2">
+        <div v-if="currentCompleteStep.id === 'feel'" class="mt-4 grid gap-2">
           <button
             v-for="opt in [
               { id: 'productive', label: 'Productive' },
@@ -293,7 +325,7 @@
           </button>
         </div>
 
-        <div v-else-if="completeStep === 1" class="mt-4 grid grid-cols-3 gap-2">
+        <div v-else-if="currentCompleteStep.id === 'aim'" class="mt-4 grid grid-cols-3 gap-2">
           <Button
             v-for="opt in ['increase', 'keep', 'decrease']"
             :key="opt"
@@ -303,7 +335,7 @@
           />
         </div>
 
-        <div v-else-if="completeStep === 2" class="mt-4 space-y-3">
+        <div v-else-if="currentCompleteStep.id === 'distraction'" class="mt-4 space-y-3">
           <div class="grid gap-2">
             <button
               v-for="opt in [
@@ -324,38 +356,57 @@
               {{ opt.label }}
             </button>
           </div>
-          <p class="text-xs text-ink-gray-5">Fade timing next time</p>
-          <div class="grid grid-cols-3 gap-2">
-            <Button
-              v-for="opt in ['increase', 'keep', 'decrease']"
-              :key="opt"
-              :variant="feedback.fade_adjust === opt ? 'solid' : 'subtle'"
-              :label="opt"
-              @click="feedback.fade_adjust = opt"
-            />
-          </div>
+          <template v-if="capturedSideIdeas">
+            <p class="text-xs text-ink-gray-5">Fade timing next time</p>
+            <div class="grid grid-cols-3 gap-2">
+              <Button
+                v-for="opt in ['increase', 'keep', 'decrease']"
+                :key="opt"
+                :variant="feedback.fade_adjust === opt ? 'solid' : 'subtle'"
+                :label="opt"
+                @click="feedback.fade_adjust = opt"
+              />
+            </div>
+          </template>
         </div>
 
-        <div v-else class="mt-4 space-y-3 text-left">
-          <FormControl v-model="feedback.next_focus_note" type="textarea" label="Focus next time" />
-          <p class="text-xs text-ink-gray-5">Plan the next sessions (3 slots)</p>
+        <div v-else-if="currentCompleteStep.id === 'next_topic'" class="mt-4 text-left">
           <FormControl
-            v-for="(slot, i) in scheduleSlots"
-            :key="i"
-            v-model="scheduleSlots[i]"
-            type="datetime-local"
-            :label="`Session ${i + 1}`"
+            v-model="feedback.next_focus_note"
+            type="textarea"
+            label="Next topic"
           />
-          <p class="text-xs text-ink-gray-5">Was the start ritual too long?</p>
-          <div class="flex gap-2">
-            <Button
-              v-for="opt in ['yes', 'no', 'skip']"
-              :key="opt"
-              size="sm"
-              :variant="feedback.start_felt_long === opt ? 'solid' : 'subtle'"
-              :label="opt"
-              @click="feedback.start_felt_long = opt"
-            />
+        </div>
+
+        <div v-else-if="currentCompleteStep.id === 'plan'" class="mt-4 text-left">
+          <SessionPlanCalendar
+            :model-value="planSlotValues"
+            :booked="planBookedSessions"
+            :draft-label="chapter?.title || 'This idea'"
+            @update:model-value="onPlanSlotsUpdate"
+          />
+        </div>
+
+        <div v-else-if="currentCompleteStep.id === 'start_long'" class="mt-4 space-y-3">
+          <div class="grid gap-2">
+            <button
+              v-for="opt in [
+                { id: 'yes', label: 'Yes — a bit long' },
+                { id: 'no', label: 'No — felt fine' },
+                { id: 'skip', label: 'Skip' },
+              ]"
+              :key="opt.id"
+              type="button"
+              class="rounded-xl border px-3 py-2 text-left text-sm"
+              :class="
+                feedback.start_felt_long === opt.id
+                  ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
+                  : 'border-[#ddd8d0] bg-[#faf8f5]'
+              "
+              @click="feedback.start_felt_long = opt.id"
+            >
+              {{ opt.label }}
+            </button>
           </div>
         </div>
 
@@ -369,24 +420,10 @@
           <Button v-else variant="ghost" label="Resume" @click="completeOpen = false" />
           <Button
             variant="solid"
-            :label="completeStep === completeSteps.length - 1 ? 'Complete' : 'Continue'"
+            :label="completeStep >= activeCompleteSteps.length - 1 ? 'Complete' : 'Continue'"
             @click="nextComplete"
           />
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div
-    v-else-if="phase === 'summary'"
-    class="flex min-h-screen items-center justify-center bg-[#f0ede8] p-6"
-  >
-    <div class="w-full max-w-md rounded-2xl border border-[#e0dbd3] bg-[#f7f5f2] p-6">
-      <h1 class="text-xl font-semibold">Session saved</h1>
-      <p class="mt-2 text-sm text-ink-gray-6">{{ summaryMessage }}</p>
-      <div class="mt-6 flex justify-between gap-2">
-        <Button variant="subtle" label="Growth Funnel" @click="router.push('/growth')" />
-        <Button variant="solid" label="Back to idea" @click="backToWrite" />
       </div>
     </div>
   </div>
@@ -401,7 +438,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useRoute, useRouter } from 'vue-router'
 import { Button, FormControl, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
-import { useWorkspace } from '@/composables/useWorkspace'
+import SessionPlanCalendar from '@/components/SessionPlanCalendar.vue'
+import { PAGE_PILE_STAGES, useWorkspace } from '@/composables/useWorkspace'
 
 const HINT_KEY = 'nextchapter_focus_capture_hints_seen'
 const router = useRouter()
@@ -414,6 +452,7 @@ const {
 	countWords,
 	effectiveSetting,
 	errorMessage,
+	scheduledChapters,
 } = useWorkspace()
 
 const phase = ref('loading')
@@ -443,12 +482,18 @@ const scheduleSlots = reactive(['', '', ''])
 const priorFocusNote = ref('')
 const priorFocusNoteDraft = ref('')
 const focusNoteAction = ref('kept')
-const railHover = ref(false)
+const captureZoneActive = ref(false)
 const draftNote = ref('')
+const draftPinned = ref(false)
+const pointerX = ref(0)
+const pointerY = ref(0)
+const draftX = ref(0)
+const draftY = ref(0)
 const notes = reactive([])
 const showCaptureHint = ref(false)
 const captureDialog = ref(null)
 const focusInput = ref(null)
+const draftInput = ref(null)
 let breathTimer = null
 let countdownTimer = null
 let draftTimer = null
@@ -471,8 +516,15 @@ const prepareSeconds = computed(() =>
 	Math.max(1, Number(state.settings.breath_prepare_seconds) || 3),
 )
 const focusFontSize = computed(() => Number(effectiveSetting('focus_font_size', 18)))
-const pagePileOn = computed(() => Boolean(state.prefs.page_pile))
+const pagePileOn = computed(() => {
+	const stage = chapter.value?.writing_stage
+	return Boolean(state.prefs.page_pile) && PAGE_PILE_STAGES.includes(stage)
+})
 const pageWords = computed(() => Number(state.settings.page_words) || 280)
+/** Forward peek only when a newer sheet already exists (e.g. after going back). */
+const showNextPagePeek = computed(
+	() => pagePileOn.value && pageIndex.value < pages.value.length - 1,
+)
 const requiredBreathsDone = computed(() => breathsCompleted.value >= requiredBreaths.value)
 const fadeDuration = computed(() => Math.max(0.5, Number(effectiveSetting('fade_duration_secs', 2))))
 const bubbleChars = computed(() => Math.max(4, Number(state.settings.bubble_label_chars) || 12))
@@ -481,7 +533,7 @@ const steps = [
 	{ title: 'Clear the runway', help: 'Remove distraction triggers — and revisit last focus if any.' },
 	{ title: 'Body reset', help: 'Small rituals that help your nervous system settle.' },
 	{ title: 'Set the aim', help: 'More, similar, or less than last time — no numbers.' },
-	{ title: 'Arrive', help: 'Prepare, then breathe with live countdowns.' },
+	{ title: 'Arrive', help: 'A quiet breath — then write.' },
 ]
 const currentStep = computed(() => steps[step.value])
 const aimOptions = [
@@ -521,48 +573,120 @@ const progressBarStyle = computed(() => {
 	return { width: `${r * 100}%`, opacity: r === 0 ? 0 : Math.max(0.15, r) }
 })
 
-const breathPhaseLabel = computed(() => {
-	const map = {
-		prepare: 'Prepare',
-		inhale: 'Inhale',
-		hold_in: 'Hold',
-		exhale: 'Exhale',
-		hold_out: 'Hold',
-	}
-	return map[breathPhase.value] || ''
-})
 const breathCircleStyle = computed(() => {
 	const dur =
-		breathPhase.value === 'inhale'
-			? inhaleSeconds.value
-			: breathPhase.value === 'hold_in'
-				? holdInSeconds.value
-				: breathPhase.value === 'exhale'
-					? exhaleSeconds.value
-					: holdOutSeconds.value
+		breathPhase.value === 'prepare'
+			? prepareSeconds.value
+			: breathPhase.value === 'inhale'
+				? inhaleSeconds.value
+				: breathPhase.value === 'hold_in'
+					? holdInSeconds.value
+					: breathPhase.value === 'exhale'
+						? exhaleSeconds.value
+						: holdOutSeconds.value
+	const softOpacity =
+		breathPhase.value === 'hold_in' || breathPhase.value === 'hold_out'
+			? 0.55
+			: breathPhase.value === 'prepare'
+				? 0.75
+				: breathOpacity.value
 	return {
 		transform: `scale(${breathScale.value})`,
-		opacity: breathOpacity.value,
-		transition: `transform ${Math.max(dur, 0.2)}s linear, opacity ${Math.max(dur, 0.2)}s linear`,
+		opacity: softOpacity,
+		transition: `transform ${Math.max(dur, 0.25)}s ease-in-out, opacity ${Math.max(dur, 0.25)}s ease-in-out`,
 	}
 })
 
 const visibleNotes = computed(() => notes.filter((n) => n.state !== 'bubble'))
 const bubbledNotes = computed(() => notes.filter((n) => n.state === 'bubble'))
 const draftRows = computed(() => Math.min(8, Math.max(3, draftNote.value.split('\n').length)))
-const summaryMessage = computed(() => {
-	const g = wordGoal.value
-	const w = sessionWords.value
-	if (w >= g) return 'You met the aim for this block.'
-	return 'Showing up compounds. Your next sessions are ready when you are.'
+const showDraftComposer = computed(
+	() =>
+		phase.value === 'focus' &&
+		(captureZoneActive.value || draftPinned.value || !!draftNote.value.trim()),
+)
+const draftComposerStyle = computed(() => {
+	const w = 208
+	const h = 40 + draftRows.value * 16
+	const x = clamp(draftX.value, 12, (typeof window !== 'undefined' ? window.innerWidth : 800) - w - 12)
+	const y = clamp(draftY.value, 12, (typeof window !== 'undefined' ? window.innerHeight : 600) - h - 12)
+	return { left: `${x}px`, top: `${y}px` }
+})
+const skippedRitual = ref(false)
+const capturedSideIdeas = computed(() => notes.some((n) => (n.text || '').trim().length > 0))
+const sessionElapsedMins = computed(() => {
+	if (!sessionStartedOn.value) return 0
+	return Math.max(0, dayjs().diff(dayjs(sessionStartedOn.value), 'minute', true))
 })
 
-const completeSteps = [
-	{ title: 'How did it feel?', help: 'One tap — no overthinking.' },
-	{ title: 'Aim for next time', help: 'Increase, keep, or decrease how ambitious the word aim feels.' },
-	{ title: 'Distraction & fades', help: 'Tell us how pulled away you felt — then nudge fade timing.' },
-	{ title: 'Next focus & schedule', help: 'Leave a note for next Start and plan a few sessions ahead.' },
-]
+/** Steps shown depend on words written and what happened in focus. */
+const activeCompleteSteps = computed(() => {
+	const words = sessionWords.value
+	const steps = []
+	if (words >= 1) {
+		steps.push({
+			id: 'feel',
+			title: 'How did it feel?',
+			help: 'One tap — no overthinking.',
+		})
+	}
+	// Aim only after enough writing to judge the goal
+	if (words >= 20) {
+		steps.push({
+			id: 'aim',
+			title: 'Aim for next time',
+			help: 'Increase, keep, or decrease how ambitious the word aim feels.',
+		})
+	}
+	if (words >= 1 || capturedSideIdeas.value) {
+		steps.push({
+			id: 'distraction',
+			title: capturedSideIdeas.value ? 'Distraction & fades' : 'Distraction',
+			help: capturedSideIdeas.value
+				? 'Tell us how pulled away you felt — then nudge fade timing.'
+				: 'Tell us how pulled away you felt.',
+		})
+	}
+	if (words >= 1) {
+		steps.push({
+			id: 'next_topic',
+			title: 'Next topic',
+			help: 'What should you focus on when you start next time?',
+		})
+		steps.push({
+			id: 'plan',
+			title: 'Plan sessions',
+			help: 'Move suggested tiles onto days; booked sessions stay visible for context.',
+		})
+	}
+	// Ritual length only if they actually went through Arrive
+	if (!skippedRitual.value && words >= 1 && sessionElapsedMins.value >= 2) {
+		steps.push({
+			id: 'start_long',
+			title: 'Was the start too long?',
+			help: 'Optional — helps us soften the ritual if it felt heavy.',
+		})
+	}
+	return steps
+})
+const currentCompleteStep = computed(
+	() => activeCompleteSteps.value[completeStep.value] || null,
+)
+
+const planSlotValues = computed(() => [...scheduleSlots])
+const planBookedSessions = computed(() =>
+	(scheduledChapters.value || []).map((c) => ({
+		name: c.name,
+		title: c.title,
+		next_write_on: c.next_write_on,
+	})),
+)
+
+function onPlanSlotsUpdate(next) {
+	;(next || []).forEach((value, i) => {
+		scheduleSlots[i] = value || ''
+	})
+}
 
 function loadChecklists() {
 	runwayChecks.splice(0)
@@ -582,6 +706,10 @@ function stopBreath() {
 	countdownTimer = null
 }
 
+const phaseGapSeconds = computed(() =>
+	Math.max(0, Number(state.settings.breath_phase_gap_seconds) || 0.8),
+)
+
 function runCountdown(seconds, onDone) {
 	phaseCountdown.value = seconds
 	clearInterval(countdownTimer)
@@ -592,6 +720,19 @@ function runCountdown(seconds, onDone) {
 			onDone()
 		}
 	}, 1000)
+}
+
+/** Soft pause after inhale/exhale before hold countdown starts. */
+function afterPhaseGap(next) {
+	const gap = phaseGapSeconds.value
+	if (!gap) {
+		next()
+		return
+	}
+	// Keep the circle still; hide the ticking number during the gap
+	phaseCountdown.value = ''
+	clearTimeout(breathTimer)
+	breathTimer = setTimeout(next, gap * 1000)
 }
 
 function startBreathCycle() {
@@ -608,24 +749,24 @@ function runPhase(name) {
 	if (name === 'inhale') {
 		breathScale.value = 1.2
 		breathOpacity.value = 1
-		runCountdown(inhaleSeconds.value, () => runPhase('hold_in'))
+		runCountdown(inhaleSeconds.value, () => afterPhaseGap(() => runPhase('hold_in')))
 	} else if (name === 'hold_in') {
 		breathScale.value = 1.2
 		breathOpacity.value = 0.45
 		const s = Math.max(holdInSeconds.value, 0)
-		if (!s) return runPhase('exhale')
-		runCountdown(s, () => runPhase('exhale'))
+		if (!s) return afterPhaseGap(() => runPhase('exhale'))
+		runCountdown(s, () => afterPhaseGap(() => runPhase('exhale')))
 	} else if (name === 'exhale') {
 		breathScale.value = 1
 		breathOpacity.value = 1
-		runCountdown(exhaleSeconds.value, () => runPhase('hold_out'))
+		runCountdown(exhaleSeconds.value, () => afterPhaseGap(() => runPhase('hold_out')))
 	} else {
 		breathScale.value = 1
 		breathOpacity.value = 0.5
 		const s = Math.max(holdOutSeconds.value, 0)
 		const done = () => {
 			breathsCompleted.value += 1
-			runPhase('inhale')
+			afterPhaseGap(() => runPhase('inhale'))
 		}
 		if (!s) return done()
 		runCountdown(s, done)
@@ -640,6 +781,11 @@ watch(step, (s) => {
 function next() {
 	if (step.value === 2 && !aimChoice.value) return
 	if (step.value < steps.length - 1) step.value += 1
+}
+
+function skipRitualToFocus() {
+	skippedRitual.value = true
+	enterFocus()
 }
 
 function enterFocus() {
@@ -672,8 +818,26 @@ function splitPages(text) {
 	return out.length ? out : ['']
 }
 
+function peekText(text) {
+	const t = String(text || '').replace(/\s+/g, ' ').trim()
+	if (!t) return ''
+	return t.length > 160 ? `${t.slice(0, 157)}…` : t
+}
+
+function goPrevPage() {
+	if (pageIndex.value > 0) pageIndex.value -= 1
+	nextTick(() => focusInput.value?.focus())
+}
+
+function goNextPage() {
+	if (pageIndex.value < pages.value.length - 1) pageIndex.value += 1
+	nextTick(() => focusInput.value?.focus())
+}
+
 function onFocusInput() {
 	if (!pagePileOn.value) return
+	// Only open a new sheet after the current (latest) page is filled —
+	// writers finish the page before another appears.
 	const w = countWords(activePageText.value)
 	if (w > pageWords.value * 1.15 && pageIndex.value === pages.value.length - 1) {
 		pages.value.push('')
@@ -681,14 +845,61 @@ function onFocusInput() {
 	}
 }
 
-function ensureNextPage() {
-	if (pageIndex.value >= pages.value.length - 1) pages.value.push('')
-	pageIndex.value += 1
+function placeDraftAtPointer(clientX, clientY) {
+	pointerX.value = clientX
+	pointerY.value = clientY
+	if (!draftPinned.value && !draftNote.value) {
+		draftX.value = clientX + 8
+		draftY.value = clientY + 8
+	}
+}
+
+function onFocusPointer(e) {
+	if (draftPinned.value || draftNote.value) return
+	// Right-side band (~last 200px) also updates position while moving toward capture
+	const fromRight = (typeof window !== 'undefined' ? window.innerWidth : 0) - e.clientX
+	if (fromRight < 220 || captureZoneActive.value) {
+		placeDraftAtPointer(e.clientX, e.clientY)
+	}
+}
+
+function onDraftPointer(e) {
+	if (draftPinned.value || draftNote.value) return
+	placeDraftAtPointer(e.clientX, e.clientY)
+}
+
+function onCaptureEnter(e) {
+	captureZoneActive.value = true
+	placeDraftAtPointer(e.clientX, e.clientY)
+	nextTick(() => draftInput.value?.focus())
+}
+
+function onCaptureLeave() {
+	// Delay so the pointer can enter the floating draft without dismissing it
+	setTimeout(() => {
+		if (draftNote.value.trim() || draftPinned.value) return
+		if (document.activeElement === draftInput.value) return
+		captureZoneActive.value = false
+		notes.forEach((n) => {
+			n.focused = false
+			if (n.text.trim() && n.state === 'solid') scheduleNoteFade(n)
+		})
+	}, 160)
+}
+
+function onDraftComposerLeave() {
+	if (draftNote.value.trim()) return
+	if (document.activeElement === draftInput.value) return
+	draftPinned.value = false
+	captureZoneActive.value = false
 }
 
 function openComplete() {
-	completeOpen.value = true
-	completeStep.value = 0
+	// Nothing written → skip the wizard entirely
+	if (sessionWords.value <= 0 && !capturedSideIdeas.value) {
+		finishSession({ quiet: true })
+		return
+	}
 	if (focusNoteAction.value === 'edited' && priorFocusNoteDraft.value) {
 		feedback.next_focus_note = priorFocusNoteDraft.value
 	} else if (priorFocusNote.value && !feedback.next_focus_note) {
@@ -699,25 +910,47 @@ function openComplete() {
 	scheduleSlots[0] = slot(1)
 	scheduleSlots[1] = slot(3)
 	scheduleSlots[2] = slot(5)
+
+	const steps = activeCompleteSteps.value
+	if (!steps.length) {
+		finishSession({ quiet: true })
+		return
+	}
+	completeStep.value = 0
+	completeOpen.value = true
 }
 
 function onDistraction(id) {
 	feedback.distraction_level = id
+	if (!capturedSideIdeas.value) {
+		feedback.fade_adjust = 'keep'
+		return
+	}
 	if (id === 'quite') feedback.fade_adjust = 'increase'
 	else if (id === 'focused') feedback.fade_adjust = 'decrease'
 	else feedback.fade_adjust = 'keep'
 }
 
 function nextComplete() {
-	if (completeStep.value < completeSteps.length - 1) {
+	if (completeStep.value < activeCompleteSteps.value.length - 1) {
 		completeStep.value += 1
 		return
 	}
 	finishSession()
 }
 
-async function finishSession() {
+function stepIncluded(id) {
+	return activeCompleteSteps.value.some((s) => s.id === id)
+}
+
+async function finishSession({ quiet = false } = {}) {
 	completeOpen.value = false
+	const includeFeel = stepIncluded('feel')
+	const includeAim = stepIncluded('aim')
+	const includeDistraction = stepIncluded('distraction')
+	const includeTopic = stepIncluded('next_topic')
+	const includePlan = stepIncluded('plan')
+	const includeStartLong = stepIncluded('start_long')
 	try {
 		await completeWritingSession({
 			name: chapter.value.name,
@@ -725,16 +958,22 @@ async function finishSession() {
 			word_goal: wordGoal.value,
 			started_on: sessionStartedOn.value,
 			aim_choice: aimChoice.value,
-			felt_productive: feedback.felt_productive,
-			aim_adjust: feedback.aim_adjust,
-			distraction_level: feedback.distraction_level,
-			fade_adjust: feedback.fade_adjust,
-			start_felt_long: feedback.start_felt_long,
-			next_focus_note: feedback.next_focus_note,
+			felt_productive: includeFeel ? feedback.felt_productive : '',
+			aim_adjust: includeAim ? feedback.aim_adjust : '',
+			distraction_level: includeDistraction ? feedback.distraction_level : '',
+			fade_adjust:
+				includeDistraction && capturedSideIdeas.value ? feedback.fade_adjust : '',
+			start_felt_long: includeStartLong ? feedback.start_felt_long : 'skip',
+			// Preserve prior note when the Next-topic step was skipped
+			next_focus_note: includeTopic
+				? feedback.next_focus_note
+				: state.prefs.last_next_focus_note || '',
 			prior_focus_note_action: priorFocusNote.value ? focusNoteAction.value : '',
 			was_scheduled: chapter.value.next_write_on ? 1 : 0,
 			schedule_slots: JSON.stringify(
-				scheduleSlots.filter(Boolean).map((s) => dayjs(s).format('YYYY-MM-DD HH:mm:ss')),
+				includePlan
+					? scheduleSlots.filter(Boolean).map((s) => dayjs(s).format('YYYY-MM-DD HH:mm:ss'))
+					: [],
 			),
 			content: `<p>${String(sessionBody.value || '')
 				.split(/\n+/)
@@ -745,8 +984,9 @@ async function finishSession() {
 		})
 	} catch (e) {
 		toast.error(errorMessage(e, 'Could not save session'))
+		return
 	}
-	phase.value = 'summary'
+	router.replace(chapter.value ? `/ideas/${chapter.value.name}` : '/ideas')
 }
 
 function tintFor(id) {
@@ -850,6 +1090,7 @@ function onNoteInput(note) {
 	if (note.text.split('\n').length >= 3) captureDialog.value = note
 }
 function onDraftInput() {
+	draftPinned.value = true
 	clearTimeout(draftTimer)
 	draftTimer = setTimeout(async () => {
 		const text = draftNote.value.trim()
@@ -866,6 +1107,8 @@ function onDraftInput() {
 		})
 		notes.push(note)
 		draftNote.value = ''
+		draftPinned.value = false
+		captureZoneActive.value = false
 		try {
 			const saved = await captureSideIdea({ parent: chapter.value.name, text })
 			note.chapterName = saved.name
@@ -878,17 +1121,10 @@ function onDraftInput() {
 		if (seen >= 5) showCaptureHint.value = false
 	}, 1500)
 }
-function onRailLeave() {
-	railHover.value = false
-	notes.forEach((n) => {
-		n.focused = false
-		if (n.text.trim() && n.state === 'solid') scheduleNoteFade(n)
-	})
-}
 function restoreBubble(note) {
 	note.state = 'solid'
 	note.focused = true
-	railHover.value = true
+	captureZoneActive.value = true
 }
 function onCaptureDialogInput() {
 	if (captureDialog.value) onNoteInput(captureDialog.value)
@@ -903,9 +1139,6 @@ function closeCaptureDialog() {
 
 function leave() {
 	router.push(chapter.value ? `/ideas/${chapter.value.name}` : '/growth')
-}
-function backToWrite() {
-	router.push(`/ideas/${chapter.value.name}`)
 }
 function onKeydown(e) {
 	if (phase.value === 'focus' && e.key === 'Escape') {

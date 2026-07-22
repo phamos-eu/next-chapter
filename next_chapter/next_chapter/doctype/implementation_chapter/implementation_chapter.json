@@ -12,6 +12,7 @@
   "writing_stage",
   "column_break_meta",
   "hidden_until",
+  "auto_hidden",
   "next_write_on",
   "write_duration_mins",
   "summary",
@@ -65,6 +66,13 @@
    "fieldname": "hidden_until",
    "fieldtype": "Datetime",
    "label": "Hidden Until"
+  },
+  {
+   "default": "0",
+   "description": "Hidden because it fell outside the user’s visible Ideas limit.",
+   "fieldname": "auto_hidden",
+   "fieldtype": "Check",
+   "label": "Auto Hidden"
   },
   {
    "description": "When you plan to continue writing.",

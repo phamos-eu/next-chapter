@@ -17,10 +17,26 @@ export const STAGE_META = {
 	'9': { metaphor: 'Sprout', job: 'First filter — keep what still interests you' },
 	'7': { metaphor: 'Seedling', job: 'Clarify the point in a few sentences' },
 	'5': { metaphor: 'Young plant', job: 'Structure emerging' },
-	'3': { metaphor: 'Growing', job: 'Serious candidates' },
-	'1': { metaphor: 'Mature focus', job: 'The one you write deeply' },
+	// Stage 3+: page-pile stack unlocks. Later maturity: page count + explicit Prev/Next chrome.
+	'3': {
+		metaphor: 'Growing',
+		job: 'Serious candidates',
+		page_pile: true,
+		future_page_nav: true,
+	},
+	'1': {
+		metaphor: 'Mature focus',
+		job: 'The one you write deeply',
+		page_pile: true,
+		future_page_nav: true,
+	},
 	Done: { metaphor: 'Harvest', job: 'Finished chapter' },
 }
+
+/** Stages where pile-of-pages focus mode may appear (not 9 / 7 / 5). */
+export const PAGE_PILE_STAGES = Object.keys(STAGE_META).filter(
+	(s) => STAGE_META[s]?.page_pile,
+)
 
 export const STAGES = ['∞', '9', '7', '5', '3', '1', 'Done']
 
@@ -44,6 +60,14 @@ const state = reactive({
 
 let bootstrapPromise = null
 
+function applyUiScale(scale) {
+	const pct = Math.max(90, Math.min(140, Number(scale) || 110))
+	if (typeof document !== 'undefined') {
+		document.documentElement.style.fontSize = `${(16 * pct) / 100}px`
+		document.documentElement.style.setProperty('--nc-ui-scale', String(pct / 100))
+	}
+}
+
 function applyBootstrap(data) {
 	state.needsSetup = Boolean(data.needs_setup)
 	state.story = data.story || null
@@ -55,6 +79,7 @@ function applyBootstrap(data) {
 	state.prefs = data.prefs || {}
 	state.loaded = true
 	state.error = ''
+	applyUiScale(state.prefs.ui_scale ?? 110)
 
 	if (state.active && !state.chapters.some((c) => c.name === state.active)) {
 		state.active = null
@@ -81,7 +106,9 @@ export function useWorkspace() {
 
 	const filteredChapters = computed(() => {
 		const q = state.search.trim().toLowerCase()
-		return state.chapters.filter((c) => {
+		const sort = state.prefs.ideas_sort || 'modified_desc'
+		const stageRank = Object.fromEntries(state.stages.map((s, i) => [s, i]))
+		const list = state.chapters.filter((c) => {
 			const hidden = Boolean(c.is_hidden)
 			if (state.listMode === 'hidden' ? !hidden : hidden) return false
 			if (state.stageFilter !== 'All' && c.writing_stage !== state.stageFilter) {
@@ -91,6 +118,20 @@ export function useWorkspace() {
 			const hay = `${c.title || ''} ${c.summary || ''}`.toLowerCase()
 			return hay.includes(q)
 		})
+		list.sort((a, b) => {
+			if (sort === 'title_asc') {
+				return (a.title || '').localeCompare(b.title || '')
+			}
+			if (sort === 'stage_asc') {
+				return (stageRank[a.writing_stage] ?? 99) - (stageRank[b.writing_stage] ?? 99)
+			}
+			if (sort === 'sequence_asc') {
+				return (a.sequence || 0) - (b.sequence || 0)
+			}
+			// modified_desc — recently edited first
+			return dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf()
+		})
+		return list
 	})
 
 	const scheduledChapters = computed(() =>
@@ -124,6 +165,15 @@ export function useWorkspace() {
 		return bootstrapPromise
 	}
 
+	async function refreshVisibility() {
+		try {
+			const chapters = await call('next_chapter.api.chapter.reconcile_visible_ideas')
+			if (Array.isArray(chapters)) state.chapters = chapters
+		} catch {
+			/* non-fatal */
+		}
+	}
+
 	async function createIdea(title = 'New idea') {
 		const chapter = await call('next_chapter.api.chapter.create_chapter', {
 			title,
@@ -131,12 +181,14 @@ export function useWorkspace() {
 		state.chapters.unshift(chapter)
 		state.active = chapter.name
 		state.listMode = 'active'
+		await refreshVisibility()
 		return chapter
 	}
 
 	async function saveChapter(fields) {
 		const chapter = await call('next_chapter.api.chapter.save_chapter', fields)
 		replaceChapter(chapter)
+		await refreshVisibility()
 		return chapter
 	}
 
@@ -171,6 +223,7 @@ export function useWorkspace() {
 	async function unhideChapter(name) {
 		const chapter = await call('next_chapter.api.chapter.unhide_chapter', { name })
 		replaceChapter(chapter)
+		await refreshVisibility()
 		return chapter
 	}
 
@@ -198,6 +251,7 @@ export function useWorkspace() {
 		if (result?.prefs) {
 			state.prefs = result.prefs
 		}
+		await refreshVisibility()
 		return result
 	}
 
@@ -216,9 +270,16 @@ export function useWorkspace() {
 	}
 
 	async function savePrefs(updates) {
-		const prefs = await call('next_chapter.api.session.save_prefs', updates)
-		state.prefs = prefs || {}
-		return prefs
+		const result = await call('next_chapter.api.session.save_prefs', updates)
+		if (result?.prefs) {
+			state.prefs = result.prefs
+			if (Array.isArray(result.chapters)) state.chapters = result.chapters
+			if (updates.ui_scale != null) applyUiScale(result.prefs.ui_scale)
+			return result.prefs
+		}
+		state.prefs = result || {}
+		if (updates.ui_scale != null) applyUiScale(state.prefs.ui_scale)
+		return result
 	}
 
 	function effectiveSetting(key, fallback = null) {
@@ -276,6 +337,7 @@ export function useWorkspace() {
 		captureSideIdea,
 		fetchChapterStats,
 		savePrefs,
+		applyUiScale,
 		effectiveSetting,
 		downloadIcs,
 		formatDateTime,

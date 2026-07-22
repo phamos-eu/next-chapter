@@ -57,6 +57,10 @@ def get_bootstrap():
 	)
 	chapters = [_serialize(row) for row in rows]
 	_expire_hidden(chapters)
+	# Re-apply visible limit / auto-hide after expiry cleanup
+	from next_chapter.api.chapter import reconcile_ideas_visibility
+
+	chapters = reconcile_ideas_visibility(story_name)
 
 	return {
 		"needs_setup": False,
@@ -80,6 +84,8 @@ def _expire_hidden(chapters: list[dict]):
 	for chapter in chapters:
 		hidden_until = chapter.get("hidden_until")
 		if not hidden_until:
+			# still respect auto_hidden
+			chapter["is_hidden"] = bool(chapter.get("auto_hidden"))
 			continue
 		if get_datetime(hidden_until) <= now:
 			frappe.db.set_value(
@@ -90,7 +96,9 @@ def _expire_hidden(chapters: list[dict]):
 				update_modified=False,
 			)
 			chapter["hidden_until"] = None
-			chapter["is_hidden"] = False
+			chapter["is_hidden"] = bool(chapter.get("auto_hidden"))
+		else:
+			chapter["is_hidden"] = True
 
 
 @frappe.whitelist()

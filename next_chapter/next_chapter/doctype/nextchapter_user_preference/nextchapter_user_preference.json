@@ -13,7 +13,12 @@
   "breath_count",
   "column_break_prefs",
   "aim_bias",
-  "last_next_focus_note"
+  "last_next_focus_note",
+  "ideas_section",
+  "ideas_sort",
+  "ideas_visible_limit",
+  "appearance_section",
+  "ui_scale"
  ],
  "fields": [
   {
@@ -76,6 +81,40 @@
    "fieldname": "last_next_focus_note",
    "fieldtype": "Small Text",
    "label": "Last Next Focus Note"
+  },
+  {
+   "fieldname": "ideas_section",
+   "fieldtype": "Section Break",
+   "label": "Ideas Overview"
+  },
+  {
+   "default": "modified_desc",
+   "description": "How the Ideas list is ordered. Not shown as controls on the overview itself.",
+   "fieldname": "ideas_sort",
+   "fieldtype": "Select",
+   "label": "Ideas Sort",
+   "options": "modified_desc\ntitle_asc\nstage_asc\nsequence_asc"
+  },
+  {
+   "default": "20",
+   "description": "How many ideas stay Active; the rest are auto-hidden.",
+   "fieldname": "ideas_visible_limit",
+   "fieldtype": "Int",
+   "label": "Visible Ideas Limit",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "appearance_section",
+   "fieldtype": "Section Break",
+   "label": "Appearance"
+  },
+  {
+   "default": "110",
+   "description": "UI text scale percent (100 = browser default).",
+   "fieldname": "ui_scale",
+   "fieldtype": "Int",
+   "label": "UI Scale (%)",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 0,

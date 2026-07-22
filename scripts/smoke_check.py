@@ -193,6 +193,7 @@ def main() -> int:
 				"fade_duration_secs",
 				"fade_idle_min_secs",
 				"fade_idle_max_secs",
+				"fade_drag",
 				"bubble_label_chars",
 				"runway_checklist",
 				"body_checklist",

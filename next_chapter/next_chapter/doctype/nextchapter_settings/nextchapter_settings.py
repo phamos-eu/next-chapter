@@ -23,6 +23,7 @@ DEFAULTS = {
 	"fade_duration_secs": 2,
 	"fade_idle_min_secs": 2,
 	"fade_idle_max_secs": 8,
+	"fade_drag": 0.25,
 	"bubble_label_chars": 12,
 }
 
@@ -108,6 +109,12 @@ def get_settings_dict() -> dict:
 	data = {
 		key: doc.get(key) if doc.get(key) is not None else DEFAULTS[key] for key in DEFAULTS
 	}
+	# Keep fade_drag in [0, 1]
+	try:
+		drag = float(data.get("fade_drag") if data.get("fade_drag") is not None else DEFAULTS["fade_drag"])
+	except (TypeError, ValueError):
+		drag = DEFAULTS["fade_drag"]
+	data["fade_drag"] = max(0.0, min(1.0, drag))
 	data["runway_checklist"] = _checklist_payload(doc.get("runway_checklist"))
 	data["body_checklist"] = _checklist_payload(doc.get("body_checklist"))
 	return data

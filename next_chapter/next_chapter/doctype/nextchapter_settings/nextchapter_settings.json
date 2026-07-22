@@ -25,6 +25,7 @@
   "fade_duration_secs",
   "fade_idle_min_secs",
   "fade_idle_max_secs",
+  "fade_drag",
   "bubble_label_chars",
   "runway_section",
   "runway_checklist",
@@ -184,6 +185,15 @@
    "fieldname": "fade_idle_max_secs",
    "fieldtype": "Int",
    "label": "Fade Idle Max (secs)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0.25",
+   "description": "How much fade timing may vary each time (0 = fixed, 1 = full swing within min/max). Applies as relative jitter so fades never feel repetitive.",
+   "fieldname": "fade_drag",
+   "fieldtype": "Float",
+   "label": "Fade Drag",
    "non_negative": 1,
    "reqd": 1
   },

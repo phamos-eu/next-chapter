@@ -16,6 +16,7 @@
   "write_duration_mins",
   "summary",
   "last_session_words",
+  "spawned_from",
   "content_section",
   "content"
  ],
@@ -92,6 +93,13 @@
    "fieldtype": "Int",
    "label": "Last Session Words",
    "non_negative": 1
+  },
+  {
+   "description": "Parent chapter this idea was captured from during a writing session.",
+   "fieldname": "spawned_from",
+   "fieldtype": "Link",
+   "label": "Spawned From",
+   "options": "Implementation Chapter"
   },
   {
    "fieldname": "content_section",

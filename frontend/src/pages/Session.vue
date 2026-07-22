@@ -297,7 +297,10 @@
       v-if="completeOpen && currentCompleteStep"
       class="absolute inset-0 z-40 flex items-center justify-center bg-ink-gray-9/35 p-4"
     >
-      <div class="w-full max-w-md rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-lg">
+      <div
+        class="w-full rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-lg"
+        :class="currentCompleteStep.id === 'plan' ? 'max-w-3xl' : 'max-w-md'"
+      >
         <h2 class="text-lg font-semibold text-ink-gray-9">{{ currentCompleteStep.title }}</h2>
         <p class="mt-1 text-sm text-ink-gray-5">{{ currentCompleteStep.help }}</p>
 
@@ -375,13 +378,12 @@
           />
         </div>
 
-        <div v-else-if="currentCompleteStep.id === 'plan'" class="mt-4 space-y-3 text-left">
-          <FormControl
-            v-for="(slot, i) in scheduleSlots"
-            :key="i"
-            v-model="scheduleSlots[i]"
-            type="datetime-local"
-            :label="`Session ${i + 1}`"
+        <div v-else-if="currentCompleteStep.id === 'plan'" class="mt-4 text-left">
+          <SessionPlanCalendar
+            :model-value="planSlotValues"
+            :booked="planBookedSessions"
+            :draft-label="chapter?.title || 'This idea'"
+            @update:model-value="onPlanSlotsUpdate"
           />
         </div>
 
@@ -450,6 +452,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useRoute, useRouter } from 'vue-router'
 import { Button, FormControl, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
+import SessionPlanCalendar from '@/components/SessionPlanCalendar.vue'
 import { PAGE_PILE_STAGES, useWorkspace } from '@/composables/useWorkspace'
 
 const HINT_KEY = 'nextchapter_focus_capture_hints_seen'
@@ -463,6 +466,7 @@ const {
 	countWords,
 	effectiveSetting,
 	errorMessage,
+	scheduledChapters,
 } = useWorkspace()
 
 const phase = ref('loading')
@@ -675,7 +679,7 @@ const activeCompleteSteps = computed(() => {
 		steps.push({
 			id: 'plan',
 			title: 'Plan sessions',
-			help: 'Pick a few times to show up again — three slots by default.',
+			help: 'Move suggested tiles onto days; booked sessions stay visible for context.',
 		})
 	}
 	// Ritual length only if they actually went through Arrive
@@ -691,6 +695,21 @@ const activeCompleteSteps = computed(() => {
 const currentCompleteStep = computed(
 	() => activeCompleteSteps.value[completeStep.value] || null,
 )
+
+const planSlotValues = computed(() => [...scheduleSlots])
+const planBookedSessions = computed(() =>
+	(scheduledChapters.value || []).map((c) => ({
+		name: c.name,
+		title: c.title,
+		next_write_on: c.next_write_on,
+	})),
+)
+
+function onPlanSlotsUpdate(next) {
+	;(next || []).forEach((value, i) => {
+		scheduleSlots[i] = value || ''
+	})
+}
 
 function loadChecklists() {
 	runwayChecks.splice(0)

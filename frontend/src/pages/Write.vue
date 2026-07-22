@@ -184,13 +184,24 @@
     >
       <div
         class="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#d4cfc6] bg-[#faf8f5] p-4 shadow-lg sm:p-5"
-        @mousemove="bumpEditIdle"
         @keydown="bumpEditIdle"
+        @pointerdown="bumpEditIdle"
       >
         <div class="mb-3 flex shrink-0 items-center justify-between gap-3">
           <div class="font-medium text-ink-gray-9">Edit writing</div>
-          <div v-if="editCountdown !== null" class="text-xs text-ink-gray-5">
-            Closing in {{ editCountdown }}s…
+          <div
+            class="rounded-full px-2.5 py-1 text-xs tabular-nums"
+            :class="
+              editCountdown !== null && editCountdown <= 3
+                ? 'bg-amber-100/80 text-amber-800'
+                : 'bg-[#efece7] text-ink-gray-6'
+            "
+            :aria-live="editCountdown !== null && editCountdown <= 3 ? 'polite' : 'off'"
+          >
+            <template v-if="editCountdown !== null && editCountdown <= 3">
+              Closing in {{ editCountdown }}s…
+            </template>
+            <template v-else> Auto-close in {{ editSecondsLeft }}s </template>
           </div>
         </div>
         <textarea
@@ -199,6 +210,7 @@
           class="min-h-0 w-full flex-1 resize-none rounded-xl border border-[#ddd8d0] bg-[#f7f5f1] p-4 leading-relaxed outline-none"
           :style="{ fontSize: `${focusFontSize}px` }"
           @input="bumpEditIdle"
+          @scroll="bumpEditIdle"
         />
         <div class="mt-3 flex shrink-0 justify-end gap-2">
           <Button variant="subtle" label="Cancel" @click="closeEdit(false)" />
@@ -275,6 +287,9 @@ const stats = ref(null)
 const editOpen = ref(false)
 const editText = ref('')
 const editInput = ref(null)
+/** Seconds left until auto-close; always shown while dialog is open. */
+const editSecondsLeft = ref(0)
+/** Set only in the final 3s for the stronger “Closing in…” state. */
 const editCountdown = ref(null)
 let editIdleTimer = null
 let editTickTimer = null
@@ -514,27 +529,42 @@ function openEdit() {
 	nextTick(() => editInput.value?.focus())
 }
 
+function editIdleSecs() {
+	const fromPref = Number(effectiveSetting('edit_idle_secs', 45))
+	return Math.max(5, fromPref || 45)
+}
+
+function syncEditCountdownDisplay() {
+	const left = Math.max(0, Math.ceil((editDeadline - Date.now()) / 1000))
+	editSecondsLeft.value = left
+	editCountdown.value = left <= 3 && left > 0 ? left : null
+	if (left <= 0) {
+		clearInterval(editTickTimer)
+		editTickTimer = null
+		closeEdit(true)
+	}
+}
+
 function bumpEditIdle() {
-	const idle = Number(effectiveSetting('edit_idle_secs', 45)) || 45
+	if (!editOpen.value) return
+	const idle = editIdleSecs()
 	editDeadline = Date.now() + idle * 1000
-	editCountdown.value = null
 	clearTimeout(editIdleTimer)
 	clearInterval(editTickTimer)
-	editTickTimer = setInterval(() => {
-		const left = Math.ceil((editDeadline - Date.now()) / 1000)
-		if (left <= 3 && left > 0) editCountdown.value = left
-		if (left <= 0) {
-			clearInterval(editTickTimer)
-			closeEdit(true)
-		}
-	}, 200)
+	syncEditCountdownDisplay()
+	editTickTimer = setInterval(syncEditCountdownDisplay, 250)
 	editIdleTimer = setTimeout(() => closeEdit(true), idle * 1000)
 }
 
 async function closeEdit(save) {
+	if (!editOpen.value) return
 	clearTimeout(editIdleTimer)
 	clearInterval(editTickTimer)
+	editIdleTimer = null
+	editTickTimer = null
 	editCountdown.value = null
+	editSecondsLeft.value = 0
+	editOpen.value = false
 	if (save && chapter.value) {
 		const html = `<p>${String(editText.value || '')
 			.split(/\n+/)
@@ -546,7 +576,6 @@ async function closeEdit(save) {
 		draft.content = html
 		saveState.value = 'Saved'
 	}
-	editOpen.value = false
 }
 
 async function onUnhide() {

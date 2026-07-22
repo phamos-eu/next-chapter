@@ -5,146 +5,152 @@
       <Button variant="subtle" label="Back to Ideas" @click="router.push('/ideas')" />
     </div>
 
-    <div v-else class="flex min-h-0 flex-1 overflow-hidden bg-[#f3f1ed]">
-      <section class="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div class="px-5 pt-3">
-          <button
-            class="mb-2 inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
-            @click="router.push('/ideas')"
-          >
-            <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
-            Ideas
-          </button>
-          <div class="flex flex-wrap items-start justify-between gap-4">
-            <TextInput
-              v-model="draft.title"
-              class="overview-title min-w-0 flex-1 !border-0 !bg-transparent !px-0 !py-1"
-              placeholder="Give this idea a short name"
-              @update:model-value="scheduleSave"
+    <div v-else class="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f3f1ed]">
+      <!-- Fixed chrome — no page scroll -->
+      <div class="shrink-0 px-5 pt-3">
+        <button
+          class="mb-2 inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+          @click="router.push('/ideas')"
+        >
+          <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
+          Ideas
+        </button>
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <TextInput
+            v-model="draft.title"
+            class="overview-title min-w-0 flex-1 !border-0 !bg-transparent !px-0 !py-1"
+            placeholder="Give this idea a short name"
+            @update:model-value="scheduleSave"
+          />
+          <div class="flex shrink-0 gap-2 pt-2">
+            <Button variant="subtle" label="Edit" @click="openEdit" />
+            <Button
+              v-if="draft.writing_stage !== 'Done'"
+              variant="solid"
+              label="Start writing session"
+              @click="router.push(`/session/${chapter.name}`)"
             />
-            <div class="flex shrink-0 gap-2 pt-2">
-              <Button variant="subtle" label="Edit" @click="openEdit" />
-              <Button
-                v-if="draft.writing_stage !== 'Done'"
-                variant="solid"
-                label="Start writing session"
-                @click="router.push(`/session/${chapter.name}`)"
-              />
-            </div>
           </div>
-          <p v-if="state.settings.in_development" class="mt-1 text-xs text-amber-700">
-            In Development — gates and ritual skips are unlocked.
-          </p>
         </div>
+        <p v-if="state.settings.in_development" class="mt-1 text-xs text-amber-700">
+          In Development — gates and ritual skips are unlocked.
+        </p>
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#ddd8d0] pb-0">
+          <TabButtons v-model="overviewTab" :buttons="overviewTabs" />
+          <div class="pb-2 text-xs text-ink-gray-5">{{ saveState }}</div>
+        </div>
+      </div>
 
-        <div class="min-h-0 flex-1 overflow-y-auto p-5">
+      <!-- One tab panel fills remaining viewport -->
+      <div class="min-h-0 flex-1 overflow-hidden p-5">
+        <!-- Writing: slate fills space; long text clips — use Edit -->
+        <div v-if="overviewTab === 'writing'" class="flex h-full min-h-0 flex-col">
           <div
-            class="min-h-[16rem] rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+            class="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
             :style="{ fontSize: `${focusFontSize}px` }"
           >
-            <div
-              v-if="plainContent"
-              class="whitespace-pre-wrap"
-            >
-              {{ plainContent }}
-            </div>
+            <div v-if="plainContent" class="whitespace-pre-wrap">{{ plainContent }}</div>
             <p v-else class="text-ink-gray-4">
               No writing yet. Start a session to begin — or use Edit for a quick change.
             </p>
+            <div
+              v-if="plainContent"
+              class="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#faf8f5] to-transparent"
+            />
           </div>
-
-          <div class="mt-4 text-xs text-ink-gray-5">
+          <div class="mt-3 shrink-0 text-xs text-ink-gray-5">
             {{ wordCount }} words
             <span v-if="nextGate">
               · {{ Math.min(wordCount, nextGate.min) }}/{{ nextGate.min }} to reach stage
               {{ nextGate.stage }}
             </span>
             <span v-if="maxWords"> · max {{ maxWords }}</span>
+            <span v-if="plainContent" class="text-ink-gray-4"> · Edit to read all</span>
           </div>
+        </div>
 
-          <!-- 12 stats: 4 themes × 3 -->
-          <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div
-              v-for="col in statColumns"
-              :key="col.title"
-              class="rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-3"
-            >
-              <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
-                {{ col.title }}
-              </div>
-              <div class="mt-2 space-y-2">
-                <div v-for="row in col.rows" :key="row.label">
-                  <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
-                    <span
-                      v-if="row.trend"
-                      class="inline-flex text-[11px] font-medium leading-none"
-                      :class="trendClass(row.trend)"
-                      :title="trendTitle(row.trend)"
-                      aria-hidden="true"
-                    >
-                      {{ trendArrow(row.trend) }}
-                    </span>
-                  </div>
+        <!-- Stats -->
+        <div
+          v-else-if="overviewTab === 'stats'"
+          class="grid h-full min-h-0 content-start gap-3 overflow-hidden sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <div
+            v-for="col in statColumns"
+            :key="col.title"
+            class="min-h-0 overflow-hidden rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-3"
+          >
+            <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
+              {{ col.title }}
+            </div>
+            <div class="mt-2 space-y-2">
+              <div v-for="row in col.rows" :key="row.label">
+                <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+                  <span
+                    v-if="row.trend"
+                    class="inline-flex text-[11px] font-medium leading-none"
+                    :class="trendClass(row.trend)"
+                    :title="trendTitle(row.trend)"
+                    aria-hidden="true"
+                  >
+                    {{ trendArrow(row.trend) }}
+                  </span>
                 </div>
               </div>
-              <svg
-                v-if="col.spark?.length"
-                class="mt-3 h-8 w-full text-ink-gray-6"
-                viewBox="0 0 100 24"
-                preserveAspectRatio="none"
-              >
-                <polyline
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  :points="sparkPoints(col.spark)"
-                />
-              </svg>
             </div>
+            <svg
+              v-if="col.spark?.length"
+              class="mt-3 h-8 w-full text-ink-gray-6"
+              viewBox="0 0 100 24"
+              preserveAspectRatio="none"
+            >
+              <polyline
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                :points="sparkPoints(col.spark)"
+              />
+            </svg>
           </div>
         </div>
-      </section>
 
-      <aside class="flex w-72 shrink-0 flex-col border-l border-[#ddd8d0] bg-[#efece7]">
-        <div class="border-b border-[#ddd8d0] px-4 py-3">
-          <div class="font-medium text-ink-gray-9">Details</div>
-          <div class="text-xs text-ink-gray-5">{{ saveState }}</div>
-        </div>
-        <div class="space-y-4 overflow-y-auto p-4">
-          <FormControl
-            v-model="draft.writing_stage"
-            type="select"
-            label="Growth stage"
-            :options="stageOptions"
-            @update:model-value="onStageChange"
-          />
-          <p v-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-5">
-            {{ STAGE_META[draft.writing_stage].metaphor }} —
-            {{ STAGE_META[draft.writing_stage].job }}
-          </p>
-          <label
-            v-if="pagePileAvailable"
-            class="flex items-center gap-2 text-sm text-ink-gray-7"
-          >
-            <input v-model="pagePile" type="checkbox" @change="onPagePile" />
-            Page pile writing mode
-          </label>
-          <p
-            v-else-if="STAGE_META[draft.writing_stage]"
-            class="text-xs text-ink-gray-4"
-          >
-            Page pile unlocks at stage 3.
-          </p>
-          <p
-            v-if="STAGE_META[draft.writing_stage]?.future_page_nav"
-            class="text-xs text-ink-gray-4"
-          >
-            Later: page count and navigation buttons once writing UX matures.
-          </p>
-          <div class="rounded-lg border border-[#ddd8d0] bg-[#faf8f5] p-3">
-            <div class="mb-2 text-sm font-medium">Next writing session</div>
+        <!-- Details / excess options -->
+        <div
+          v-else
+          class="mx-auto grid h-full min-h-0 max-w-2xl content-start gap-4 overflow-hidden sm:grid-cols-2"
+        >
+          <div class="space-y-3 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-4">
+            <FormControl
+              v-model="draft.writing_stage"
+              type="select"
+              label="Growth stage"
+              :options="stageOptions"
+              @update:model-value="onStageChange"
+            />
+            <p v-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-5">
+              {{ STAGE_META[draft.writing_stage].metaphor }} —
+              {{ STAGE_META[draft.writing_stage].job }}
+            </p>
+            <label
+              v-if="pagePileAvailable"
+              class="flex items-center gap-2 text-sm text-ink-gray-7"
+            >
+              <input v-model="pagePile" type="checkbox" @change="onPagePile" />
+              Page pile writing mode
+            </label>
+            <p v-else-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-4">
+              Page pile unlocks at stage 3.
+            </p>
+            <p
+              v-if="STAGE_META[draft.writing_stage]?.future_page_nav"
+              class="text-xs text-ink-gray-4"
+            >
+              Later: page count and navigation buttons once writing UX matures.
+            </p>
+          </div>
+          <div class="space-y-3 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-4">
+            <div class="text-sm font-medium text-ink-gray-9">Next writing session</div>
             <FormControl
               v-model="draft.next_write_on"
               type="datetime-local"
@@ -152,29 +158,29 @@
               @update:model-value="onSessionChange"
             />
             <Button
-              class="mt-3 w-full"
+              class="w-full"
               variant="subtle"
               label="Add to calendar (.ics)"
               :disabled="!draft.next_write_on"
               @click="downloadIcs(chapter.name)"
             />
+            <Button
+              v-if="chapter.is_hidden"
+              class="w-full"
+              variant="subtle"
+              label="Show idea again"
+              @click="onUnhide"
+            />
+            <Button
+              v-else
+              class="w-full"
+              variant="subtle"
+              label="Hide for later…"
+              @click="hideOpen = true"
+            />
           </div>
-          <Button
-            v-if="chapter.is_hidden"
-            class="w-full"
-            variant="subtle"
-            label="Show idea again"
-            @click="onUnhide"
-          />
-          <Button
-            v-else
-            class="w-full"
-            variant="subtle"
-            label="Hide for later…"
-            @click="hideOpen = true"
-          />
         </div>
-      </aside>
+      </div>
     </div>
 
     <!-- Edit dialog — large from the start; page behind does not scroll -->
@@ -247,6 +253,7 @@ import {
 	Dialog,
 	FeatherIcon,
 	FormControl,
+	TabButtons,
 	TextInput,
 	toast,
 } from 'frappe-ui'
@@ -273,6 +280,13 @@ const {
 const chapter = computed(
 	() => state.chapters.find((c) => c.name === route.params.name) || null,
 )
+
+const overviewTab = ref('writing')
+const overviewTabs = [
+	{ label: 'Writing', value: 'writing' },
+	{ label: 'Stats', value: 'stats' },
+	{ label: 'Details', value: 'details' },
+]
 
 const draft = reactive({
 	title: '',

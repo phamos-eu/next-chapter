@@ -189,9 +189,9 @@
           />
         </div>
 
-        <!-- Next sheet peek — thin edge only (does not cover writing) -->
+        <!-- Next sheet peek: only when a real newer page already exists -->
         <button
-          v-if="pagePileOn && pageIndex < pages.length - 1"
+          v-if="showNextPagePeek"
           type="button"
           class="absolute -right-1 top-6 z-20 h-[70%] w-9 overflow-hidden rounded-r-2xl border border-[#ddd8d0] bg-[#faf8f5] shadow-md transition hover:brightness-[1.02]"
           :style="{ transform: 'translateX(6px) rotate(1.5deg)' }"
@@ -430,7 +430,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useRoute, useRouter } from 'vue-router'
 import { Button, FormControl, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
-import { useWorkspace } from '@/composables/useWorkspace'
+import { PAGE_PILE_STAGES, useWorkspace } from '@/composables/useWorkspace'
 
 const HINT_KEY = 'nextchapter_focus_capture_hints_seen'
 const router = useRouter()
@@ -506,8 +506,15 @@ const prepareSeconds = computed(() =>
 	Math.max(1, Number(state.settings.breath_prepare_seconds) || 3),
 )
 const focusFontSize = computed(() => Number(effectiveSetting('focus_font_size', 18)))
-const pagePileOn = computed(() => Boolean(state.prefs.page_pile))
+const pagePileOn = computed(() => {
+	const stage = chapter.value?.writing_stage
+	return Boolean(state.prefs.page_pile) && PAGE_PILE_STAGES.includes(stage)
+})
 const pageWords = computed(() => Number(state.settings.page_words) || 280)
+/** Forward peek only when a newer sheet already exists (e.g. after going back). */
+const showNextPagePeek = computed(
+	() => pagePileOn.value && pageIndex.value < pages.value.length - 1,
+)
 const requiredBreathsDone = computed(() => breathsCompleted.value >= requiredBreaths.value)
 const fadeDuration = computed(() => Math.max(0.5, Number(effectiveSetting('fade_duration_secs', 2))))
 const bubbleChars = computed(() => Math.max(4, Number(state.settings.bubble_label_chars) || 12))
@@ -735,6 +742,8 @@ function goNextPage() {
 
 function onFocusInput() {
 	if (!pagePileOn.value) return
+	// Only open a new sheet after the current (latest) page is filled —
+	// writers finish the page before another appears.
 	const w = countWords(activePageText.value)
 	if (w > pageWords.value * 1.15 && pageIndex.value === pages.value.length - 1) {
 		pages.value.push('')

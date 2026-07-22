@@ -17,10 +17,26 @@ export const STAGE_META = {
 	'9': { metaphor: 'Sprout', job: 'First filter — keep what still interests you' },
 	'7': { metaphor: 'Seedling', job: 'Clarify the point in a few sentences' },
 	'5': { metaphor: 'Young plant', job: 'Structure emerging' },
-	'3': { metaphor: 'Growing', job: 'Serious candidates' },
-	'1': { metaphor: 'Mature focus', job: 'The one you write deeply' },
+	// Stage 3+: page-pile stack unlocks. Later maturity: page count + explicit Prev/Next chrome.
+	'3': {
+		metaphor: 'Growing',
+		job: 'Serious candidates',
+		page_pile: true,
+		future_page_nav: true,
+	},
+	'1': {
+		metaphor: 'Mature focus',
+		job: 'The one you write deeply',
+		page_pile: true,
+		future_page_nav: true,
+	},
 	Done: { metaphor: 'Harvest', job: 'Finished chapter' },
 }
+
+/** Stages where pile-of-pages focus mode may appear (not 9 / 7 / 5). */
+export const PAGE_PILE_STAGES = Object.keys(STAGE_META).filter(
+	(s) => STAGE_META[s]?.page_pile,
+)
 
 export const STAGES = ['∞', '9', '7', '5', '3', '1', 'Done']
 

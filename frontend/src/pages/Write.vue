@@ -113,10 +113,25 @@
             {{ STAGE_META[draft.writing_stage].metaphor }} —
             {{ STAGE_META[draft.writing_stage].job }}
           </p>
-          <label class="flex items-center gap-2 text-sm text-ink-gray-7">
+          <label
+            v-if="pagePileAvailable"
+            class="flex items-center gap-2 text-sm text-ink-gray-7"
+          >
             <input v-model="pagePile" type="checkbox" @change="onPagePile" />
             Page pile writing mode
           </label>
+          <p
+            v-else-if="STAGE_META[draft.writing_stage]"
+            class="text-xs text-ink-gray-4"
+          >
+            Page pile unlocks at stage 3.
+          </p>
+          <p
+            v-if="STAGE_META[draft.writing_stage]?.future_page_nav"
+            class="text-xs text-ink-gray-4"
+          >
+            Later: page count and navigation buttons once writing UX matures.
+          </p>
           <div class="rounded-lg border border-[#ddd8d0] bg-[#faf8f5] p-3">
             <div class="mb-2 text-sm font-medium">Next writing session</div>
             <FormControl
@@ -214,7 +229,7 @@ import {
 } from 'frappe-ui'
 import dayjs from 'dayjs'
 import AppShell from '@/components/AppShell.vue'
-import { STAGE_META, useWorkspace } from '@/composables/useWorkspace'
+import { PAGE_PILE_STAGES, STAGE_META, useWorkspace } from '@/composables/useWorkspace'
 
 const router = useRouter()
 const route = useRoute()
@@ -266,6 +281,9 @@ const hideOptions = [
 ].map((v) => ({ label: v, value: v }))
 
 const pagePile = ref(false)
+const pagePileAvailable = computed(() =>
+	PAGE_PILE_STAGES.includes(draft.writing_stage),
+)
 const focusFontSize = computed(() => Number(effectiveSetting('focus_font_size', 18)))
 const maxWords = computed(() => Number(state.settings.max_words || 0))
 

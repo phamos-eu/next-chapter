@@ -9,7 +9,7 @@
       class="absolute right-4 top-4 rounded bg-amber-100 px-2 py-1 text-xs text-amber-800"
     >
       In Development
-      <button class="ml-2 underline" type="button" @click="enterFocus">Skip to write</button>
+      <button class="ml-2 underline" type="button" @click="skipRitualToFocus">Skip to write</button>
     </div>
 
     <div class="mx-auto w-full max-w-lg text-center">
@@ -292,16 +292,16 @@
       </div>
     </div>
 
-    <!-- Complete wizard -->
+    <!-- Complete wizard (steps filtered by what happened in the session) -->
     <div
-      v-if="completeOpen"
+      v-if="completeOpen && currentCompleteStep"
       class="absolute inset-0 z-40 flex items-center justify-center bg-ink-gray-9/35 p-4"
     >
       <div class="w-full max-w-md rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-lg">
-        <h2 class="text-lg font-semibold text-ink-gray-9">{{ completeSteps[completeStep].title }}</h2>
-        <p class="mt-1 text-sm text-ink-gray-5">{{ completeSteps[completeStep].help }}</p>
+        <h2 class="text-lg font-semibold text-ink-gray-9">{{ currentCompleteStep.title }}</h2>
+        <p class="mt-1 text-sm text-ink-gray-5">{{ currentCompleteStep.help }}</p>
 
-        <div v-if="completeStep === 0" class="mt-4 grid gap-2">
+        <div v-if="currentCompleteStep.id === 'feel'" class="mt-4 grid gap-2">
           <button
             v-for="opt in [
               { id: 'productive', label: 'Productive' },
@@ -322,7 +322,7 @@
           </button>
         </div>
 
-        <div v-else-if="completeStep === 1" class="mt-4 grid grid-cols-3 gap-2">
+        <div v-else-if="currentCompleteStep.id === 'aim'" class="mt-4 grid grid-cols-3 gap-2">
           <Button
             v-for="opt in ['increase', 'keep', 'decrease']"
             :key="opt"
@@ -332,7 +332,7 @@
           />
         </div>
 
-        <div v-else-if="completeStep === 2" class="mt-4 space-y-3">
+        <div v-else-if="currentCompleteStep.id === 'distraction'" class="mt-4 space-y-3">
           <div class="grid gap-2">
             <button
               v-for="opt in [
@@ -353,19 +353,21 @@
               {{ opt.label }}
             </button>
           </div>
-          <p class="text-xs text-ink-gray-5">Fade timing next time</p>
-          <div class="grid grid-cols-3 gap-2">
-            <Button
-              v-for="opt in ['increase', 'keep', 'decrease']"
-              :key="opt"
-              :variant="feedback.fade_adjust === opt ? 'solid' : 'subtle'"
-              :label="opt"
-              @click="feedback.fade_adjust = opt"
-            />
-          </div>
+          <template v-if="capturedSideIdeas">
+            <p class="text-xs text-ink-gray-5">Fade timing next time</p>
+            <div class="grid grid-cols-3 gap-2">
+              <Button
+                v-for="opt in ['increase', 'keep', 'decrease']"
+                :key="opt"
+                :variant="feedback.fade_adjust === opt ? 'solid' : 'subtle'"
+                :label="opt"
+                @click="feedback.fade_adjust = opt"
+              />
+            </div>
+          </template>
         </div>
 
-        <div v-else-if="completeStep === 3" class="mt-4 text-left">
+        <div v-else-if="currentCompleteStep.id === 'next_topic'" class="mt-4 text-left">
           <FormControl
             v-model="feedback.next_focus_note"
             type="textarea"
@@ -373,7 +375,7 @@
           />
         </div>
 
-        <div v-else-if="completeStep === 4" class="mt-4 space-y-3 text-left">
+        <div v-else-if="currentCompleteStep.id === 'plan'" class="mt-4 space-y-3 text-left">
           <FormControl
             v-for="(slot, i) in scheduleSlots"
             :key="i"
@@ -383,7 +385,7 @@
           />
         </div>
 
-        <div v-else class="mt-4 space-y-3">
+        <div v-else-if="currentCompleteStep.id === 'start_long'" class="mt-4 space-y-3">
           <div class="grid gap-2">
             <button
               v-for="opt in [
@@ -416,7 +418,7 @@
           <Button v-else variant="ghost" label="Resume" @click="completeOpen = false" />
           <Button
             variant="solid"
-            :label="completeStep === completeSteps.length - 1 ? 'Complete' : 'Continue'"
+            :label="completeStep >= activeCompleteSteps.length - 1 ? 'Complete' : 'Continue'"
             @click="nextComplete"
           />
         </div>
@@ -623,18 +625,72 @@ const draftComposerStyle = computed(() => {
 const summaryMessage = computed(() => {
 	const g = wordGoal.value
 	const w = sessionWords.value
+	if (w <= 0) return 'Session closed — nothing new was written this time.'
 	if (w >= g) return 'You met the aim for this block.'
 	return 'Showing up compounds. Your next sessions are ready when you are.'
 })
 
-const completeSteps = [
-	{ title: 'How did it feel?', help: 'One tap — no overthinking.' },
-	{ title: 'Aim for next time', help: 'Increase, keep, or decrease how ambitious the word aim feels.' },
-	{ title: 'Distraction & fades', help: 'Tell us how pulled away you felt — then nudge fade timing.' },
-	{ title: 'Next topic', help: 'What should you focus on when you start next time?' },
-	{ title: 'Plan sessions', help: 'Pick a few times to show up again — three slots by default.' },
-	{ title: 'Was the start too long?', help: 'Optional — helps us soften the ritual if it felt heavy.' },
-]
+const skippedRitual = ref(false)
+const quietComplete = ref(false)
+const capturedSideIdeas = computed(() => notes.some((n) => (n.text || '').trim().length > 0))
+const sessionElapsedMins = computed(() => {
+	if (!sessionStartedOn.value) return 0
+	return Math.max(0, dayjs().diff(dayjs(sessionStartedOn.value), 'minute', true))
+})
+
+/** Steps shown depend on words written and what happened in focus. */
+const activeCompleteSteps = computed(() => {
+	const words = sessionWords.value
+	const steps = []
+	if (words >= 1) {
+		steps.push({
+			id: 'feel',
+			title: 'How did it feel?',
+			help: 'One tap — no overthinking.',
+		})
+	}
+	// Aim only after enough writing to judge the goal
+	if (words >= 20) {
+		steps.push({
+			id: 'aim',
+			title: 'Aim for next time',
+			help: 'Increase, keep, or decrease how ambitious the word aim feels.',
+		})
+	}
+	if (words >= 1 || capturedSideIdeas.value) {
+		steps.push({
+			id: 'distraction',
+			title: capturedSideIdeas.value ? 'Distraction & fades' : 'Distraction',
+			help: capturedSideIdeas.value
+				? 'Tell us how pulled away you felt — then nudge fade timing.'
+				: 'Tell us how pulled away you felt.',
+		})
+	}
+	if (words >= 1) {
+		steps.push({
+			id: 'next_topic',
+			title: 'Next topic',
+			help: 'What should you focus on when you start next time?',
+		})
+		steps.push({
+			id: 'plan',
+			title: 'Plan sessions',
+			help: 'Pick a few times to show up again — three slots by default.',
+		})
+	}
+	// Ritual length only if they actually went through Arrive
+	if (!skippedRitual.value && words >= 1 && sessionElapsedMins.value >= 2) {
+		steps.push({
+			id: 'start_long',
+			title: 'Was the start too long?',
+			help: 'Optional — helps us soften the ritual if it felt heavy.',
+		})
+	}
+	return steps
+})
+const currentCompleteStep = computed(
+	() => activeCompleteSteps.value[completeStep.value] || null,
+)
 
 function loadChecklists() {
 	runwayChecks.splice(0)
@@ -712,6 +768,11 @@ watch(step, (s) => {
 function next() {
 	if (step.value === 2 && !aimChoice.value) return
 	if (step.value < steps.length - 1) step.value += 1
+}
+
+function skipRitualToFocus() {
+	skippedRitual.value = true
+	enterFocus()
 }
 
 function enterFocus() {
@@ -821,8 +882,13 @@ function onDraftComposerLeave() {
 }
 
 function openComplete() {
-	completeOpen.value = true
-	completeStep.value = 0
+	quietComplete.value = false
+	// Nothing written → skip the wizard entirely
+	if (sessionWords.value <= 0 && !capturedSideIdeas.value) {
+		quietComplete.value = true
+		finishSession({ quiet: true })
+		return
+	}
 	if (focusNoteAction.value === 'edited' && priorFocusNoteDraft.value) {
 		feedback.next_focus_note = priorFocusNoteDraft.value
 	} else if (priorFocusNote.value && !feedback.next_focus_note) {
@@ -833,25 +899,49 @@ function openComplete() {
 	scheduleSlots[0] = slot(1)
 	scheduleSlots[1] = slot(3)
 	scheduleSlots[2] = slot(5)
+
+	const steps = activeCompleteSteps.value
+	if (!steps.length) {
+		quietComplete.value = true
+		finishSession({ quiet: true })
+		return
+	}
+	completeStep.value = 0
+	completeOpen.value = true
 }
 
 function onDistraction(id) {
 	feedback.distraction_level = id
+	if (!capturedSideIdeas.value) {
+		feedback.fade_adjust = 'keep'
+		return
+	}
 	if (id === 'quite') feedback.fade_adjust = 'increase'
 	else if (id === 'focused') feedback.fade_adjust = 'decrease'
 	else feedback.fade_adjust = 'keep'
 }
 
 function nextComplete() {
-	if (completeStep.value < completeSteps.length - 1) {
+	if (completeStep.value < activeCompleteSteps.value.length - 1) {
 		completeStep.value += 1
 		return
 	}
 	finishSession()
 }
 
-async function finishSession() {
+function stepIncluded(id) {
+	return activeCompleteSteps.value.some((s) => s.id === id)
+}
+
+async function finishSession({ quiet = false } = {}) {
 	completeOpen.value = false
+	quietComplete.value = quiet || sessionWords.value <= 0
+	const includeFeel = stepIncluded('feel')
+	const includeAim = stepIncluded('aim')
+	const includeDistraction = stepIncluded('distraction')
+	const includeTopic = stepIncluded('next_topic')
+	const includePlan = stepIncluded('plan')
+	const includeStartLong = stepIncluded('start_long')
 	try {
 		await completeWritingSession({
 			name: chapter.value.name,
@@ -859,16 +949,22 @@ async function finishSession() {
 			word_goal: wordGoal.value,
 			started_on: sessionStartedOn.value,
 			aim_choice: aimChoice.value,
-			felt_productive: feedback.felt_productive,
-			aim_adjust: feedback.aim_adjust,
-			distraction_level: feedback.distraction_level,
-			fade_adjust: feedback.fade_adjust,
-			start_felt_long: feedback.start_felt_long,
-			next_focus_note: feedback.next_focus_note,
+			felt_productive: includeFeel ? feedback.felt_productive : '',
+			aim_adjust: includeAim ? feedback.aim_adjust : '',
+			distraction_level: includeDistraction ? feedback.distraction_level : '',
+			fade_adjust:
+				includeDistraction && capturedSideIdeas.value ? feedback.fade_adjust : '',
+			start_felt_long: includeStartLong ? feedback.start_felt_long : 'skip',
+			// Preserve prior note when the Next-topic step was skipped
+			next_focus_note: includeTopic
+				? feedback.next_focus_note
+				: state.prefs.last_next_focus_note || '',
 			prior_focus_note_action: priorFocusNote.value ? focusNoteAction.value : '',
 			was_scheduled: chapter.value.next_write_on ? 1 : 0,
 			schedule_slots: JSON.stringify(
-				scheduleSlots.filter(Boolean).map((s) => dayjs(s).format('YYYY-MM-DD HH:mm:ss')),
+				includePlan
+					? scheduleSlots.filter(Boolean).map((s) => dayjs(s).format('YYYY-MM-DD HH:mm:ss'))
+					: [],
 			),
 			content: `<p>${String(sessionBody.value || '')
 				.split(/\n+/)

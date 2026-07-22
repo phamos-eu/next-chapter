@@ -61,9 +61,16 @@
           <FormControl
             v-model="draft.writing_stage"
             type="select"
-            label="Progress"
+            label="Growth stage"
             :options="stageOptions"
             @update:model-value="onStageChange"
+          />
+          <Button
+            v-if="draft.writing_stage !== 'Done'"
+            class="w-full"
+            variant="solid"
+            label="Start writing session"
+            @click="router.push(`/session/${chapter.name}`)"
           />
           <div class="rounded-lg border border-outline-gray-1 bg-surface-white p-3">
             <div class="mb-2 text-sm font-medium">Next writing session</div>
@@ -75,7 +82,7 @@
             />
             <Button
               class="mt-3 w-full"
-              variant="solid"
+              variant="subtle"
               label="Add to calendar (.ics)"
               :disabled="!draft.next_write_on"
               @click="downloadIcs(chapter.name)"
@@ -165,7 +172,7 @@ const draft = reactive({
 	title: '',
 	summary: '',
 	content: '',
-	writing_stage: 'Idea',
+	writing_stage: '∞',
 	next_write_on: '',
 })
 
@@ -181,7 +188,7 @@ watch(
 		draft.title = ch.title || ''
 		draft.summary = ch.summary || ''
 		draft.content = ch.content || ''
-		draft.writing_stage = ch.writing_stage || 'Idea'
+		draft.writing_stage = ch.writing_stage || '∞'
 		draft.next_write_on = ch.next_write_on
 			? dayjs(ch.next_write_on).format('YYYY-MM-DDTHH:mm')
 			: ''

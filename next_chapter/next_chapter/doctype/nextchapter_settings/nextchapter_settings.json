@@ -5,34 +5,50 @@
  "engine": "InnoDB",
  "field_order": [
   "wip_section",
-  "wip_outline",
-  "wip_draft",
+  "wip_9",
+  "wip_7",
+  "wip_5",
   "column_break_wip",
-  "wip_ready_to_write",
-  "wip_writing",
+  "wip_3",
+  "wip_1",
   "session_section",
   "default_session_mins",
-  "reminder_mins"
+  "reminder_mins",
+  "ritual_section",
+  "breath_count",
+  "inhale_seconds",
+  "exhale_seconds",
+  "runway_section",
+  "runway_checklist",
+  "body_section",
+  "body_checklist"
  ],
  "fields": [
   {
    "fieldname": "wip_section",
    "fieldtype": "Section Break",
-   "label": "Column Limits (WIP)"
+   "label": "Growth Funnel Limits (WIP)"
   },
   {
-   "default": "8",
-   "description": "0 means unlimited. Idea and Done are always unlimited.",
-   "fieldname": "wip_outline",
+   "default": "9",
+   "description": "0 means unlimited. Stage ∞ and Done are always unlimited.",
+   "fieldname": "wip_9",
    "fieldtype": "Int",
-   "label": "Outline Limit",
+   "label": "Stage 9 Limit",
+   "non_negative": 1
+  },
+  {
+   "default": "7",
+   "fieldname": "wip_7",
+   "fieldtype": "Int",
+   "label": "Stage 7 Limit",
    "non_negative": 1
   },
   {
    "default": "5",
-   "fieldname": "wip_draft",
+   "fieldname": "wip_5",
    "fieldtype": "Int",
-   "label": "Draft Limit",
+   "label": "Stage 5 Limit",
    "non_negative": 1
   },
   {
@@ -41,16 +57,16 @@
   },
   {
    "default": "3",
-   "fieldname": "wip_ready_to_write",
+   "fieldname": "wip_3",
    "fieldtype": "Int",
-   "label": "Ready to Write Limit",
+   "label": "Stage 3 Limit",
    "non_negative": 1
   },
   {
    "default": "1",
-   "fieldname": "wip_writing",
+   "fieldname": "wip_1",
    "fieldtype": "Int",
-   "label": "Writing Limit",
+   "label": "Stage 1 Limit",
    "non_negative": 1
   },
   {
@@ -74,36 +90,93 @@
    "fieldtype": "Int",
    "label": "Calendar Reminder (mins)",
    "non_negative": 1
+  },
+  {
+   "fieldname": "ritual_section",
+   "fieldtype": "Section Break",
+   "label": "Writing Ritual"
+  },
+  {
+   "default": "3",
+   "description": "How many breaths before entering focus mode.",
+   "fieldname": "breath_count",
+   "fieldtype": "Int",
+   "label": "Breath Count",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "4",
+   "fieldname": "inhale_seconds",
+   "fieldtype": "Int",
+   "label": "Inhale Seconds",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "6",
+   "fieldname": "exhale_seconds",
+   "fieldtype": "Int",
+   "label": "Exhale Seconds",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "runway_section",
+   "fieldtype": "Section Break",
+   "label": "Clear the Runway"
+  },
+  {
+   "fieldname": "runway_checklist",
+   "fieldtype": "Table",
+   "label": "Runway Checklist",
+   "options": "NextChapter Ritual Item"
+  },
+  {
+   "fieldname": "body_section",
+   "fieldtype": "Section Break",
+   "label": "Body Reset"
+  },
+  {
+   "fieldname": "body_checklist",
+   "fieldtype": "Table",
+   "label": "Body Checklist",
+   "options": "NextChapter Ritual Item"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-07-19 20:35:00.000000",
+ "modified": "2026-07-22 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Next Chapter",
  "name": "NextChapter Settings",
+ "naming_rule": "",
  "owner": "Administrator",
  "permissions": [
   {
    "create": 1,
    "delete": 1,
    "email": 1,
+   "export": 1,
    "print": 1,
    "read": 1,
+   "report": 1,
    "role": "System Manager",
    "share": 1,
    "write": 1
   },
   {
    "email": 1,
+   "export": 1,
    "print": 1,
    "read": 1,
+   "report": 1,
    "role": "All",
    "share": 1,
    "write": 1
   }
  ],
- "sort_field": "creation",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1

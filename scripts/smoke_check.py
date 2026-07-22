@@ -168,7 +168,7 @@ def main() -> int:
 				if required not in fields:
 					errors.append(f"Chapter missing field: {required}")
 			stage_field = next(f for f in data["fields"] if f["fieldname"] == "writing_stage")
-			for stage in ("Idea", "Outline", "Draft", "Ready to write", "Writing", "Done"):
+			for stage in ("∞", "9", "7", "5", "3", "1", "Done"):
 				if stage not in (stage_field.get("options") or ""):
 					errors.append(f"Chapter writing_stage missing {stage}")
 			if data.get("sort_field") != "creation":
@@ -178,14 +178,23 @@ def main() -> int:
 				errors.append("NextChapter Settings must be a Single DocType")
 			fields = {f["fieldname"] for f in data["fields"]}
 			for required in (
-				"wip_outline",
-				"wip_draft",
-				"wip_ready_to_write",
-				"wip_writing",
+				"wip_9",
+				"wip_7",
+				"wip_5",
+				"wip_3",
+				"wip_1",
 				"default_session_mins",
+				"breath_count",
+				"inhale_seconds",
+				"exhale_seconds",
+				"runway_checklist",
+				"body_checklist",
 			):
 				if required not in fields:
 					errors.append(f"Settings missing field: {required}")
+		if rel.endswith("nextchapter_ritual_item.json"):
+			if not data.get("istable"):
+				errors.append("NextChapter Ritual Item must be a child table")
 		if rel.endswith("page/next_chapter/next_chapter.json"):
 			if data.get("page_name") != "next-chapter":
 				errors.append("Desk page_name must be next-chapter")
@@ -208,7 +217,8 @@ def main() -> int:
 		ROOT / "frontend" / "src" / "composables" / "useWorkspace.js",
 		ROOT / "frontend" / "src" / "pages" / "Ideas.vue",
 		ROOT / "frontend" / "src" / "pages" / "Write.vue",
-		ROOT / "frontend" / "src" / "pages" / "Board.vue",
+		ROOT / "frontend" / "src" / "pages" / "GrowthFunnel.vue",
+		ROOT / "frontend" / "src" / "pages" / "Session.vue",
 		ROOT / "frontend" / "src" / "pages" / "Schedule.vue",
 		ROOT / "frontend" / "src" / "pages" / "Setup.vue",
 		ROOT / "frontend" / "src" / "components" / "AppShell.vue",
@@ -226,9 +236,12 @@ def main() -> int:
 		"next_chapter.api.chapter.create_chapter",
 		"next_chapter.api.chapter.hide_chapter",
 		"next_chapter.api.chapter.set_stage",
+		"next_chapter.api.chapter.complete_writing_session",
 		"Add Idea",
 		"Brain Dump",
 		"Ideas",
+		"Growth Funnel",
+		"Start writing session",
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
 		"Could not open NextChapter",
@@ -241,6 +254,7 @@ def main() -> int:
 		"download_ics",
 		"hide_chapter",
 		"set_writing_session",
+		"complete_writing_session",
 		"BEGIN:VCALENDAR",
 		"/next-chapter/ideas/",
 	):

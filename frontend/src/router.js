@@ -36,6 +36,21 @@ const routes = [
 		name: 'Schedule',
 		component: () => import('@/pages/Schedule.vue'),
 	},
+	{
+		path: '/mock/growth',
+		name: 'MockGrowth',
+		component: () => import('@/pages/mock/MockGrowth.vue'),
+	},
+	{
+		path: '/mock/write/:stage',
+		name: 'MockWrite',
+		component: () => import('@/pages/mock/MockWrite.vue'),
+	},
+	{
+		path: '/mock/session',
+		name: 'MockSession',
+		component: () => import('@/pages/mock/MockSession.vue'),
+	},
 ]
 
 const router = createRouter({

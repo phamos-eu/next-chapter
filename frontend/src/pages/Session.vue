@@ -483,13 +483,25 @@ function enterFocus() {
 	nextTick(() => focusInput.value?.focus())
 }
 
+function clamp(n, min, max) {
+	return Math.min(max, Math.max(min, n))
+}
+
 function idleSecsForWords(words) {
 	const min = Number(state.settings.fade_idle_min_secs) || 2
 	const max = Number(state.settings.fade_idle_max_secs) || 8
 	const base = Number(state.settings.fade_idle_secs) || 3
 	// fewer words → sooner; more words → longer (clamped)
 	const scaled = base + (words / 40) * (max - min)
-	return Math.min(max, Math.max(min, scaled))
+	return clamp(scaled, min, max)
+}
+
+/** Relative jitter: final = clamp(value + value * drag * random(-1,1), min, max) */
+function withFadeDrag(value, min, max, strength = 1) {
+	const drag = clamp(Number(state.settings.fade_drag) || 0, 0, 1)
+	if (!drag) return clamp(value, min, max)
+	const jitter = value * drag * strength * (Math.random() * 2 - 1)
+	return clamp(value + jitter, min, max)
 }
 
 function noteOpacityClass(note) {
@@ -517,8 +529,14 @@ function scheduleNoteFade(note) {
 	clearNoteTimer(note)
 	if (!note.text.trim() || note.focused) return
 	const words = countWords(note.text)
-	const idle = idleSecsForWords(words) * 1000
-	const fade = fadeDuration.value * 1000
+	const min = Number(state.settings.fade_idle_min_secs) || 2
+	const max = Number(state.settings.fade_idle_max_secs) || 8
+	const idleSecs = withFadeDrag(idleSecsForWords(words), min, max, 1)
+	// Lighter drag on fade duration so “how fast” also varies slightly
+	const fadeBase = fadeDuration.value
+	const fadeSecs = withFadeDrag(fadeBase, Math.max(0.3, fadeBase * 0.5), fadeBase * 1.5, 0.5)
+	const idle = idleSecs * 1000
+	const fade = fadeSecs * 1000
 	noteTimers[note.localId] = {
 		idle: setTimeout(() => {
 			note.state = 'fading'

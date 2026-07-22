@@ -330,6 +330,7 @@ def save_prefs(**kwargs):
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",
+		"overview_title_size",
 		"last_breath_gap_jitter",
 	}
 	updates = {k: kwargs[k] for k in allowed if k in kwargs}

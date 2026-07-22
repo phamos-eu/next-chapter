@@ -13,6 +13,7 @@ DEFAULT_PREFS = {
 	"ideas_sort": "modified_desc",
 	"ideas_visible_limit": 20,
 	"ui_scale": 125,
+	"overview_title_size": "comfortable",
 	"last_breath_gap_jitter": None,
 }
 
@@ -21,6 +22,12 @@ IDEAS_SORT_OPTIONS = {
 	"title_asc",
 	"stage_asc",
 	"sequence_asc",
+}
+
+OVERVIEW_TITLE_SIZE_OPTIONS = {
+	"comfortable",
+	"large",
+	"larger",
 }
 
 
@@ -55,6 +62,9 @@ def get_user_prefs(user: str | None = None) -> dict:
 		limit = DEFAULT_PREFS["ideas_visible_limit"]
 	scale = int(doc.ui_scale or DEFAULT_PREFS["ui_scale"])
 	scale = max(90, min(140, scale))
+	title_size = doc.overview_title_size or DEFAULT_PREFS["overview_title_size"]
+	if title_size not in OVERVIEW_TITLE_SIZE_OPTIONS:
+		title_size = DEFAULT_PREFS["overview_title_size"]
 	jitter = doc.last_breath_gap_jitter
 	if jitter is not None and jitter != "":
 		jitter = float(jitter)
@@ -74,6 +84,7 @@ def get_user_prefs(user: str | None = None) -> dict:
 		"ideas_sort": sort,
 		"ideas_visible_limit": limit,
 		"ui_scale": scale,
+		"overview_title_size": title_size,
 		"last_breath_gap_jitter": jitter,
 	}
 
@@ -93,6 +104,7 @@ def save_user_prefs(updates: dict, user: str | None = None) -> dict:
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",
+		"overview_title_size",
 		"last_breath_gap_jitter",
 	):
 		if key in updates and updates[key] is not None:
@@ -103,5 +115,7 @@ def save_user_prefs(updates: dict, user: str | None = None) -> dict:
 		doc.ideas_visible_limit = DEFAULT_PREFS["ideas_visible_limit"]
 	scale = int(doc.ui_scale or DEFAULT_PREFS["ui_scale"])
 	doc.ui_scale = max(90, min(140, scale))
+	if doc.overview_title_size not in OVERVIEW_TITLE_SIZE_OPTIONS:
+		doc.overview_title_size = DEFAULT_PREFS["overview_title_size"]
 	doc.save(ignore_permissions=True)
 	return get_user_prefs(user)

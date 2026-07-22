@@ -19,6 +19,7 @@
   "ideas_visible_limit",
   "appearance_section",
   "ui_scale",
+  "overview_title_size",
   "last_breath_gap_jitter"
  ],
  "fields": [
@@ -118,6 +119,14 @@
    "non_negative": 1
   },
   {
+   "default": "comfortable",
+   "description": "Idea overview title size (comfortable matches the default slightly-reduced size).",
+   "fieldname": "overview_title_size",
+   "fieldtype": "Select",
+   "label": "Overview Title Size",
+   "options": "comfortable\nlarge\nlarger"
+  },
+  {
    "description": "Breath phase-gap jitter used in the last session (kept different next time).",
    "fieldname": "last_breath_gap_jitter",
    "fieldtype": "Float",
@@ -126,7 +135,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-07-22 17:05:00.000000",
+ "modified": "2026-07-22 20:50:00.000000",
  "modified_by": "Administrator",
  "module": "Next Chapter",
  "name": "NextChapter User Preference",

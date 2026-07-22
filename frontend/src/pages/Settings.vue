@@ -40,6 +40,17 @@
             <p class="text-xs text-ink-gray-5">
               Default is 125% — sized for comfortable reading on typical desks.
             </p>
+            <FormControl
+              v-model="form.overview_title_size"
+              type="select"
+              label="Overview title size"
+              :options="titleSizeOptions"
+              @update:model-value="scheduleSave"
+            />
+            <p class="text-xs text-ink-gray-5">
+              Comfortable matches the default idea overview title. Large and larger bump the name
+              field only.
+            </p>
           </div>
 
           <div v-else-if="tab === 'ideas'" class="space-y-4">
@@ -208,6 +219,7 @@ const tabs = [
 
 const form = reactive({
 	ui_scale: 125,
+	overview_title_size: 'comfortable',
 	ideas_sort: 'modified_desc',
 	ideas_visible_limit: 20,
 	page_pile: false,
@@ -225,6 +237,12 @@ const scaleOptions = [
 	{ label: '125% — default', value: 125 },
 	{ label: '130% — extra large', value: 130 },
 	{ label: '140% — maximum', value: 140 },
+]
+
+const titleSizeOptions = [
+	{ label: 'Comfortable — default', value: 'comfortable' },
+	{ label: 'Large', value: 'large' },
+	{ label: 'Larger', value: 'larger' },
 ]
 
 const sortOptions = [
@@ -283,6 +301,9 @@ function formatDateTime(value) {
 function syncFromPrefs() {
 	const p = state.prefs || {}
 	form.ui_scale = Number(p.ui_scale || 125)
+	const titleSize = p.overview_title_size || 'comfortable'
+	form.overview_title_size =
+		titleSize === 'large' || titleSize === 'larger' ? titleSize : 'comfortable'
 	form.ideas_sort = p.ideas_sort || 'modified_desc'
 	form.ideas_visible_limit = Number(p.ideas_visible_limit || 20)
 	form.page_pile = Boolean(p.page_pile)
@@ -306,6 +327,7 @@ function scheduleSave() {
 		try {
 			await savePrefs({
 				ui_scale: Math.max(90, Math.min(140, Number(form.ui_scale) || 125)),
+				overview_title_size: form.overview_title_size || 'comfortable',
 				ideas_sort: form.ideas_sort,
 				ideas_visible_limit: Math.max(1, Number(form.ideas_visible_limit) || 20),
 				page_pile: form.page_pile ? 1 : 0,

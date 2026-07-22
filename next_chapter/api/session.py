@@ -330,6 +330,7 @@ def save_prefs(**kwargs):
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",
+		"overview_title_size",
 		"last_breath_gap_jitter",
 	}
 	updates = {k: kwargs[k] for k in allowed if k in kwargs}
@@ -370,8 +371,7 @@ def apply_feedback_to_prefs(feedback: dict):
 	if aim_adjust in ("increase", "keep", "decrease"):
 		updates["aim_bias"] = aim_adjust
 
-	if feedback.get("next_focus_note") is not None:
-		updates["last_next_focus_note"] = feedback.get("next_focus_note") or ""
+	# next_focus_note is stored per chapter, not in user prefs
 
 	# optional breath tweak via start_felt_long
 	if feedback.get("start_felt_long") == "yes":

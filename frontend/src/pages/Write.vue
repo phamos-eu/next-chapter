@@ -5,90 +5,80 @@
       <Button variant="subtle" label="Back to Ideas" @click="router.push('/ideas')" />
     </div>
 
-    <div v-else class="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f3f1ed]">
-      <!-- Fixed chrome — no page scroll -->
-      <div class="shrink-0 px-5 pt-3">
-        <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <button
-            class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
-            @click="router.push('/ideas')"
-          >
-            <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
-            Ideas
-          </button>
-          <button
-            v-if="parentChapter"
-            type="button"
-            class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
-            @click="router.push(`/ideas/${parentChapter.name}`)"
-          >
-            Came from
-            <span class="font-medium text-ink-gray-7">{{ parentChapter.title || 'Untitled' }}</span>
-          </button>
-        </div>
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <TextInput
-            v-model="draft.title"
-            class="overview-title min-w-0 flex-1 !border-0 !bg-transparent !px-0 !py-1"
-            placeholder="Give this idea a short name"
-            @update:model-value="scheduleSave"
-          />
-          <div class="flex shrink-0 gap-2 pt-2">
-            <Button variant="subtle" label="Edit" @click="openEdit" />
-            <Button
-              v-if="draft.writing_stage !== 'Done'"
-              variant="solid"
-              label="Start writing session"
-              @click="router.push(`/session/${chapter.name}`)"
-            />
+    <div v-else class="flex min-h-0 flex-1 overflow-hidden bg-[#f3f1ed]">
+      <!-- Center: Writing | Statistics -->
+      <section class="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div class="shrink-0 px-5 pt-3">
+          <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <button
+              class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+              @click="router.push('/ideas')"
+            >
+              <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
+              Ideas
+            </button>
+            <button
+              v-if="parentChapter"
+              type="button"
+              class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+              @click="router.push(`/ideas/${parentChapter.name}`)"
+            >
+              Came from
+              <span class="font-medium text-ink-gray-7">{{ parentChapter.title || 'Untitled' }}</span>
+            </button>
           </div>
-        </div>
-        <p v-if="state.settings.in_development" class="mt-1 text-xs text-amber-700">
-          In Development — gates and ritual skips are unlocked.
-        </p>
-        <div
-          v-if="pinnedStatRows.length"
-          class="mt-3 grid gap-2 sm:grid-cols-3"
-        >
-          <div
-            v-for="row in pinnedStatRows"
-            :key="row.key"
-            class="rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/90 px-3 py-2"
-          >
-            <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
-            <div class="mt-0.5 flex items-center gap-1.5">
-              <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
-              <span
-                v-if="row.trend"
-                class="inline-flex text-[11px] font-medium leading-none"
-                :class="trendClass(row.trend)"
-                :title="trendTitle(row.trend)"
-                aria-hidden="true"
-              >
-                {{ trendArrow(row.trend) }}
-              </span>
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <TextInput
+              v-model="draft.title"
+              class="overview-title min-w-0 flex-1 !border-0 !bg-transparent !px-0 !py-1"
+              :class="`overview-title--${overviewTitleSize}`"
+              placeholder="Give this idea a short name"
+              @update:model-value="scheduleSave"
+            />
+            <div class="flex shrink-0 gap-2 pt-2">
+              <Button variant="subtle" label="Edit" @click="openEdit" />
+              <Button
+                v-if="draft.writing_stage !== 'Done'"
+                variant="solid"
+                label="Start Focus"
+                @click="router.push(`/session/${chapter.name}`)"
+              />
             </div>
           </div>
-        </div>
-        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#ddd8d0] pb-0">
-          <TabButtons v-model="overviewTab" :buttons="overviewTabs" />
-          <div class="pb-2 text-xs text-ink-gray-5">
-            <span v-if="timelineIdeaCount" class="mr-2 text-ink-gray-6">
-              {{ timelineIdeaCount }} captured
-            </span>
-            {{ saveState }}
+          <p v-if="state.settings.in_development" class="mt-1 text-xs text-amber-700">
+            In Development — gates and ritual skips are unlocked.
+          </p>
+          <div
+            v-if="pinnedStatRows.length && overviewTab === 'writing'"
+            class="mt-3 grid gap-2 sm:grid-cols-3"
+          >
+            <div
+              v-for="row in pinnedStatRows"
+              :key="row.key"
+              class="rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/90 px-3 py-2"
+            >
+              <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
+              <div class="mt-0.5 flex items-center gap-1.5">
+                <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+                <span
+                  v-if="row.trend"
+                  class="inline-flex text-[11px] font-medium leading-none"
+                  :class="trendClass(row.trend)"
+                  :title="trendTitle(row.trend)"
+                  aria-hidden="true"
+                >
+                  {{ trendArrow(row.trend) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#ddd8d0] pb-0">
+            <TabButtons v-model="overviewTab" :buttons="overviewTabs" />
           </div>
         </div>
-      </div>
 
-      <!-- One tab panel fills remaining viewport -->
-      <div class="min-h-0 flex-1 overflow-hidden p-5">
-        <!-- Overview: writing + timeline side by side -->
-        <div
-          v-if="overviewTab === 'overview'"
-          class="grid h-full min-h-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,1fr)]"
-        >
-          <div class="flex min-h-0 min-w-0 flex-col">
+        <div class="min-h-0 flex-1 overflow-hidden p-5">
+          <div v-if="overviewTab === 'writing'" class="flex h-full min-h-0 flex-col">
             <div
               class="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
               :style="{ fontSize: `${focusFontSize}px` }"
@@ -108,33 +98,160 @@
             </div>
           </div>
 
-          <aside class="flex min-h-0 min-w-0 flex-col overflow-hidden">
-            <div class="mb-2 shrink-0 text-sm font-medium text-ink-gray-9">Timeline</div>
-            <p class="mb-3 shrink-0 text-xs text-ink-gray-5">
+          <div
+            v-else
+            class="flex h-full min-h-0 flex-col overflow-hidden"
+          >
+            <p class="mb-3 shrink-0 text-sm text-ink-gray-5">
+              Highlight up to 3 statistics to show on Writing.
+              <span class="text-ink-gray-4">{{ highlightedKeys.length }}/3 selected</span>
+            </p>
+            <div
+              class="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <div
+                v-for="col in statColumns"
+                :key="col.title"
+                class="min-h-0 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-3"
+              >
+                <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
+                  {{ col.title }}
+                </div>
+                <div class="mt-2 space-y-2">
+                  <button
+                    v-for="row in col.rows"
+                    :key="row.key"
+                    type="button"
+                    class="flex w-full items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-left transition"
+                    :class="
+                      isHighlighted(row.key)
+                        ? 'bg-ink-gray-9/5 ring-1 ring-ink-gray-9/20'
+                        : 'hover:bg-[#efece7]/80'
+                    "
+                    @click="toggleHighlight(row.key)"
+                  >
+                    <div class="min-w-0">
+                      <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+                        <span
+                          v-if="row.trend"
+                          class="inline-flex text-[11px] font-medium leading-none"
+                          :class="trendClass(row.trend)"
+                          aria-hidden="true"
+                        >
+                          {{ trendArrow(row.trend) }}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      class="mt-0.5 shrink-0 text-[10px] font-medium uppercase tracking-wide"
+                      :class="isHighlighted(row.key) ? 'text-ink-gray-8' : 'text-ink-gray-4'"
+                    >
+                      {{ isHighlighted(row.key) ? 'On' : 'Pin' }}
+                    </span>
+                  </button>
+                </div>
+                <svg
+                  v-if="col.spark?.length"
+                  class="mt-3 h-8 w-full text-ink-gray-6"
+                  viewBox="0 0 100 24"
+                  preserveAspectRatio="none"
+                >
+                  <polyline
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    :points="sparkPoints(col.spark)"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Details + Inspired ideas -->
+      <aside class="flex w-72 shrink-0 flex-col border-l border-[#ddd8d0] bg-[#efece7]">
+        <div class="border-b border-[#ddd8d0] px-4 py-3">
+          <div class="font-medium text-ink-gray-9">Details</div>
+          <div class="text-xs text-ink-gray-5">{{ saveState }}</div>
+        </div>
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+          <FormControl
+            v-model="draft.writing_stage"
+            type="select"
+            label="Growth stage"
+            :options="stageOptions"
+            @update:model-value="onStageChange"
+          />
+          <p v-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-5">
+            {{ STAGE_META[draft.writing_stage].metaphor }} —
+            {{ STAGE_META[draft.writing_stage].job }}
+          </p>
+          <label
+            v-if="pagePileAvailable"
+            class="flex items-center gap-2 text-sm text-ink-gray-7"
+          >
+            <input v-model="pagePile" type="checkbox" @change="onPagePile" />
+            Page pile writing mode
+          </label>
+          <p v-else-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-4">
+            Page pile unlocks at stage 3.
+          </p>
+          <div class="rounded-lg border border-[#ddd8d0] bg-[#faf8f5] p-3">
+            <div class="mb-2 text-sm font-medium">Next writing session</div>
+            <FormControl
+              v-model="draft.next_write_on"
+              type="datetime-local"
+              label="Date & time"
+              @update:model-value="onSessionChange"
+            />
+            <Button
+              class="mt-3 w-full"
+              variant="subtle"
+              label="Add to calendar (.ics)"
+              :disabled="!draft.next_write_on"
+              @click="downloadIcs(chapter.name)"
+            />
+          </div>
+          <Button
+            v-if="chapter.is_hidden"
+            class="w-full"
+            variant="subtle"
+            label="Show idea again"
+            @click="onUnhide"
+          />
+          <Button
+            v-else
+            class="w-full"
+            variant="subtle"
+            label="Hide for later…"
+            @click="hideOpen = true"
+          />
+
+          <div class="border-t border-[#ddd8d0] pt-4">
+            <div class="mb-1 text-sm font-medium text-ink-gray-9">Inspired ideas</div>
+            <p class="mb-3 text-xs text-ink-gray-5">
               Ideas that came out of writing this one.
+              <span v-if="timelineIdeaCount" class="text-ink-gray-4">
+                · {{ timelineIdeaCount }}
+              </span>
             </p>
             <div
               v-if="!timelineGroups.length"
-              class="flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-4 text-center text-xs text-ink-gray-5"
+              class="rounded-lg border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-3 py-4 text-center text-xs text-ink-gray-5"
             >
               Side ideas from sessions will show up here as links.
             </div>
-            <ol v-else class="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+            <ol v-else class="space-y-3">
               <li
                 v-for="(group, gi) in timelineGroups"
                 :key="group.kind === 'session' ? group.session.name : `u-${gi}`"
-                class="relative pl-4"
               >
-                <span
-                  class="absolute left-0 top-2 h-2 w-2 rounded-full bg-[#c4bdb0]"
-                  aria-hidden="true"
-                />
                 <div class="mb-1.5 text-xs text-ink-gray-5">
                   <template v-if="group.kind === 'session'">
                     {{ formatSessionWhen(group.session) }}
-                    <span v-if="formatSessionMeta(group.session)">
-                      · {{ formatSessionMeta(group.session) }}
-                    </span>
                   </template>
                   <template v-else>Outside a logged session</template>
                 </div>
@@ -142,7 +259,7 @@
                   <li v-for="idea in group.ideas" :key="idea.name">
                     <button
                       type="button"
-                      class="group flex w-full items-start gap-2 rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-2.5 py-2 text-left transition hover:border-[#c4bdb0] hover:bg-white"
+                      class="group flex w-full items-start gap-2 rounded-lg border border-[#ddd8d0] bg-[#faf8f5] px-2 py-1.5 text-left transition hover:border-[#c4bdb0] hover:bg-white"
                       @click="openSpawnedIdea(idea)"
                     >
                       <span class="min-w-0 flex-1">
@@ -160,154 +277,16 @@
                       </span>
                       <FeatherIcon
                         name="chevron-right"
-                        class="mt-0.5 h-4 w-4 shrink-0 text-ink-gray-4"
+                        class="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-gray-4"
                       />
                     </button>
                   </li>
                 </ul>
               </li>
             </ol>
-          </aside>
-        </div>
-
-        <!-- Stats: highlight up to 3 for the overview -->
-        <div
-          v-else-if="overviewTab === 'stats'"
-          class="flex h-full min-h-0 flex-col overflow-hidden"
-        >
-          <p class="mb-3 shrink-0 text-sm text-ink-gray-5">
-            Highlight up to 3 stats to show on the overview.
-            <span class="text-ink-gray-4">{{ highlightedKeys.length }}/3 selected</span>
-          </p>
-          <div
-            class="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-4"
-          >
-            <div
-              v-for="col in statColumns"
-              :key="col.title"
-              class="min-h-0 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-3"
-            >
-              <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
-                {{ col.title }}
-              </div>
-              <div class="mt-2 space-y-2">
-                <button
-                  v-for="row in col.rows"
-                  :key="row.key"
-                  type="button"
-                  class="flex w-full items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-left transition"
-                  :class="
-                    isHighlighted(row.key)
-                      ? 'bg-ink-gray-9/5 ring-1 ring-ink-gray-9/20'
-                      : 'hover:bg-[#efece7]/80'
-                  "
-                  @click="toggleHighlight(row.key)"
-                >
-                  <div class="min-w-0">
-                    <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
-                      <span
-                        v-if="row.trend"
-                        class="inline-flex text-[11px] font-medium leading-none"
-                        :class="trendClass(row.trend)"
-                        aria-hidden="true"
-                      >
-                        {{ trendArrow(row.trend) }}
-                      </span>
-                    </div>
-                  </div>
-                  <span
-                    class="mt-0.5 shrink-0 text-[10px] font-medium uppercase tracking-wide"
-                    :class="isHighlighted(row.key) ? 'text-ink-gray-8' : 'text-ink-gray-4'"
-                  >
-                    {{ isHighlighted(row.key) ? 'On' : 'Pin' }}
-                  </span>
-                </button>
-              </div>
-              <svg
-                v-if="col.spark?.length"
-                class="mt-3 h-8 w-full text-ink-gray-6"
-                viewBox="0 0 100 24"
-                preserveAspectRatio="none"
-              >
-                <polyline
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  :points="sparkPoints(col.spark)"
-                />
-              </svg>
-            </div>
           </div>
         </div>
-
-        <!-- Details / excess options -->
-        <div
-          v-else
-          class="mx-auto grid h-full min-h-0 max-w-2xl content-start gap-4 overflow-hidden sm:grid-cols-2"
-        >
-          <div class="space-y-3 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-4">
-            <FormControl
-              v-model="draft.writing_stage"
-              type="select"
-              label="Growth stage"
-              :options="stageOptions"
-              @update:model-value="onStageChange"
-            />
-            <p v-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-5">
-              {{ STAGE_META[draft.writing_stage].metaphor }} —
-              {{ STAGE_META[draft.writing_stage].job }}
-            </p>
-            <label
-              v-if="pagePileAvailable"
-              class="flex items-center gap-2 text-sm text-ink-gray-7"
-            >
-              <input v-model="pagePile" type="checkbox" @change="onPagePile" />
-              Page pile writing mode
-            </label>
-            <p v-else-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-4">
-              Page pile unlocks at stage 3.
-            </p>
-            <p
-              v-if="STAGE_META[draft.writing_stage]?.future_page_nav"
-              class="text-xs text-ink-gray-4"
-            >
-              Later: page count and navigation buttons once writing UX matures.
-            </p>
-          </div>
-          <div class="space-y-3 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-4">
-            <div class="text-sm font-medium text-ink-gray-9">Next writing session</div>
-            <FormControl
-              v-model="draft.next_write_on"
-              type="datetime-local"
-              label="Date & time"
-              @update:model-value="onSessionChange"
-            />
-            <Button
-              class="w-full"
-              variant="subtle"
-              label="Add to calendar (.ics)"
-              :disabled="!draft.next_write_on"
-              @click="downloadIcs(chapter.name)"
-            />
-            <Button
-              v-if="chapter.is_hidden"
-              class="w-full"
-              variant="subtle"
-              label="Show idea again"
-              @click="onUnhide"
-            />
-            <Button
-              v-else
-              class="w-full"
-              variant="subtle"
-              label="Hide for later…"
-              @click="hideOpen = true"
-            />
-          </div>
-        </div>
-      </div>
+      </aside>
     </div>
 
     <!-- Edit dialog — large from the start; page behind does not scroll -->
@@ -323,13 +302,15 @@
         <div class="mb-3 flex shrink-0 items-center justify-between gap-3">
           <div class="font-medium text-ink-gray-9">Edit writing</div>
           <div
-            class="rounded-full px-2.5 py-1 text-xs tabular-nums"
-            :class="
+            class="edit-idle-countdown rounded-full px-2.5 py-1 text-xs tabular-nums"
+            :class="[
               editCountdown !== null && editCountdown <= 3
                 ? 'bg-amber-100/80 text-amber-800'
-                : 'bg-[#efece7] text-ink-gray-6'
-            "
+                : 'bg-[#efece7] text-ink-gray-6',
+              editCountdownVisible ? 'edit-idle-countdown--visible' : '',
+            ]"
             :aria-live="editCountdown !== null && editCountdown <= 3 ? 'polite' : 'off'"
+            :aria-hidden="editCountdownVisible ? undefined : 'true'"
           >
             <template v-if="editCountdown !== null && editCountdown <= 3">
               Closing in {{ editCountdown }}s…
@@ -475,12 +456,17 @@ const chapter = computed(
 
 const parentChapter = computed(() => chapterByName(chapter.value?.spawned_from))
 
-const overviewTab = ref('overview')
+const overviewTab = ref('writing')
 const overviewTabs = [
-	{ label: 'Overview', value: 'overview' },
-	{ label: 'Stats', value: 'stats' },
-	{ label: 'Details', value: 'details' },
+	{ label: 'Writing', value: 'writing' },
+	{ label: 'Statistics', value: 'statistics' },
 ]
+
+const overviewTitleSize = computed(() => {
+	const size = state.prefs?.overview_title_size || 'comfortable'
+	if (size === 'large' || size === 'larger') return size
+	return 'comfortable'
+})
 
 const highlightedKeys = ref([])
 const doneScheduleOpen = ref(false)
@@ -501,10 +487,19 @@ const timeline = ref(null)
 const editOpen = ref(false)
 const editText = ref('')
 const editInput = ref(null)
-/** Seconds left until auto-close; always shown while dialog is open. */
+/** Seconds left until auto-close. */
 const editSecondsLeft = ref(0)
+/** Idle length (seconds) for the current Edit open; used for fade-in threshold. */
+const editIdleTotal = ref(45)
 /** Set only in the final 3s for the stronger “Closing in…” state. */
 const editCountdown = ref(null)
+/** Visible after 30% of idle time has elapsed, then CSS fades in. */
+const editCountdownVisible = computed(() => {
+	const idle = editIdleTotal.value
+	if (!editOpen.value || idle <= 0) return false
+	const elapsed = idle - editSecondsLeft.value
+	return elapsed >= idle * 0.3
+})
 let editIdleTimer = null
 let editTickTimer = null
 let editDeadline = 0
@@ -879,6 +874,7 @@ function syncEditCountdownDisplay() {
 function bumpEditIdle() {
 	if (!editOpen.value) return
 	const idle = editIdleSecs()
+	editIdleTotal.value = idle
 	editDeadline = Date.now() + idle * 1000
 	clearTimeout(editIdleTimer)
 	clearInterval(editTickTimer)
@@ -895,6 +891,7 @@ async function closeEdit(save) {
 	editTickTimer = null
 	editCountdown.value = null
 	editSecondsLeft.value = 0
+	editIdleTotal.value = 45
 	editOpen.value = false
 	if (save && chapter.value) {
 		const html = `<p>${String(editText.value || '')
@@ -946,16 +943,43 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .overview-title :deep(input) {
-	min-height: 3.25rem;
-	font-size: 2.25rem;
 	line-height: 1.2;
 	font-weight: 600;
 	letter-spacing: -0.02em;
 }
+/* Default / comfortable — current slightly-reduced overview title */
+.overview-title--comfortable :deep(input) {
+	min-height: 2.75rem;
+	font-size: 1.875rem;
+}
+.overview-title--large :deep(input) {
+	min-height: 3rem;
+	font-size: 2.25rem;
+}
+.overview-title--larger :deep(input) {
+	min-height: 3.25rem;
+	font-size: 2.75rem;
+}
 @media (min-width: 640px) {
-	.overview-title :deep(input) {
-		min-height: 3.75rem;
+	.overview-title--comfortable :deep(input) {
+		min-height: 3.25rem;
+		font-size: 2.25rem;
+	}
+	.overview-title--large :deep(input) {
+		min-height: 3.5rem;
 		font-size: 2.75rem;
 	}
+	.overview-title--larger :deep(input) {
+		min-height: 3.75rem;
+		font-size: 3.25rem;
+	}
+}
+.edit-idle-countdown {
+	opacity: 0;
+	transition: opacity 0.5s ease;
+	pointer-events: none;
+}
+.edit-idle-countdown--visible {
+	opacity: 1;
 }
 </style>

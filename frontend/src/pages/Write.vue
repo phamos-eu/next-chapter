@@ -75,7 +75,18 @@
               <div class="mt-2 space-y-2">
                 <div v-for="row in col.rows" :key="row.label">
                   <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
-                  <div class="text-sm font-medium text-ink-gray-9">{{ row.value }}</div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+                    <span
+                      v-if="row.trend"
+                      class="inline-flex text-[11px] font-medium leading-none"
+                      :class="trendClass(row.trend)"
+                      :title="trendTitle(row.trend)"
+                      aria-hidden="true"
+                    >
+                      {{ trendArrow(row.trend) }}
+                    </span>
+                  </div>
                 </div>
               </div>
               <svg
@@ -315,53 +326,90 @@ const statColumns = computed(() => {
 	const o = stats.value?.output || {}
 	const t = stats.value?.time || {}
 	const p = stats.value?.planning || {}
+	const tr = stats.value?.trends || {}
 	const aim = p.aim_mix || {}
 	return [
 		{
 			title: 'Consistency',
 			rows: [
-				{ label: 'Sessions (total)', value: c.total_sessions ?? '—' },
-				{ label: 'Avg / week', value: c.avg_sessions_per_week ?? '—' },
+				{
+					label: 'Sessions (total)',
+					value: c.total_sessions ?? '—',
+					trend: tr.total_sessions,
+				},
+				{
+					label: 'Avg / week',
+					value: c.avg_sessions_per_week ?? '—',
+					trend: tr.avg_sessions_per_week,
+				},
 				{
 					label: 'Best / quiet week',
 					value: `${c.best_week ?? '—'} / ${c.quietest_week ?? '—'}`,
+					trend: tr.best_quiet,
 				},
 			],
 		},
 		{
 			title: 'Output',
 			rows: [
-				{ label: 'Words written (total)', value: o.total_words ?? '—' },
+				{
+					label: 'Words written (total)',
+					value: o.total_words ?? '—',
+					trend: tr.total_words,
+				},
 				{
 					label: 'Last planned → actual',
 					value: formatPairs(o.planned_vs_actual),
+					trend: tr.planned_vs_actual,
 				},
-				{ label: 'Recent sessions', value: (o.words_trend || []).length || '—' },
+				{
+					label: 'Recent sessions',
+					value: (o.words_trend || []).length || '—',
+					trend: tr.recent_sessions,
+				},
 			],
 			spark: o.words_trend || [],
 		},
 		{
 			title: 'Time',
 			rows: [
-				{ label: 'Total focus (mins)', value: t.total_focus_mins ?? '—' },
-				{ label: 'Avg session', value: t.avg_session_mins ?? '—' },
-				{ label: 'Longest session', value: t.longest_session_mins ?? '—' },
+				{
+					label: 'Total focus (mins)',
+					value: t.total_focus_mins ?? '—',
+					trend: tr.total_focus_mins,
+				},
+				{
+					label: 'Avg session',
+					value: t.avg_session_mins ?? '—',
+					trend: tr.avg_session_mins,
+				},
+				{
+					label: 'Longest session',
+					value: t.longest_session_mins ?? '—',
+					trend: tr.longest_session_mins,
+				},
 			],
 		},
 		{
 			title: 'Planning & aim',
 			rows: [
-				{ label: 'Scheduled sessions', value: p.scheduled_sessions ?? '—' },
+				{
+					label: 'Scheduled sessions',
+					value: p.scheduled_sessions ?? '—',
+					trend: tr.scheduled_sessions,
+				},
 				{
 					label: 'Focus-note keep rate',
 					value:
 						p.focus_note_keep_rate == null
 							? '—'
 							: `${Math.round(p.focus_note_keep_rate * 100)}%`,
+					trend: tr.focus_note_keep_rate,
 				},
 				{
 					label: 'Aim mix (more/sim/less)',
 					value: `${aim.more || 0}/${aim.similar || 0}/${aim.less || 0}`,
+					trend: tr.aim_mix,
 				},
 			],
 		},
@@ -372,6 +420,28 @@ function formatPairs(pairs) {
 	if (!pairs?.length) return '—'
 	const [a, b] = pairs[0]
 	return `${a} → ${b}`
+}
+
+function trendArrow(trend) {
+	if (trend === 'up') return '↑'
+	if (trend === 'down') return '↓'
+	if (trend === 'flat') return '→'
+	return ''
+}
+
+function trendClass(trend) {
+	// Faint green / red / blue
+	if (trend === 'up') return 'text-emerald-600/45'
+	if (trend === 'down') return 'text-rose-600/45'
+	if (trend === 'flat') return 'text-sky-600/45'
+	return 'text-ink-gray-4'
+}
+
+function trendTitle(trend) {
+	if (trend === 'up') return 'Improving'
+	if (trend === 'down') return 'Declining'
+	if (trend === 'flat') return 'Steady'
+	return ''
 }
 
 function sparkPoints(values) {

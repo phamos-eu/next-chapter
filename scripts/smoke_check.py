@@ -260,18 +260,32 @@ def main() -> int:
 		"next_chapter.api.chapter.complete_writing_session",
 		"next_chapter.api.chapter.capture_side_idea",
 		"next_chapter.api.session.chapter_stats",
+		"next_chapter.api.session.chapter_timeline",
 		"next_chapter.api.session.save_prefs",
 		"Add Idea",
 		"Ideas",
 		"Growth Funnel",
 		"Start writing session",
+		"chapter_timeline",
+		"Timeline",
+		"Came from",
+		"History",
+		"DONE_PREVIEW_LIMIT",
+		"highlighted_stats",
+		"HIGHLIGHTABLE_STATS",
+		"pickBreathGapJitter",
+		"advanceComplete",
+		"backComplete",
 		"Complete",
 		"Page pile",
 		"Inhale will start in",
+		"breathPhaseLabel",
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",
 		"applyUiScale",
+		"last_breath_gap_jitter",
+		"writing_stage === 'Done'",
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
 		"Could not open NextChapter",
@@ -287,6 +301,8 @@ def main() -> int:
 		"complete_writing_session",
 		"capture_side_idea",
 		"_assert_word_gate",
+		"highlighted_stats",
+		"DONE_PREVIEW_LIMIT",
 		"Writing Session",
 		"BEGIN:VCALENDAR",
 		"/next-chapter/ideas/",
@@ -299,7 +315,13 @@ def main() -> int:
 		errors.append("missing api/session.py")
 	else:
 		session_src = session_api.read_text(encoding="utf-8")
-		for needle in ("list_sessions", "chapter_stats", "save_prefs", "apply_feedback_to_prefs"):
+		for needle in (
+			"list_sessions",
+			"chapter_stats",
+			"chapter_timeline",
+			"save_prefs",
+			"apply_feedback_to_prefs",
+		):
 			if needle not in session_src:
 				errors.append(f"session API missing: {needle}")
 

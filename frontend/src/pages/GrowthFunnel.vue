@@ -43,6 +43,14 @@
                 {{ formatDateTime(chapter.next_write_on) }}
               </div>
             </div>
+            <button
+              v-if="stage === 'Done' && doneStageTruncated()"
+              type="button"
+              class="w-full rounded-md border border-dashed border-outline-gray-2 px-2 py-2 text-left text-xs text-ink-gray-6 hover:border-outline-gray-3 hover:bg-surface-gray-1"
+              @click="router.push('/history')"
+            >
+              Older Done ideas → History
+            </button>
           </div>
         </div>
       </div>
@@ -77,36 +85,94 @@
         />
       </template>
     </Dialog>
+
+    <Dialog v-model="doneScheduleOpen" :options="{ title: 'Scheduled session still open' }">
+      <template #body-content>
+        <p class="text-sm text-ink-gray-7">
+          This idea is Done, but a writing slot remains on
+          <span class="font-medium text-ink-gray-9">{{ formatDateTime(doneScheduleWhen) }}</span>.
+        </p>
+        <FormControl
+          v-model="doneReassignTo"
+          class="mt-4"
+          type="select"
+          label="Move slot to…"
+          :options="reassignOptions"
+        />
+      </template>
+      <template #actions>
+        <Button variant="subtle" label="Remove schedule" @click="resolveDoneSchedule('clear')" />
+        <Button
+          variant="solid"
+          label="Move slot"
+          :disabled="!doneReassignTo"
+          @click="resolveDoneSchedule('move')"
+        />
+      </template>
+    </Dialog>
   </AppShell>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, Dialog } from 'frappe-ui'
+import { Button, Dialog, FormControl, toast } from 'frappe-ui'
+import dayjs from 'dayjs'
 import AppShell from '@/components/AppShell.vue'
-import { STAGE_META, useWorkspace } from '@/composables/useWorkspace'
+import { DONE_PREVIEW_LIMIT, STAGE_META, useWorkspace } from '@/composables/useWorkspace'
 
 const router = useRouter()
-const { state, setStage, downloadIcs, formatDateTime } = useWorkspace()
+const {
+	state,
+	setStage,
+	setSession,
+	downloadIcs,
+	formatDateTime,
+	cardsForStage,
+	doneStageTruncated,
+} = useWorkspace()
 
 const dragName = ref(null)
 const dialogOpen = ref(false)
 const dialogChapter = ref(null)
+const doneScheduleOpen = ref(false)
+const doneScheduleWhen = ref('')
+const doneChapterName = ref('')
+const doneReassignTo = ref('')
+
+const reassignOptions = computed(() =>
+	state.chapters
+		.filter(
+			(c) =>
+				c.name !== doneChapterName.value &&
+				c.writing_stage !== 'Done' &&
+				!c.is_hidden,
+		)
+		.map((c) => ({ label: c.title || c.name, value: c.name })),
+)
 
 function cardsFor(stage) {
-	return state.chapters.filter((c) => !c.is_hidden && c.writing_stage === stage)
+	return cardsForStage(stage)
 }
 
 function countLabel(stage) {
-	const count = cardsFor(stage).length
+	const shown = cardsFor(stage).length
+	const total = state.chapters.filter(
+		(c) => !c.is_hidden && c.writing_stage === stage,
+	).length
 	const limit = Number(state.wipLimits[stage] || 0)
-	return limit > 0 ? `${count}/${limit}` : `${count}/∞`
+	if (stage === 'Done' && total > DONE_PREVIEW_LIMIT) {
+		return `${shown}/${total}`
+	}
+	return limit > 0 ? `${total}/${limit}` : `${total}/∞`
 }
 
 function isFull(stage) {
 	const limit = Number(state.wipLimits[stage] || 0)
-	return limit > 0 && cardsFor(stage).length >= limit
+	const total = state.chapters.filter(
+		(c) => !c.is_hidden && c.writing_stage === stage,
+	).length
+	return limit > 0 && total >= limit
 }
 
 function onDragStart(e, name) {
@@ -118,7 +184,33 @@ async function onDrop(e, stage) {
 	e.preventDefault()
 	const name = dragName.value || e.dataTransfer.getData('text/plain')
 	if (!name) return
+	const before = state.chapters.find((c) => c.name === name)
+	const scheduled = before?.next_write_on
 	await setStage(name, stage)
+	if (stage === 'Done' && scheduled) {
+		doneChapterName.value = name
+		doneScheduleWhen.value = scheduled
+		doneReassignTo.value = ''
+		doneScheduleOpen.value = true
+	}
+}
+
+async function resolveDoneSchedule(action) {
+	const name = doneChapterName.value
+	if (!name) return
+	try {
+		if (action === 'move' && doneReassignTo.value) {
+			const when = dayjs(doneScheduleWhen.value).format('YYYY-MM-DD HH:mm:ss')
+			await setSession(doneReassignTo.value, when)
+			await setSession(name, null)
+			toast.success('Slot moved to the other idea')
+		} else {
+			await setSession(name, null)
+			toast.success('Schedule removed')
+		}
+	} finally {
+		doneScheduleOpen.value = false
+	}
 }
 
 function openChapter(chapter) {

@@ -8,13 +8,24 @@
     <div v-else class="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f3f1ed]">
       <!-- Fixed chrome — no page scroll -->
       <div class="shrink-0 px-5 pt-3">
-        <button
-          class="mb-2 inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
-          @click="router.push('/ideas')"
-        >
-          <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
-          Ideas
-        </button>
+        <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <button
+            class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+            @click="router.push('/ideas')"
+          >
+            <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
+            Ideas
+          </button>
+          <button
+            v-if="parentChapter"
+            type="button"
+            class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+            @click="router.push(`/ideas/${parentChapter.name}`)"
+          >
+            Came from
+            <span class="font-medium text-ink-gray-7">{{ parentChapter.title || 'Untitled' }}</span>
+          </button>
+        </div>
         <div class="flex flex-wrap items-start justify-between gap-4">
           <TextInput
             v-model="draft.title"
@@ -35,83 +46,199 @@
         <p v-if="state.settings.in_development" class="mt-1 text-xs text-amber-700">
           In Development — gates and ritual skips are unlocked.
         </p>
+        <div
+          v-if="pinnedStatRows.length"
+          class="mt-3 grid gap-2 sm:grid-cols-3"
+        >
+          <div
+            v-for="row in pinnedStatRows"
+            :key="row.key"
+            class="rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/90 px-3 py-2"
+          >
+            <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
+            <div class="mt-0.5 flex items-center gap-1.5">
+              <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+              <span
+                v-if="row.trend"
+                class="inline-flex text-[11px] font-medium leading-none"
+                :class="trendClass(row.trend)"
+                :title="trendTitle(row.trend)"
+                aria-hidden="true"
+              >
+                {{ trendArrow(row.trend) }}
+              </span>
+            </div>
+          </div>
+        </div>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#ddd8d0] pb-0">
           <TabButtons v-model="overviewTab" :buttons="overviewTabs" />
-          <div class="pb-2 text-xs text-ink-gray-5">{{ saveState }}</div>
+          <div class="pb-2 text-xs text-ink-gray-5">
+            <span v-if="timelineIdeaCount" class="mr-2 text-ink-gray-6">
+              {{ timelineIdeaCount }} captured
+            </span>
+            {{ saveState }}
+          </div>
         </div>
       </div>
 
       <!-- One tab panel fills remaining viewport -->
       <div class="min-h-0 flex-1 overflow-hidden p-5">
-        <!-- Writing: slate fills space; long text clips — use Edit -->
-        <div v-if="overviewTab === 'writing'" class="flex h-full min-h-0 flex-col">
-          <div
-            class="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-            :style="{ fontSize: `${focusFontSize}px` }"
-          >
-            <div v-if="plainContent" class="whitespace-pre-wrap">{{ plainContent }}</div>
-            <p v-else class="text-ink-gray-4">
-              No writing yet. Start a session to begin — or use Edit for a quick change.
+        <!-- Overview: writing + timeline side by side -->
+        <div
+          v-if="overviewTab === 'overview'"
+          class="grid h-full min-h-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,1fr)]"
+        >
+          <div class="flex min-h-0 min-w-0 flex-col">
+            <div
+              class="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+              :style="{ fontSize: `${focusFontSize}px` }"
+            >
+              <div v-if="plainContent" class="whitespace-pre-wrap">{{ plainContent }}</div>
+              <p v-else class="text-ink-gray-4">
+                No writing yet. Start a session to begin — or use Edit for a quick change.
+              </p>
+            </div>
+            <div class="mt-3 shrink-0 text-xs text-ink-gray-5">
+              {{ wordCount }} words
+              <span v-if="nextGate">
+                · {{ Math.min(wordCount, nextGate.min) }}/{{ nextGate.min }} to reach stage
+                {{ nextGate.stage }}
+              </span>
+              <span v-if="maxWords"> · max {{ maxWords }}</span>
+            </div>
+          </div>
+
+          <aside class="flex min-h-0 min-w-0 flex-col overflow-hidden">
+            <div class="mb-2 shrink-0 text-sm font-medium text-ink-gray-9">Timeline</div>
+            <p class="mb-3 shrink-0 text-xs text-ink-gray-5">
+              Ideas that came out of writing this one.
             </p>
             <div
-              v-if="plainContent"
-              class="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#faf8f5] to-transparent"
-            />
-          </div>
-          <div class="mt-3 shrink-0 text-xs text-ink-gray-5">
-            {{ wordCount }} words
-            <span v-if="nextGate">
-              · {{ Math.min(wordCount, nextGate.min) }}/{{ nextGate.min }} to reach stage
-              {{ nextGate.stage }}
-            </span>
-            <span v-if="maxWords"> · max {{ maxWords }}</span>
-            <span v-if="plainContent" class="text-ink-gray-4"> · Edit to read all</span>
-          </div>
+              v-if="!timelineGroups.length"
+              class="flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-4 text-center text-xs text-ink-gray-5"
+            >
+              Side ideas from sessions will show up here as links.
+            </div>
+            <ol v-else class="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+              <li
+                v-for="(group, gi) in timelineGroups"
+                :key="group.kind === 'session' ? group.session.name : `u-${gi}`"
+                class="relative pl-4"
+              >
+                <span
+                  class="absolute left-0 top-2 h-2 w-2 rounded-full bg-[#c4bdb0]"
+                  aria-hidden="true"
+                />
+                <div class="mb-1.5 text-xs text-ink-gray-5">
+                  <template v-if="group.kind === 'session'">
+                    {{ formatSessionWhen(group.session) }}
+                    <span v-if="formatSessionMeta(group.session)">
+                      · {{ formatSessionMeta(group.session) }}
+                    </span>
+                  </template>
+                  <template v-else>Outside a logged session</template>
+                </div>
+                <ul class="space-y-1.5">
+                  <li v-for="idea in group.ideas" :key="idea.name">
+                    <button
+                      type="button"
+                      class="group flex w-full items-start gap-2 rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-2.5 py-2 text-left transition hover:border-[#c4bdb0] hover:bg-white"
+                      @click="openSpawnedIdea(idea)"
+                    >
+                      <span class="min-w-0 flex-1">
+                        <span
+                          class="block truncate text-sm font-medium text-ink-gray-9 group-hover:underline"
+                        >
+                          {{ idea.title }}
+                        </span>
+                        <span
+                          v-if="ideaSnippet(idea)"
+                          class="mt-0.5 block line-clamp-2 text-xs text-ink-gray-5"
+                        >
+                          {{ ideaSnippet(idea) }}
+                        </span>
+                      </span>
+                      <FeatherIcon
+                        name="chevron-right"
+                        class="mt-0.5 h-4 w-4 shrink-0 text-ink-gray-4"
+                      />
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            </ol>
+          </aside>
         </div>
 
-        <!-- Stats -->
+        <!-- Stats: highlight up to 3 for the overview -->
         <div
           v-else-if="overviewTab === 'stats'"
-          class="grid h-full min-h-0 content-start gap-3 overflow-hidden sm:grid-cols-2 lg:grid-cols-4"
+          class="flex h-full min-h-0 flex-col overflow-hidden"
         >
+          <p class="mb-3 shrink-0 text-sm text-ink-gray-5">
+            Highlight up to 3 stats to show on the overview.
+            <span class="text-ink-gray-4">{{ highlightedKeys.length }}/3 selected</span>
+          </p>
           <div
-            v-for="col in statColumns"
-            :key="col.title"
-            class="min-h-0 overflow-hidden rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-3"
+            class="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-4"
           >
-            <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
-              {{ col.title }}
-            </div>
-            <div class="mt-2 space-y-2">
-              <div v-for="row in col.rows" :key="row.label">
-                <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
-                  <span
-                    v-if="row.trend"
-                    class="inline-flex text-[11px] font-medium leading-none"
-                    :class="trendClass(row.trend)"
-                    :title="trendTitle(row.trend)"
-                    aria-hidden="true"
-                  >
-                    {{ trendArrow(row.trend) }}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <svg
-              v-if="col.spark?.length"
-              class="mt-3 h-8 w-full text-ink-gray-6"
-              viewBox="0 0 100 24"
-              preserveAspectRatio="none"
+            <div
+              v-for="col in statColumns"
+              :key="col.title"
+              class="min-h-0 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-3"
             >
-              <polyline
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                :points="sparkPoints(col.spark)"
-              />
-            </svg>
+              <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
+                {{ col.title }}
+              </div>
+              <div class="mt-2 space-y-2">
+                <button
+                  v-for="row in col.rows"
+                  :key="row.key"
+                  type="button"
+                  class="flex w-full items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-left transition"
+                  :class="
+                    isHighlighted(row.key)
+                      ? 'bg-ink-gray-9/5 ring-1 ring-ink-gray-9/20'
+                      : 'hover:bg-[#efece7]/80'
+                  "
+                  @click="toggleHighlight(row.key)"
+                >
+                  <div class="min-w-0">
+                    <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+                      <span
+                        v-if="row.trend"
+                        class="inline-flex text-[11px] font-medium leading-none"
+                        :class="trendClass(row.trend)"
+                        aria-hidden="true"
+                      >
+                        {{ trendArrow(row.trend) }}
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    class="mt-0.5 shrink-0 text-[10px] font-medium uppercase tracking-wide"
+                    :class="isHighlighted(row.key) ? 'text-ink-gray-8' : 'text-ink-gray-4'"
+                  >
+                    {{ isHighlighted(row.key) ? 'On' : 'Pin' }}
+                  </span>
+                </button>
+              </div>
+              <svg
+                v-if="col.spark?.length"
+                class="mt-3 h-8 w-full text-ink-gray-6"
+                viewBox="0 0 100 24"
+                preserveAspectRatio="none"
+              >
+                <polyline
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  :points="sparkPoints(col.spark)"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -227,8 +354,31 @@
 
     <Dialog v-model="hideOpen" :options="{ title: 'Hide this idea' }">
       <template #body-content>
-        <p class="mb-3 text-sm font-medium">{{ chapter?.title }}</p>
-        <FormControl v-model="hidePreset" type="select" label="Show it again…" :options="hideOptions" />
+        <p class="mb-1 text-sm font-medium text-ink-gray-9">{{ chapter?.title }}</p>
+        <p class="mb-3 text-xs text-ink-gray-5">Show it again…</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            v-for="opt in hideOptions"
+            :key="opt.value"
+            type="button"
+            class="rounded-xl border px-3 py-3 text-left text-sm transition"
+            :class="[
+              opt.value === 'Custom date' ? 'col-span-2' : '',
+              hidePreset === opt.value
+                ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
+                : 'border-[#ddd8d0] bg-[#faf8f5] text-ink-gray-8 hover:border-[#c4bdb0] hover:bg-white',
+            ]"
+            @click="onHideTile(opt.value)"
+          >
+            <span class="block font-medium leading-snug">{{ opt.label }}</span>
+            <span
+              class="mt-0.5 block text-[11px] leading-snug"
+              :class="hidePreset === opt.value ? 'text-white/70' : 'text-ink-gray-5'"
+            >
+              {{ opt.hint }}
+            </span>
+          </button>
+        </div>
         <FormControl
           v-if="hidePreset === 'Custom date'"
           v-model="hideCustom"
@@ -239,7 +389,41 @@
       </template>
       <template #actions>
         <Button variant="subtle" label="Cancel" @click="hideOpen = false" />
-        <Button variant="solid" label="Hide" @click="confirmHide" />
+        <Button
+          v-if="hidePreset === 'Custom date'"
+          variant="solid"
+          label="Hide"
+          :disabled="!hideCustom"
+          @click="confirmHide"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog v-model="doneScheduleOpen" :options="{ title: 'Scheduled session still open' }">
+      <template #body-content>
+        <p class="text-sm text-ink-gray-7">
+          This idea is Done, but a writing slot remains on
+          <span class="font-medium text-ink-gray-9">{{ doneScheduleLabel }}</span>.
+        </p>
+        <p class="mt-2 text-sm text-ink-gray-5">
+          Move that slot to another idea, or remove it.
+        </p>
+        <FormControl
+          v-model="doneReassignTo"
+          class="mt-4"
+          type="select"
+          label="Move slot to…"
+          :options="reassignOptions"
+        />
+      </template>
+      <template #actions>
+        <Button variant="subtle" label="Remove schedule" @click="resolveDoneSchedule('clear')" />
+        <Button
+          variant="solid"
+          label="Move slot"
+          :disabled="!doneReassignTo"
+          @click="resolveDoneSchedule('move')"
+        />
       </template>
     </Dialog>
   </AppShell>
@@ -259,7 +443,12 @@ import {
 } from 'frappe-ui'
 import dayjs from 'dayjs'
 import AppShell from '@/components/AppShell.vue'
-import { PAGE_PILE_STAGES, STAGE_META, useWorkspace } from '@/composables/useWorkspace'
+import {
+	HIGHLIGHTABLE_STATS,
+	PAGE_PILE_STAGES,
+	STAGE_META,
+	useWorkspace,
+} from '@/composables/useWorkspace'
 
 const router = useRouter()
 const route = useRoute()
@@ -272,21 +461,31 @@ const {
 	setSession,
 	downloadIcs,
 	fetchChapterStats,
+	fetchChapterTimeline,
 	savePrefs,
 	countWords,
 	effectiveSetting,
+	formatDateTime,
+	chapterByName,
 } = useWorkspace()
 
 const chapter = computed(
 	() => state.chapters.find((c) => c.name === route.params.name) || null,
 )
 
-const overviewTab = ref('writing')
+const parentChapter = computed(() => chapterByName(chapter.value?.spawned_from))
+
+const overviewTab = ref('overview')
 const overviewTabs = [
-	{ label: 'Writing', value: 'writing' },
+	{ label: 'Overview', value: 'overview' },
 	{ label: 'Stats', value: 'stats' },
 	{ label: 'Details', value: 'details' },
 ]
+
+const highlightedKeys = ref([])
+const doneScheduleOpen = ref(false)
+const doneScheduleWhen = ref('')
+const doneReassignTo = ref('')
 
 const draft = reactive({
 	title: '',
@@ -298,6 +497,7 @@ const saveState = ref('All changes save automatically')
 let saveTimer = null
 
 const stats = ref(null)
+const timeline = ref(null)
 const editOpen = ref(false)
 const editText = ref('')
 const editInput = ref(null)
@@ -313,12 +513,12 @@ const hideOpen = ref(false)
 const hidePreset = ref('Later today')
 const hideCustom = ref('')
 const hideOptions = [
-	'Later today',
-	'Tomorrow',
-	'Next week',
-	'Next month',
-	'Custom date',
-].map((v) => ({ label: v, value: v }))
+	{ label: 'Later today', value: 'Later today', hint: 'This evening' },
+	{ label: 'Tomorrow', value: 'Tomorrow', hint: 'Next morning' },
+	{ label: 'Next week', value: 'Next week', hint: 'In seven days' },
+	{ label: 'Next month', value: 'Next month', hint: 'In thirty days' },
+	{ label: 'Custom date', value: 'Custom date', hint: 'Pick date & time' },
+]
 
 const pagePile = ref(false)
 const pagePileAvailable = computed(() =>
@@ -350,100 +550,148 @@ const nextGate = computed(() => {
 	return { stage, min }
 })
 
-const statColumns = computed(() => {
+const timelineIdeaCount = computed(() => Number(timeline.value?.total_ideas || 0))
+
+/** Groups that have at least one captured idea (sessions without captures stay out). */
+const timelineGroups = computed(() => {
+	const groups = timeline.value?.groups || []
+	return groups.filter((g) => (g.ideas || []).length > 0)
+})
+
+const statLookup = computed(() => {
 	const c = stats.value?.consistency || {}
 	const o = stats.value?.output || {}
 	const t = stats.value?.time || {}
 	const p = stats.value?.planning || {}
 	const tr = stats.value?.trends || {}
 	const aim = p.aim_mix || {}
-	return [
-		{
-			title: 'Consistency',
-			rows: [
-				{
-					label: 'Sessions (total)',
-					value: c.total_sessions ?? '—',
-					trend: tr.total_sessions,
-				},
-				{
-					label: 'Avg / week',
-					value: c.avg_sessions_per_week ?? '—',
-					trend: tr.avg_sessions_per_week,
-				},
-				{
-					label: 'Best / quiet week',
-					value: `${c.best_week ?? '—'} / ${c.quietest_week ?? '—'}`,
-					trend: tr.best_quiet,
-				},
-			],
+	return {
+		total_sessions: {
+			label: 'Sessions (total)',
+			value: c.total_sessions ?? '—',
+			trend: tr.total_sessions,
 		},
-		{
-			title: 'Output',
-			rows: [
-				{
-					label: 'Words written (total)',
-					value: o.total_words ?? '—',
-					trend: tr.total_words,
-				},
-				{
-					label: 'Last planned → actual',
-					value: formatPairs(o.planned_vs_actual),
-					trend: tr.planned_vs_actual,
-				},
-				{
-					label: 'Recent sessions',
-					value: (o.words_trend || []).length || '—',
-					trend: tr.recent_sessions,
-				},
-			],
-			spark: o.words_trend || [],
+		avg_sessions_per_week: {
+			label: 'Avg / week',
+			value: c.avg_sessions_per_week ?? '—',
+			trend: tr.avg_sessions_per_week,
 		},
-		{
-			title: 'Time',
-			rows: [
-				{
-					label: 'Total focus (mins)',
-					value: t.total_focus_mins ?? '—',
-					trend: tr.total_focus_mins,
-				},
-				{
-					label: 'Avg session',
-					value: t.avg_session_mins ?? '—',
-					trend: tr.avg_session_mins,
-				},
-				{
-					label: 'Longest session',
-					value: t.longest_session_mins ?? '—',
-					trend: tr.longest_session_mins,
-				},
-			],
+		best_quiet: {
+			label: 'Best / quiet week',
+			value: `${c.best_week ?? '—'} / ${c.quietest_week ?? '—'}`,
+			trend: tr.best_quiet,
 		},
-		{
-			title: 'Planning & aim',
-			rows: [
-				{
-					label: 'Scheduled sessions',
-					value: p.scheduled_sessions ?? '—',
-					trend: tr.scheduled_sessions,
-				},
-				{
-					label: 'Focus-note keep rate',
-					value:
-						p.focus_note_keep_rate == null
-							? '—'
-							: `${Math.round(p.focus_note_keep_rate * 100)}%`,
-					trend: tr.focus_note_keep_rate,
-				},
-				{
-					label: 'Aim mix (more/sim/less)',
-					value: `${aim.more || 0}/${aim.similar || 0}/${aim.less || 0}`,
-					trend: tr.aim_mix,
-				},
-			],
+		total_words: {
+			label: 'Words written (total)',
+			value: o.total_words ?? '—',
+			trend: tr.total_words,
 		},
-	]
+		planned_vs_actual: {
+			label: 'Last planned → actual',
+			value: formatPairs(o.planned_vs_actual),
+			trend: tr.planned_vs_actual,
+		},
+		recent_sessions: {
+			label: 'Recent sessions',
+			value: (o.words_trend || []).length || '—',
+			trend: tr.recent_sessions,
+		},
+		total_focus_mins: {
+			label: 'Total focus (mins)',
+			value: t.total_focus_mins ?? '—',
+			trend: tr.total_focus_mins,
+		},
+		avg_session_mins: {
+			label: 'Avg session',
+			value: t.avg_session_mins ?? '—',
+			trend: tr.avg_session_mins,
+		},
+		longest_session_mins: {
+			label: 'Longest session',
+			value: t.longest_session_mins ?? '—',
+			trend: tr.longest_session_mins,
+		},
+		scheduled_sessions: {
+			label: 'Scheduled sessions',
+			value: p.scheduled_sessions ?? '—',
+			trend: tr.scheduled_sessions,
+		},
+		focus_note_keep_rate: {
+			label: 'Focus-note keep rate',
+			value:
+				p.focus_note_keep_rate == null
+					? '—'
+					: `${Math.round(p.focus_note_keep_rate * 100)}%`,
+			trend: tr.focus_note_keep_rate,
+		},
+		aim_mix: {
+			label: 'Aim mix (more/sim/less)',
+			value: `${aim.more || 0}/${aim.similar || 0}/${aim.less || 0}`,
+			trend: tr.aim_mix,
+		},
+	}
 })
+
+const pinnedStatRows = computed(() =>
+	highlightedKeys.value
+		.map((key) => {
+			const row = statLookup.value[key]
+			if (!row) return null
+			return { key, ...row }
+		})
+		.filter(Boolean),
+)
+
+const statColumns = computed(() => {
+	const o = stats.value?.output || {}
+	const groups = {}
+	for (const meta of HIGHLIGHTABLE_STATS) {
+		if (!groups[meta.group]) groups[meta.group] = []
+		const row = statLookup.value[meta.key] || {
+			label: meta.label,
+			value: '—',
+			trend: null,
+		}
+		groups[meta.group].push({ key: meta.key, ...row })
+	}
+	return Object.entries(groups).map(([title, rows]) => ({
+		title,
+		rows,
+		spark: title === 'Output' ? o.words_trend || [] : null,
+	}))
+})
+
+const doneScheduleLabel = computed(() =>
+	doneScheduleWhen.value ? formatDateTime(doneScheduleWhen.value) : '',
+)
+
+const reassignOptions = computed(() =>
+	state.chapters
+		.filter(
+			(c) =>
+				c.name !== chapter.value?.name &&
+				c.writing_stage !== 'Done' &&
+				!c.is_hidden,
+		)
+		.map((c) => ({ label: c.title || c.name, value: c.name })),
+)
+
+function isHighlighted(key) {
+	return highlightedKeys.value.includes(key)
+}
+
+async function toggleHighlight(key) {
+	const next = [...highlightedKeys.value]
+	const idx = next.indexOf(key)
+	if (idx >= 0) next.splice(idx, 1)
+	else if (next.length < 3) next.push(key)
+	else return
+	highlightedKeys.value = next
+	if (!chapter.value) return
+	saveState.value = 'Saving…'
+	await saveChapter({ name: chapter.value.name, highlighted_stats: next })
+	saveState.value = 'Saved'
+}
 
 function formatPairs(pairs) {
 	if (!pairs?.length) return '—'
@@ -485,6 +733,42 @@ function sparkPoints(values) {
 		.join(' ')
 }
 
+function formatSessionWhen(session) {
+	const when = session?.ended_on || session?.started_on || session?.creation
+	return when ? formatDateTime(when) : 'Session'
+}
+
+function formatSessionMeta(session) {
+	const parts = []
+	const mins = Number(session?.duration_mins || 0)
+	if (mins) parts.push(`${Math.round(mins)} min`)
+	const words = Number(session?.words_written || 0)
+	if (words) parts.push(`${words} words`)
+	const n = (timeline.value?.ideas || []).filter((i) => i.session === session?.name)
+		.length
+	if (n) parts.push(`${n} captured`)
+	return parts.join(' · ')
+}
+
+function ideaSnippet(idea) {
+	const summary = String(idea?.summary || '')
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+	if (!summary) return ''
+	const title = String(idea?.title || '').trim()
+	if (summary === title || summary.startsWith(title)) {
+		const rest = summary.slice(title.length).replace(/^[\s.…—-]+/, '')
+		return rest || ''
+	}
+	return summary
+}
+
+function openSpawnedIdea(idea) {
+	if (!idea?.name) return
+	router.push(`/ideas/${idea.name}`)
+}
+
 watch(
 	chapter,
 	async (ch) => {
@@ -496,11 +780,19 @@ watch(
 		draft.next_write_on = ch.next_write_on
 			? dayjs(ch.next_write_on).format('YYYY-MM-DDTHH:mm')
 			: ''
+		highlightedKeys.value = Array.isArray(ch.highlighted_stats)
+			? [...ch.highlighted_stats].slice(0, 3)
+			: []
 		pagePile.value = Boolean(state.prefs.page_pile)
 		try {
 			stats.value = await fetchChapterStats(ch.name)
 		} catch {
 			stats.value = null
+		}
+		try {
+			timeline.value = await fetchChapterTimeline(ch.name)
+		} catch {
+			timeline.value = null
 		}
 	},
 	{ immediate: true },
@@ -518,11 +810,36 @@ function scheduleSave() {
 
 async function onStageChange(stage) {
 	if (!chapter.value) return
+	const scheduled = chapter.value.next_write_on
 	try {
 		await setStage(chapter.value.name, stage)
 		saveState.value = 'Saved'
+		if (stage === 'Done' && scheduled) {
+			doneScheduleWhen.value = scheduled
+			doneReassignTo.value = ''
+			doneScheduleOpen.value = true
+		}
 	} catch {
 		draft.writing_stage = chapter.value.writing_stage
+	}
+}
+
+async function resolveDoneSchedule(action) {
+	if (!chapter.value) return
+	try {
+		if (action === 'move' && doneReassignTo.value) {
+			const when = dayjs(doneScheduleWhen.value).format('YYYY-MM-DD HH:mm:ss')
+			await setSession(doneReassignTo.value, when)
+			await setSession(chapter.value.name, null)
+			draft.next_write_on = ''
+			toast.success('Slot moved to the other idea')
+		} else {
+			await setSession(chapter.value.name, null)
+			draft.next_write_on = ''
+			toast.success('Schedule removed')
+		}
+	} finally {
+		doneScheduleOpen.value = false
 	}
 }
 
@@ -595,6 +912,12 @@ async function closeEdit(save) {
 async function onUnhide() {
 	await unhideChapter(chapter.value.name)
 	toast.success('Idea is visible again')
+}
+
+async function onHideTile(value) {
+	hidePreset.value = value
+	if (value === 'Custom date') return
+	await confirmHide()
 }
 
 async function confirmHide() {

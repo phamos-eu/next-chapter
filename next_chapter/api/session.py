@@ -208,6 +208,110 @@ def chapter_stats(chapter: str):
 	}
 
 
+def _idea_in_session(idea_creation, session: dict, slack_secs: int = 120) -> bool:
+	"""True if idea was created within the session window (small slack after end)."""
+	created = get_datetime(idea_creation) if idea_creation else None
+	if not created:
+		return False
+	start = get_datetime(session.get("started_on") or session.get("creation"))
+	end = get_datetime(session.get("ended_on") or session.get("creation"))
+	if not start or not end:
+		return False
+	if end < start:
+		start, end = end, start
+	end = end + timedelta(seconds=slack_secs)
+	return start <= created <= end
+
+
+@frappe.whitelist()
+def chapter_timeline(chapter: str):
+	"""Sessions for an idea plus side ideas spawned during those sessions.
+
+	Side ideas are Implementation Chapters with spawned_from = chapter.
+	Session attribution uses creation time within [started_on, ended_on].
+	"""
+	if not chapter:
+		frappe.throw(_("Chapter is required."), frappe.ValidationError)
+
+	sessions = list_sessions(chapter)
+	# Chronological for attribution; UI gets newest-first groups
+	chrono = list(reversed(sessions))
+
+	raw_ideas = frappe.get_all(
+		"Implementation Chapter",
+		filters={"spawned_from": chapter},
+		fields=[
+			"name",
+			"title",
+			"summary",
+			"writing_stage",
+			"creation",
+			"modified",
+			"hidden_until",
+			"auto_hidden",
+		],
+		order_by="creation desc",
+		limit_page_length=500,
+	)
+
+	ideas = []
+	for row in raw_ideas:
+		hidden_until = row.get("hidden_until")
+		snoozed = bool(hidden_until and get_datetime(hidden_until) > now_datetime())
+		auto = int(row.get("auto_hidden") or 0)
+		session_name = None
+		for s in chrono:
+			if _idea_in_session(row.get("creation"), s):
+				session_name = s.get("name")
+				break
+		ideas.append(
+			{
+				"name": row.get("name"),
+				"title": row.get("title") or _("Untitled"),
+				"summary": row.get("summary") or "",
+				"writing_stage": row.get("writing_stage") or "∞",
+				"creation": row.get("creation"),
+				"modified": row.get("modified"),
+				"is_hidden": snoozed or bool(auto),
+				"session": session_name,
+			}
+		)
+
+	by_session = defaultdict(list)
+	unassigned = []
+	for idea in ideas:
+		if idea.get("session"):
+			by_session[idea["session"]].append(idea)
+		else:
+			unassigned.append(idea)
+
+	groups = []
+	for s in sessions:
+		groups.append(
+			{
+				"kind": "session",
+				"session": s,
+				"ideas": by_session.get(s.get("name"), []),
+			}
+		)
+	if unassigned:
+		groups.insert(
+			0,
+			{
+				"kind": "unassigned",
+				"session": None,
+				"ideas": unassigned,
+			},
+		)
+
+	return {
+		"groups": groups,
+		"ideas": ideas,
+		"sessions": sessions,
+		"total_ideas": len(ideas),
+	}
+
+
 @frappe.whitelist()
 def get_prefs():
 	return get_user_prefs()
@@ -226,6 +330,7 @@ def save_prefs(**kwargs):
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",
+		"last_breath_gap_jitter",
 	}
 	updates = {k: kwargs[k] for k in allowed if k in kwargs}
 	prefs = save_user_prefs(updates)

@@ -38,7 +38,7 @@
               <span class="font-medium text-ink-gray-9">The quick brown idea</span>
             </p>
             <p class="text-xs text-ink-gray-5">
-              Default is 110% — a bit larger than the browser base for 24″ screens.
+              Default is 125% — sized for comfortable reading on typical desks.
             </p>
           </div>
 
@@ -207,7 +207,7 @@ const tabs = [
 ]
 
 const form = reactive({
-	ui_scale: 110,
+	ui_scale: 125,
 	ideas_sort: 'modified_desc',
 	ideas_visible_limit: 20,
 	page_pile: false,
@@ -220,9 +220,11 @@ let saveTimer = null
 const scaleOptions = [
 	{ label: '90% — compact', value: 90 },
 	{ label: '100% — browser default', value: 100 },
-	{ label: '110% — comfortable (default)', value: 110 },
+	{ label: '110% — comfortable', value: 110 },
 	{ label: '120% — larger', value: 120 },
+	{ label: '125% — default', value: 125 },
 	{ label: '130% — extra large', value: 130 },
+	{ label: '140% — maximum', value: 140 },
 ]
 
 const sortOptions = [
@@ -242,7 +244,7 @@ const sortLabel = computed(() => {
 })
 
 const previewRootStyle = computed(() => {
-	const scale = Math.max(90, Math.min(140, Number(form.ui_scale) || 110)) / 100
+	const scale = Math.max(90, Math.min(140, Number(form.ui_scale) || 125)) / 100
 	return { fontSize: `${16 * scale}px` }
 })
 
@@ -280,7 +282,7 @@ function formatDateTime(value) {
 
 function syncFromPrefs() {
 	const p = state.prefs || {}
-	form.ui_scale = Number(p.ui_scale || 110)
+	form.ui_scale = Number(p.ui_scale || 125)
 	form.ideas_sort = p.ideas_sort || 'modified_desc'
 	form.ideas_visible_limit = Number(p.ideas_visible_limit || 20)
 	form.page_pile = Boolean(p.page_pile)
@@ -303,7 +305,7 @@ function scheduleSave() {
 	saveTimer = setTimeout(async () => {
 		try {
 			await savePrefs({
-				ui_scale: Math.max(90, Math.min(140, Number(form.ui_scale) || 110)),
+				ui_scale: Math.max(90, Math.min(140, Number(form.ui_scale) || 125)),
 				ideas_sort: form.ideas_sort,
 				ideas_visible_limit: Math.max(1, Number(form.ideas_visible_limit) || 20),
 				page_pile: form.page_pile ? 1 : 0,

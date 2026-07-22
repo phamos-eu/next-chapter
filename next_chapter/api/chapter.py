@@ -52,8 +52,36 @@ CHAPTER_FIELDS = [
 	"write_duration_mins",
 	"last_session_words",
 	"spawned_from",
+	"highlighted_stats",
 	"modified",
 ]
+
+# How many Done ideas to preview on Ideas / Growth Funnel before History
+DONE_PREVIEW_LIMIT = 10
+
+
+def _parse_highlighted_stats(raw) -> list[str]:
+	import json
+
+	if not raw:
+		return []
+	if isinstance(raw, list):
+		values = raw
+	else:
+		try:
+			values = json.loads(raw)
+		except (TypeError, ValueError):
+			return []
+	if not isinstance(values, list):
+		return []
+	out = []
+	for item in values:
+		key = str(item or "").strip()
+		if key and key not in out:
+			out.append(key)
+		if len(out) >= 3:
+			break
+	return out
 
 
 def _serialize(doc_or_row) -> dict:
@@ -62,6 +90,7 @@ def _serialize(doc_or_row) -> dict:
 	data["content"] = data.get("content") or ""
 	data["last_session_words"] = int(data.get("last_session_words") or 0)
 	data["auto_hidden"] = int(data.get("auto_hidden") or 0)
+	data["highlighted_stats"] = _parse_highlighted_stats(data.get("highlighted_stats"))
 	hidden_until = data.get("hidden_until")
 	snoozed = bool(hidden_until and get_datetime(hidden_until) > now_datetime())
 	data["is_hidden"] = snoozed or bool(data["auto_hidden"])
@@ -114,8 +143,12 @@ def save_chapter(
 	next_write_on: str | None = None,
 	write_duration_mins: int | None = None,
 	update_next_write_on: int | None = None,
+	highlighted_stats: str | None = None,
+	update_highlighted_stats: int | None = None,
 ):
 	"""Autosave chapter writing fields from the desk page."""
+	import json
+
 	if not name:
 		frappe.throw(_("Chapter name is required."), frappe.ValidationError)
 
@@ -142,6 +175,10 @@ def save_chapter(
 
 	if write_duration_mins is not None:
 		doc.write_duration_mins = int(write_duration_mins) or None
+
+	if update_highlighted_stats:
+		parsed = _parse_highlighted_stats(highlighted_stats)
+		doc.highlighted_stats = json.dumps(parsed)
 
 	doc.save()
 	return _serialize(doc)

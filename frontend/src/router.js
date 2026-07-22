@@ -22,6 +22,11 @@ const routes = [
 		component: () => import('@/pages/Write.vue'),
 	},
 	{
+		path: '/history',
+		name: 'History',
+		component: () => import('@/pages/History.vue'),
+	},
+	{
 		path: '/write',
 		name: 'WriteLegacy',
 		component: () => import('@/pages/Home.vue'),

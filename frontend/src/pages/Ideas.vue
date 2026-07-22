@@ -37,6 +37,15 @@
 
       <div class="min-h-0 flex-1 overflow-y-auto">
         <div
+          v-if="state.stageFilter === 'Done' && state.listMode === 'active'"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-[#ddd8d0] bg-[#f3f1ed] px-5 py-2.5 text-sm text-ink-gray-7"
+        >
+          <p>
+            Only {{ DONE_PREVIEW_LIMIT }} are shown here — the rest live in History.
+          </p>
+          <Button variant="subtle" label="Open History" @click="router.push('/history')" />
+        </div>
+        <div
           v-if="!filteredChapters.length"
           class="flex h-full flex-col items-center justify-center gap-2 px-6 text-center"
         >
@@ -102,7 +111,7 @@
 import { useRouter } from 'vue-router'
 import { Badge, Button, FeatherIcon, TabButtons, TextInput, toast } from 'frappe-ui'
 import AppShell from '@/components/AppShell.vue'
-import { STAGE_COLORS, useWorkspace } from '@/composables/useWorkspace'
+import { DONE_PREVIEW_LIMIT, STAGE_COLORS, useWorkspace } from '@/composables/useWorkspace'
 
 const router = useRouter()
 const {

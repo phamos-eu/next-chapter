@@ -242,7 +242,9 @@ def main() -> int:
 		ROOT / "frontend" / "src" / "pages" / "Schedule.vue",
 		ROOT / "frontend" / "src" / "pages" / "Setup.vue",
 		ROOT / "frontend" / "src" / "pages" / "Settings.vue",
+		ROOT / "frontend" / "src" / "pages" / "History.vue",
 		ROOT / "frontend" / "src" / "components" / "AppShell.vue",
+		ROOT / "frontend" / "src" / "components" / "SessionPlanCalendar.vue",
 	]
 	front = ""
 	for path in spa_sources:
@@ -280,6 +282,10 @@ def main() -> int:
 		"Page pile",
 		"Inhale will start in",
 		"breathPhaseLabel",
+		"next_focus_note",
+		"chapter.value.next_focus_note",
+		"addSlot",
+		"removeSlot",
 		"ideas_sort",
 		"ideas_visible_limit",
 		"ui_scale",
@@ -302,6 +308,7 @@ def main() -> int:
 		"capture_side_idea",
 		"_assert_word_gate",
 		"highlighted_stats",
+		"next_focus_note",
 		"DONE_PREVIEW_LIMIT",
 		"Writing Session",
 		"BEGIN:VCALENDAR",

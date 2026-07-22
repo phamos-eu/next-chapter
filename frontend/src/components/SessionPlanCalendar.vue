@@ -1,7 +1,8 @@
 <template>
   <div class="space-y-2">
     <p class="text-xs text-ink-gray-5">
-      Drag suggested sessions onto a day. Booked writing blocks are shown for context.
+      Drag suggested sessions onto a day, remove with ×, or add with + on an empty day.
+      Booked writing blocks are shown for context.
       <span class="text-ink-gray-4">Other calendar appointments will appear here later.</span>
     </p>
 
@@ -9,7 +10,7 @@
       <div
         v-for="day in dayColumns"
         :key="day.key"
-        class="flex min-h-[12rem] flex-col rounded-lg border border-[#ddd8d0] bg-[#f3f0eb]/80"
+        class="group/day flex min-h-[12rem] flex-col rounded-lg border border-[#ddd8d0] bg-[#f3f0eb]/80"
         :class="dragOverDay === day.key ? 'ring-2 ring-ink-gray-4/40' : ''"
         @dragover.prevent="onDragOver(day.key, $event)"
         @dragleave="onDragLeave(day.key)"
@@ -20,7 +21,7 @@
         >
           {{ day.label }}
         </div>
-        <div class="flex flex-1 flex-col gap-1.5 p-1.5">
+        <div class="relative flex flex-1 flex-col gap-1.5 p-1.5">
           <!-- Already booked (read-only) -->
           <div
             v-for="item in day.booked"
@@ -37,11 +38,20 @@
           <div
             v-for="slot in day.drafts"
             :key="slot.index"
-            class="cursor-grab rounded-md border border-ink-gray-8/20 bg-[#faf8f5] px-1.5 py-1 text-left text-[10px] leading-snug shadow-sm active:cursor-grabbing"
+            class="group/tile relative cursor-grab rounded-md border border-ink-gray-8/20 bg-[#faf8f5] px-1.5 py-1 text-left text-[10px] leading-snug shadow-sm active:cursor-grabbing"
             draggable="true"
             @dragstart="onDragStart(slot.index, $event)"
             @dragend="onDragEnd"
           >
+            <button
+              type="button"
+              class="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full border border-[#ddd8d0] bg-white text-[10px] leading-none text-ink-gray-6 shadow-sm group-hover/tile:flex hover:border-ink-gray-7 hover:text-ink-gray-9"
+              title="Remove suggestion"
+              aria-label="Remove suggestion"
+              @click.stop="removeSlot(slot.index)"
+            >
+              ×
+            </button>
             <div class="font-semibold text-ink-gray-8">Suggested</div>
             <div class="truncate text-ink-gray-7">{{ draftLabel }}</div>
             <label class="mt-1 flex items-center gap-1 text-ink-gray-6">
@@ -56,9 +66,20 @@
             </label>
           </div>
 
+          <!-- Empty day: hover + to add a suggestion -->
+          <button
+            v-if="!day.drafts.length"
+            type="button"
+            class="mt-auto flex items-center justify-center rounded-md border border-dashed border-[#ddd8d0] py-2 text-sm text-ink-gray-4 opacity-0 transition group-hover/day:opacity-100 hover:border-ink-gray-6 hover:text-ink-gray-7"
+            title="Add suggested session"
+            aria-label="Add suggested session"
+            @click="addSlot(day.key)"
+          >
+            +
+          </button>
           <div
             v-if="!day.booked.length && !day.drafts.length"
-            class="px-0.5 text-[10px] text-ink-gray-4"
+            class="px-0.5 text-[10px] text-ink-gray-4 group-hover/day:hidden"
           >
             Drop here
           </div>
@@ -113,10 +134,29 @@ const dayColumns = computed(() => {
 	})
 })
 
+function emitSlots(next) {
+	emit(
+		'update:modelValue',
+		(next || []).filter((v) => v),
+	)
+}
+
 function patchSlot(index, nextLocal) {
 	const next = [...(props.modelValue || [])]
 	next[index] = nextLocal
-	emit('update:modelValue', next)
+	emitSlots(next)
+}
+
+function removeSlot(index) {
+	const next = [...(props.modelValue || [])]
+	next.splice(index, 1)
+	emitSlots(next)
+}
+
+function addSlot(dayKey) {
+	const next = [...(props.modelValue || [])]
+	next.push(`${dayKey}T09:00`)
+	emitSlots(next)
 }
 
 function onDragStart(index, event) {

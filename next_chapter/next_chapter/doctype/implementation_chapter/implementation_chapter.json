@@ -19,6 +19,7 @@
   "last_session_words",
   "spawned_from",
   "highlighted_stats",
+  "next_focus_note",
   "content_section",
   "content"
  ],
@@ -115,6 +116,12 @@
    "fieldname": "highlighted_stats",
    "fieldtype": "Small Text",
    "label": "Highlighted Stats"
+  },
+  {
+   "description": "What to focus on next time for this idea (from Complete).",
+   "fieldname": "next_focus_note",
+   "fieldtype": "Small Text",
+   "label": "Next Focus Note"
   },
   {
    "fieldname": "content_section",

@@ -517,7 +517,8 @@ const feedback = reactive({
 	start_felt_long: 'skip',
 	next_focus_note: '',
 })
-const scheduleSlots = reactive(['', '', ''])
+/** Dynamic suggested plan slots (datetime-local strings). */
+const scheduleSlots = ref([])
 const priorFocusNote = ref('')
 const priorFocusNoteDraft = ref('')
 const focusNoteAction = ref('kept')
@@ -730,7 +731,7 @@ const currentCompleteStep = computed(
 	() => activeCompleteSteps.value[completeStep.value] || null,
 )
 
-const planSlotValues = computed(() => [...scheduleSlots])
+const planSlotValues = computed(() => [...scheduleSlots.value])
 const planBookedSessions = computed(() =>
 	(scheduledChapters.value || []).map((c) => ({
 		name: c.name,
@@ -740,9 +741,7 @@ const planBookedSessions = computed(() =>
 )
 
 function onPlanSlotsUpdate(next) {
-	;(next || []).forEach((value, i) => {
-		scheduleSlots[i] = value || ''
-	})
+	scheduleSlots.value = (next || []).filter((v) => v)
 }
 
 function loadChecklists() {
@@ -985,9 +984,7 @@ function openComplete() {
 	}
 	const slot = (days) =>
 		dayjs().add(days, 'day').hour(9).minute(0).second(0).format('YYYY-MM-DDTHH:mm')
-	scheduleSlots[0] = slot(1)
-	scheduleSlots[1] = slot(3)
-	scheduleSlots[2] = slot(5)
+	scheduleSlots.value = [slot(1), slot(3), slot(5)]
 
 	const steps = activeCompleteSteps.value
 	if (!steps.length) {
@@ -1021,9 +1018,7 @@ function selectComplete(field, value) {
 }
 
 function skipPlanAndAdvance() {
-	scheduleSlots[0] = ''
-	scheduleSlots[1] = ''
-	scheduleSlots[2] = ''
+	scheduleSlots.value = []
 	advanceComplete()
 }
 
@@ -1078,15 +1073,17 @@ async function finishSession({ quiet = false } = {}) {
 			fade_adjust:
 				includeDistraction && capturedSideIdeas.value ? feedback.fade_adjust : '',
 			start_felt_long: includeStartLong ? feedback.start_felt_long : 'skip',
-			// Preserve prior note when the Next-topic step was skipped
+			// Preserve this idea’s note when the Next-topic step was skipped
 			next_focus_note: includeTopic
 				? feedback.next_focus_note
-				: state.prefs.last_next_focus_note || '',
+				: chapter.value.next_focus_note || '',
 			prior_focus_note_action: priorFocusNote.value ? focusNoteAction.value : '',
 			was_scheduled: chapter.value.next_write_on ? 1 : 0,
 			schedule_slots: JSON.stringify(
 				includePlan
-					? scheduleSlots.filter(Boolean).map((s) => dayjs(s).format('YYYY-MM-DD HH:mm:ss'))
+					? scheduleSlots.value
+							.filter(Boolean)
+							.map((s) => dayjs(s).format('YYYY-MM-DD HH:mm:ss'))
 					: [],
 			),
 			content: `<p>${String(sessionBody.value || '')
@@ -1270,7 +1267,7 @@ onMounted(async () => {
 		return
 	}
 	loadChecklists()
-	priorFocusNote.value = state.prefs.last_next_focus_note || ''
+	priorFocusNote.value = chapter.value.next_focus_note || ''
 	priorFocusNoteDraft.value = priorFocusNote.value
 	const bias = state.prefs.aim_bias
 	aimChoice.value = bias === 'increase' ? 'more' : bias === 'decrease' ? 'less' : 'similar'

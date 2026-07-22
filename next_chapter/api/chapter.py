@@ -53,6 +53,7 @@ CHAPTER_FIELDS = [
 	"last_session_words",
 	"spawned_from",
 	"highlighted_stats",
+	"next_focus_note",
 	"modified",
 ]
 
@@ -91,6 +92,7 @@ def _serialize(doc_or_row) -> dict:
 	data["last_session_words"] = int(data.get("last_session_words") or 0)
 	data["auto_hidden"] = int(data.get("auto_hidden") or 0)
 	data["highlighted_stats"] = _parse_highlighted_stats(data.get("highlighted_stats"))
+	data["next_focus_note"] = data.get("next_focus_note") or ""
 	hidden_until = data.get("hidden_until")
 	snoozed = bool(hidden_until and get_datetime(hidden_until) > now_datetime())
 	data["is_hidden"] = snoozed or bool(data["auto_hidden"])
@@ -491,6 +493,10 @@ def complete_writing_session(
 	if summary is not None:
 		doc.summary = summary
 
+	# Per-idea intent for the next session on this chapter (not a global pref)
+	if next_focus_note is not None:
+		doc.next_focus_note = (next_focus_note or "").strip()
+
 	# Optional: set next_write_on from first upcoming slot
 	slots = []
 	if schedule_slots:
@@ -539,7 +545,6 @@ def complete_writing_session(
 			"fade_adjust": fade_adjust,
 			"aim_adjust": aim_adjust,
 			"start_felt_long": start_felt_long,
-			"next_focus_note": next_focus_note,
 		}
 	)
 

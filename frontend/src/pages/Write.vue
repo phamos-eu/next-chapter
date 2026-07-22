@@ -319,8 +319,31 @@
 
     <Dialog v-model="hideOpen" :options="{ title: 'Hide this idea' }">
       <template #body-content>
-        <p class="mb-3 text-sm font-medium">{{ chapter?.title }}</p>
-        <FormControl v-model="hidePreset" type="select" label="Show it again…" :options="hideOptions" />
+        <p class="mb-1 text-sm font-medium text-ink-gray-9">{{ chapter?.title }}</p>
+        <p class="mb-3 text-xs text-ink-gray-5">Show it again…</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            v-for="opt in hideOptions"
+            :key="opt.value"
+            type="button"
+            class="rounded-xl border px-3 py-3 text-left text-sm transition"
+            :class="[
+              opt.value === 'Custom date' ? 'col-span-2' : '',
+              hidePreset === opt.value
+                ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
+                : 'border-[#ddd8d0] bg-[#faf8f5] text-ink-gray-8 hover:border-[#c4bdb0] hover:bg-white',
+            ]"
+            @click="onHideTile(opt.value)"
+          >
+            <span class="block font-medium leading-snug">{{ opt.label }}</span>
+            <span
+              class="mt-0.5 block text-[11px] leading-snug"
+              :class="hidePreset === opt.value ? 'text-white/70' : 'text-ink-gray-5'"
+            >
+              {{ opt.hint }}
+            </span>
+          </button>
+        </div>
         <FormControl
           v-if="hidePreset === 'Custom date'"
           v-model="hideCustom"
@@ -331,7 +354,13 @@
       </template>
       <template #actions>
         <Button variant="subtle" label="Cancel" @click="hideOpen = false" />
-        <Button variant="solid" label="Hide" @click="confirmHide" />
+        <Button
+          v-if="hidePreset === 'Custom date'"
+          variant="solid"
+          label="Hide"
+          :disabled="!hideCustom"
+          @click="confirmHide"
+        />
       </template>
     </Dialog>
   </AppShell>
@@ -409,12 +438,12 @@ const hideOpen = ref(false)
 const hidePreset = ref('Later today')
 const hideCustom = ref('')
 const hideOptions = [
-	'Later today',
-	'Tomorrow',
-	'Next week',
-	'Next month',
-	'Custom date',
-].map((v) => ({ label: v, value: v }))
+	{ label: 'Later today', value: 'Later today', hint: 'This evening' },
+	{ label: 'Tomorrow', value: 'Tomorrow', hint: 'Next morning' },
+	{ label: 'Next week', value: 'Next week', hint: 'In seven days' },
+	{ label: 'Next month', value: 'Next month', hint: 'In thirty days' },
+	{ label: 'Custom date', value: 'Custom date', hint: 'Pick date & time' },
+]
 
 const pagePile = ref(false)
 const pagePileAvailable = computed(() =>
@@ -740,6 +769,12 @@ async function closeEdit(save) {
 async function onUnhide() {
 	await unhideChapter(chapter.value.name)
 	toast.success('Idea is visible again')
+}
+
+async function onHideTile(value) {
+	hidePreset.value = value
+	if (value === 'Custom date') return
+	await confirmHide()
 }
 
 async function confirmHide() {

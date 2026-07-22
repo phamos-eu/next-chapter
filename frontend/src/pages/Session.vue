@@ -428,20 +428,6 @@
     </div>
   </div>
 
-  <div
-    v-else-if="phase === 'summary'"
-    class="flex min-h-screen items-center justify-center bg-[#f0ede8] p-6"
-  >
-    <div class="w-full max-w-md rounded-2xl border border-[#e0dbd3] bg-[#f7f5f2] p-6">
-      <h1 class="text-xl font-semibold">Session saved</h1>
-      <p class="mt-2 text-sm text-ink-gray-6">{{ summaryMessage }}</p>
-      <div class="mt-6 flex justify-between gap-2">
-        <Button variant="subtle" label="Growth Funnel" @click="router.push('/growth')" />
-        <Button variant="solid" label="Back to idea" @click="backToWrite" />
-      </div>
-    </div>
-  </div>
-
   <div v-else class="flex min-h-screen items-center justify-center text-sm text-ink-gray-5">
     Loading…
   </div>
@@ -626,16 +612,7 @@ const draftComposerStyle = computed(() => {
 	const y = clamp(draftY.value, 12, (typeof window !== 'undefined' ? window.innerHeight : 600) - h - 12)
 	return { left: `${x}px`, top: `${y}px` }
 })
-const summaryMessage = computed(() => {
-	const g = wordGoal.value
-	const w = sessionWords.value
-	if (w <= 0) return 'Session closed — nothing new was written this time.'
-	if (w >= g) return 'You met the aim for this block.'
-	return 'Showing up compounds. Your next sessions are ready when you are.'
-})
-
 const skippedRitual = ref(false)
-const quietComplete = ref(false)
 const capturedSideIdeas = computed(() => notes.some((n) => (n.text || '').trim().length > 0))
 const sessionElapsedMins = computed(() => {
 	if (!sessionStartedOn.value) return 0
@@ -918,10 +895,8 @@ function onDraftComposerLeave() {
 }
 
 function openComplete() {
-	quietComplete.value = false
 	// Nothing written → skip the wizard entirely
 	if (sessionWords.value <= 0 && !capturedSideIdeas.value) {
-		quietComplete.value = true
 		finishSession({ quiet: true })
 		return
 	}
@@ -938,7 +913,6 @@ function openComplete() {
 
 	const steps = activeCompleteSteps.value
 	if (!steps.length) {
-		quietComplete.value = true
 		finishSession({ quiet: true })
 		return
 	}
@@ -971,7 +945,6 @@ function stepIncluded(id) {
 
 async function finishSession({ quiet = false } = {}) {
 	completeOpen.value = false
-	quietComplete.value = quiet || sessionWords.value <= 0
 	const includeFeel = stepIncluded('feel')
 	const includeAim = stepIncluded('aim')
 	const includeDistraction = stepIncluded('distraction')
@@ -1011,8 +984,9 @@ async function finishSession({ quiet = false } = {}) {
 		})
 	} catch (e) {
 		toast.error(errorMessage(e, 'Could not save session'))
+		return
 	}
-	phase.value = 'summary'
+	router.replace(chapter.value ? `/ideas/${chapter.value.name}` : '/ideas')
 }
 
 function tintFor(id) {
@@ -1165,9 +1139,6 @@ function closeCaptureDialog() {
 
 function leave() {
 	router.push(chapter.value ? `/ideas/${chapter.value.name}` : '/growth')
-}
-function backToWrite() {
-	router.push(`/ideas/${chapter.value.name}`)
 }
 function onKeydown(e) {
 	if (phase.value === 'focus' && e.key === 'Escape') {

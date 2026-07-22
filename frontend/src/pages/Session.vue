@@ -365,9 +365,15 @@
           </div>
         </div>
 
-        <div v-else class="mt-4 space-y-3 text-left">
-          <FormControl v-model="feedback.next_focus_note" type="textarea" label="Focus next time" />
-          <p class="text-xs text-ink-gray-5">Plan the next sessions (3 slots)</p>
+        <div v-else-if="completeStep === 3" class="mt-4 text-left">
+          <FormControl
+            v-model="feedback.next_focus_note"
+            type="textarea"
+            label="Next topic"
+          />
+        </div>
+
+        <div v-else-if="completeStep === 4" class="mt-4 space-y-3 text-left">
           <FormControl
             v-for="(slot, i) in scheduleSlots"
             :key="i"
@@ -375,16 +381,28 @@
             type="datetime-local"
             :label="`Session ${i + 1}`"
           />
-          <p class="text-xs text-ink-gray-5">Was the start ritual too long?</p>
-          <div class="flex gap-2">
-            <Button
-              v-for="opt in ['yes', 'no', 'skip']"
-              :key="opt"
-              size="sm"
-              :variant="feedback.start_felt_long === opt ? 'solid' : 'subtle'"
-              :label="opt"
-              @click="feedback.start_felt_long = opt"
-            />
+        </div>
+
+        <div v-else class="mt-4 space-y-3">
+          <div class="grid gap-2">
+            <button
+              v-for="opt in [
+                { id: 'yes', label: 'Yes — a bit long' },
+                { id: 'no', label: 'No — felt fine' },
+                { id: 'skip', label: 'Skip' },
+              ]"
+              :key="opt.id"
+              type="button"
+              class="rounded-xl border px-3 py-2 text-left text-sm"
+              :class="
+                feedback.start_felt_long === opt.id
+                  ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
+                  : 'border-[#ddd8d0] bg-[#faf8f5]'
+              "
+              @click="feedback.start_felt_long = opt.id"
+            >
+              {{ opt.label }}
+            </button>
           </div>
         </div>
 
@@ -613,7 +631,9 @@ const completeSteps = [
 	{ title: 'How did it feel?', help: 'One tap — no overthinking.' },
 	{ title: 'Aim for next time', help: 'Increase, keep, or decrease how ambitious the word aim feels.' },
 	{ title: 'Distraction & fades', help: 'Tell us how pulled away you felt — then nudge fade timing.' },
-	{ title: 'Next focus & schedule', help: 'Leave a note for next Start and plan a few sessions ahead.' },
+	{ title: 'Next topic', help: 'What should you focus on when you start next time?' },
+	{ title: 'Plan sessions', help: 'Pick a few times to show up again — three slots by default.' },
+	{ title: 'Was the start too long?', help: 'Optional — helps us soften the ritual if it felt heavy.' },
 ]
 
 function loadChecklists() {

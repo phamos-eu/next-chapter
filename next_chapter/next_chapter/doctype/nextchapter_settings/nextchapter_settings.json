@@ -14,10 +14,18 @@
   "session_section",
   "default_session_mins",
   "reminder_mins",
+  "focus_font_size",
   "ritual_section",
   "breath_count",
   "inhale_seconds",
+  "hold_seconds",
   "exhale_seconds",
+  "capture_section",
+  "fade_idle_secs",
+  "fade_duration_secs",
+  "fade_idle_min_secs",
+  "fade_idle_max_secs",
+  "bubble_label_chars",
   "runway_section",
   "runway_checklist",
   "body_section",
@@ -92,13 +100,22 @@
    "non_negative": 1
   },
   {
+   "default": "18",
+   "description": "Font size (px) for the distraction-free focus editor.",
+   "fieldname": "focus_font_size",
+   "fieldtype": "Int",
+   "label": "Focus Font Size (px)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
    "fieldname": "ritual_section",
    "fieldtype": "Section Break",
    "label": "Writing Ritual"
   },
   {
    "default": "3",
-   "description": "How many breaths before entering focus mode.",
+   "description": "Required breaths before Enter Session is offered.",
    "fieldname": "breath_count",
    "fieldtype": "Int",
    "label": "Breath Count",
@@ -114,10 +131,68 @@
    "reqd": 1
   },
   {
+   "default": "2",
+   "description": "Hold between inhale and exhale; circle fades during hold.",
+   "fieldname": "hold_seconds",
+   "fieldtype": "Int",
+   "label": "Hold Seconds",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
    "default": "6",
    "fieldname": "exhale_seconds",
    "fieldtype": "Int",
    "label": "Exhale Seconds",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "capture_section",
+   "fieldtype": "Section Break",
+   "label": "Side Idea Capture"
+  },
+  {
+   "default": "3",
+   "description": "Base idle seconds before a post-it starts fading (scaled by word count).",
+   "fieldname": "fade_idle_secs",
+   "fieldtype": "Int",
+   "label": "Fade Idle (secs)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "2",
+   "fieldname": "fade_duration_secs",
+   "fieldtype": "Int",
+   "label": "Fade Duration (secs)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "2",
+   "description": "Minimum idle before fade (few words).",
+   "fieldname": "fade_idle_min_secs",
+   "fieldtype": "Int",
+   "label": "Fade Idle Min (secs)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "8",
+   "description": "Maximum idle before fade (many words).",
+   "fieldname": "fade_idle_max_secs",
+   "fieldtype": "Int",
+   "label": "Fade Idle Max (secs)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "12",
+   "description": "Characters shown on minimized idea bubbles.",
+   "fieldname": "bubble_label_chars",
+   "fieldtype": "Int",
+   "label": "Bubble Label Characters",
    "non_negative": 1,
    "reqd": 1
   },
@@ -146,7 +221,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-07-22 15:00:00.000000",
+ "modified": "2026-07-22 15:45:00.000000",
  "modified_by": "Administrator",
  "module": "Next Chapter",
  "name": "NextChapter Settings",

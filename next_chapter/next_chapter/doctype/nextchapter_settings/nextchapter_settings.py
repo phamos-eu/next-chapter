@@ -14,9 +14,16 @@ DEFAULTS = {
 	"wip_1": 1,
 	"default_session_mins": 60,
 	"reminder_mins": 15,
+	"focus_font_size": 18,
 	"breath_count": 3,
 	"inhale_seconds": 4,
+	"hold_seconds": 2,
 	"exhale_seconds": 6,
+	"fade_idle_secs": 3,
+	"fade_duration_secs": 2,
+	"fade_idle_min_secs": 2,
+	"fade_idle_max_secs": 8,
+	"bubble_label_chars": 12,
 }
 
 STAGE_WIP_FIELD = {

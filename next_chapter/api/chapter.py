@@ -45,6 +45,7 @@ CHAPTER_FIELDS = [
 	"next_write_on",
 	"write_duration_mins",
 	"last_session_words",
+	"spawned_from",
 	"modified",
 ]
 
@@ -228,6 +229,58 @@ def clear_writing_session(name: str):
 	doc = frappe.get_doc("Implementation Chapter", name)
 	doc.next_write_on = None
 	doc.save()
+	return _serialize(doc)
+
+
+@frappe.whitelist()
+def capture_side_idea(parent: str, text: str, name: str | None = None):
+	"""Create or update an ∞-stage idea captured during a focus session."""
+	if not parent:
+		frappe.throw(_("Parent chapter is required."), frappe.ValidationError)
+
+	parent_doc = frappe.get_doc("Implementation Chapter", parent)
+	raw = (text or "").strip()
+	if not raw:
+		frappe.throw(_("Idea text is required."), frappe.ValidationError)
+
+	title = raw.split("\n", 1)[0].strip()
+	if len(title) > 80:
+		title = title[:77].rstrip() + "…"
+	if not title:
+		title = _("Captured idea")
+
+	settings = get_settings_dict()
+
+	if name and frappe.db.exists("Implementation Chapter", name):
+		doc = frappe.get_doc("Implementation Chapter", name)
+		if doc.spawned_from and doc.spawned_from != parent:
+			frappe.throw(_("This idea belongs to another chapter."), frappe.ValidationError)
+		doc.title = title
+		doc.summary = raw
+		doc.spawned_from = parent
+		doc.save()
+		return _serialize(doc)
+
+	max_seq = frappe.db.sql(
+		"select max(sequence) from `tabImplementation Chapter` where story=%s",
+		parent_doc.story,
+	)
+	sequence = int((max_seq and max_seq[0][0]) or 0) + 1
+
+	doc = frappe.get_doc(
+		{
+			"doctype": "Implementation Chapter",
+			"story": parent_doc.story,
+			"title": title,
+			"sequence": sequence,
+			"writing_stage": "∞",
+			"summary": raw,
+			"content": "",
+			"spawned_from": parent,
+			"write_duration_mins": settings.get("default_session_mins") or 60,
+		}
+	)
+	doc.insert()
 	return _serialize(doc)
 
 

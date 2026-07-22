@@ -194,6 +194,16 @@ export function useWorkspace() {
 		return result
 	}
 
+	async function captureSideIdea({ parent, text, name = null }) {
+		const chapter = await call('next_chapter.api.chapter.capture_side_idea', {
+			parent,
+			text,
+			name,
+		})
+		replaceChapter(chapter)
+		return chapter
+	}
+
 	function downloadIcs(name) {
 		window.location.href = `/api/method/next_chapter.api.chapter.download_ics?name=${encodeURIComponent(name)}`
 	}
@@ -237,6 +247,7 @@ export function useWorkspace() {
 		unhideChapter,
 		setSession,
 		completeWritingSession,
+		captureSideIdea,
 		downloadIcs,
 		formatDateTime,
 		formatTime,

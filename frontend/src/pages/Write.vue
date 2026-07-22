@@ -177,17 +177,17 @@
       </aside>
     </div>
 
-    <!-- Edit dialog -->
+    <!-- Edit dialog — large from the start; page behind does not scroll -->
     <div
       v-if="editOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-ink-gray-9/35 p-4"
+      class="fixed inset-0 z-50 flex items-stretch justify-center overflow-hidden bg-ink-gray-9/35 p-3 sm:p-5"
     >
       <div
-        class="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-[#d4cfc6] bg-[#faf8f5] p-4 shadow-lg"
+        class="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#d4cfc6] bg-[#faf8f5] p-4 shadow-lg sm:p-5"
         @mousemove="bumpEditIdle"
         @keydown="bumpEditIdle"
       >
-        <div class="mb-2 flex items-center justify-between">
+        <div class="mb-3 flex shrink-0 items-center justify-between gap-3">
           <div class="font-medium text-ink-gray-9">Edit writing</div>
           <div v-if="editCountdown !== null" class="text-xs text-ink-gray-5">
             Closing in {{ editCountdown }}s…
@@ -196,11 +196,11 @@
         <textarea
           ref="editInput"
           v-model="editText"
-          class="min-h-[16rem] flex-1 resize-none rounded-xl border border-[#ddd8d0] bg-[#f7f5f1] p-3 text-base leading-relaxed outline-none"
+          class="min-h-0 w-full flex-1 resize-none rounded-xl border border-[#ddd8d0] bg-[#f7f5f1] p-4 leading-relaxed outline-none"
           :style="{ fontSize: `${focusFontSize}px` }"
           @input="bumpEditIdle"
         />
-        <div class="mt-3 flex justify-end gap-2">
+        <div class="mt-3 flex shrink-0 justify-end gap-2">
           <Button variant="subtle" label="Cancel" @click="closeEdit(false)" />
           <Button variant="solid" label="Save" @click="closeEdit(true)" />
         </div>

@@ -38,7 +38,7 @@
             <Button
               v-if="draft.writing_stage !== 'Done'"
               variant="solid"
-              label="Start writing session"
+              label="Start Focus"
               @click="router.push(`/session/${chapter.name}`)"
             />
           </div>
@@ -946,16 +946,16 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .overview-title :deep(input) {
-	min-height: 3.25rem;
-	font-size: 2.25rem;
+	min-height: 2.75rem;
+	font-size: 1.875rem;
 	line-height: 1.2;
 	font-weight: 600;
 	letter-spacing: -0.02em;
 }
 @media (min-width: 640px) {
 	.overview-title :deep(input) {
-		min-height: 3.75rem;
-		font-size: 2.75rem;
+		min-height: 3.25rem;
+		font-size: 2.25rem;
 	}
 }
 </style>

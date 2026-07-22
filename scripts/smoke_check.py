@@ -267,7 +267,7 @@ def main() -> int:
 		"Add Idea",
 		"Ideas",
 		"Growth Funnel",
-		"Start writing session",
+		"Start Focus",
 		"chapter_timeline",
 		"Timeline",
 		"Came from",

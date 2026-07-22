@@ -12,8 +12,12 @@ from next_chapter.next_chapter.doctype.implementation_story.implementation_story
 	get_active_story_name,
 )
 from next_chapter.next_chapter.doctype.nextchapter_settings.nextchapter_settings import (
+	STAGE_MIN_WORDS_FIELD,
 	STAGE_WIP_FIELD,
 	get_settings_dict,
+)
+from next_chapter.next_chapter.doctype.nextchapter_user_preference.nextchapter_user_preference import (
+	get_user_prefs,
 )
 
 
@@ -26,6 +30,11 @@ def get_bootstrap():
 		stage: (settings.get(field) or 0)
 		for stage, field in STAGE_WIP_FIELD.items()
 	}
+	word_gates = {
+		stage: int(settings.get(field) or 0)
+		for stage, field in STAGE_MIN_WORDS_FIELD.items()
+	}
+	prefs = get_user_prefs()
 
 	if not story_name:
 		return {
@@ -35,6 +44,8 @@ def get_bootstrap():
 			"stages": STAGES,
 			"settings": settings,
 			"wip_limits": wip_limits,
+			"word_gates": word_gates,
+			"prefs": prefs,
 		}
 
 	story = frappe.get_doc("Implementation Story", story_name)
@@ -58,6 +69,8 @@ def get_bootstrap():
 		"stages": STAGES,
 		"settings": settings,
 		"wip_limits": wip_limits,
+		"word_gates": word_gates,
+		"prefs": prefs,
 	}
 
 

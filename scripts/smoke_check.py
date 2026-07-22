@@ -188,6 +188,8 @@ def main() -> int:
 				"inhale_seconds",
 				"hold_seconds",
 				"exhale_seconds",
+				"hold_after_exhale_seconds",
+				"breath_prepare_seconds",
 				"focus_font_size",
 				"fade_idle_secs",
 				"fade_duration_secs",
@@ -195,6 +197,15 @@ def main() -> int:
 				"fade_idle_max_secs",
 				"fade_drag",
 				"bubble_label_chars",
+				"min_words_9",
+				"min_words_7",
+				"min_words_5",
+				"min_words_3",
+				"min_words_1",
+				"max_words",
+				"in_development",
+				"edit_idle_secs",
+				"page_words",
 				"runway_checklist",
 				"body_checklist",
 			):
@@ -246,12 +257,15 @@ def main() -> int:
 		"next_chapter.api.chapter.set_stage",
 		"next_chapter.api.chapter.complete_writing_session",
 		"next_chapter.api.chapter.capture_side_idea",
+		"next_chapter.api.session.chapter_stats",
+		"next_chapter.api.session.save_prefs",
 		"Add Idea",
-		"Brain Dump",
 		"Ideas",
 		"Growth Funnel",
 		"Start writing session",
 		"Complete",
+		"Page pile",
+		"Inhale will start in",
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
 		"Could not open NextChapter",
@@ -266,11 +280,30 @@ def main() -> int:
 		"set_writing_session",
 		"complete_writing_session",
 		"capture_side_idea",
+		"_assert_word_gate",
+		"Writing Session",
 		"BEGIN:VCALENDAR",
 		"/next-chapter/ideas/",
 	):
 		if needle not in api:
 			errors.append(f"chapter API missing: {needle}")
+
+	session_api = APP / "api/session.py"
+	if not session_api.is_file():
+		errors.append("missing api/session.py")
+	else:
+		session_src = session_api.read_text(encoding="utf-8")
+		for needle in ("list_sessions", "chapter_stats", "save_prefs", "apply_feedback_to_prefs"):
+			if needle not in session_src:
+				errors.append(f"session API missing: {needle}")
+
+	for rel in (
+		"next_chapter/doctype/writing_session/writing_session.json",
+		"next_chapter/doctype/nextchapter_user_preference/nextchapter_user_preference.json",
+	):
+		path = APP / rel
+		if not path.is_file():
+			errors.append(f"missing DocType: {rel}")
 
 	sidebar = json.loads((APP / "workspace_sidebar/next_chapter.json").read_text(encoding="utf-8"))
 	labels = {i.get("label") for i in sidebar.get("items", [])}

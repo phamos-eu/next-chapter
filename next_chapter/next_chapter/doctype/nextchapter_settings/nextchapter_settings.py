@@ -12,13 +12,24 @@ DEFAULTS = {
 	"wip_5": 5,
 	"wip_3": 3,
 	"wip_1": 1,
+	"min_words_9": 50,
+	"min_words_7": 120,
+	"min_words_5": 250,
+	"min_words_3": 400,
+	"min_words_1": 600,
+	"max_words": 5000,
 	"default_session_mins": 60,
 	"reminder_mins": 15,
 	"focus_font_size": 18,
+	"edit_idle_secs": 45,
+	"page_words": 280,
+	"in_development": 0,
 	"breath_count": 3,
+	"breath_prepare_seconds": 3,
 	"inhale_seconds": 4,
 	"hold_seconds": 2,
 	"exhale_seconds": 6,
+	"hold_after_exhale_seconds": 2,
 	"fade_idle_secs": 3,
 	"fade_duration_secs": 2,
 	"fade_idle_min_secs": 2,
@@ -33,6 +44,14 @@ STAGE_WIP_FIELD = {
 	"5": "wip_5",
 	"3": "wip_3",
 	"1": "wip_1",
+}
+
+STAGE_MIN_WORDS_FIELD = {
+	"9": "min_words_9",
+	"7": "min_words_7",
+	"5": "min_words_5",
+	"3": "min_words_3",
+	"1": "min_words_1",
 }
 
 DEFAULT_RUNWAY = [
@@ -109,12 +128,12 @@ def get_settings_dict() -> dict:
 	data = {
 		key: doc.get(key) if doc.get(key) is not None else DEFAULTS[key] for key in DEFAULTS
 	}
-	# Keep fade_drag in [0, 1]
 	try:
 		drag = float(data.get("fade_drag") if data.get("fade_drag") is not None else DEFAULTS["fade_drag"])
 	except (TypeError, ValueError):
 		drag = DEFAULTS["fade_drag"]
 	data["fade_drag"] = max(0.0, min(1.0, drag))
+	data["in_development"] = 1 if data.get("in_development") else 0
 	data["runway_checklist"] = _checklist_payload(doc.get("runway_checklist"))
 	data["body_checklist"] = _checklist_payload(doc.get("body_checklist"))
 	return data
@@ -128,3 +147,11 @@ def get_wip_limit(stage: str) -> int | None:
 	settings = get_settings_dict()
 	limit = int(settings.get(field) or 0)
 	return limit or None
+
+
+def get_min_words_for_stage(stage: str) -> int:
+	field = STAGE_MIN_WORDS_FIELD.get(stage)
+	if not field:
+		return 0
+	settings = get_settings_dict()
+	return int(settings.get(field) or 0)

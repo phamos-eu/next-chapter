@@ -1,0 +1,192 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-07-22 17:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "chapter",
+  "user",
+  "column_break_meta",
+  "started_on",
+  "ended_on",
+  "duration_mins",
+  "output_section",
+  "words_planned",
+  "words_written",
+  "aim_choice",
+  "feedback_section",
+  "felt_productive",
+  "aim_adjust",
+  "distraction_level",
+  "fade_adjust",
+  "start_felt_long",
+  "continuity_section",
+  "next_focus_note",
+  "prior_focus_note_action",
+  "was_scheduled"
+ ],
+ "fields": [
+  {
+   "fieldname": "chapter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Chapter",
+   "options": "Implementation Chapter",
+   "reqd": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Started On"
+  },
+  {
+   "fieldname": "ended_on",
+   "fieldtype": "Datetime",
+   "label": "Ended On"
+  },
+  {
+   "default": "0",
+   "fieldname": "duration_mins",
+   "fieldtype": "Float",
+   "label": "Duration (mins)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "output_section",
+   "fieldtype": "Section Break",
+   "label": "Output"
+  },
+  {
+   "default": "0",
+   "fieldname": "words_planned",
+   "fieldtype": "Int",
+   "label": "Words Planned",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "words_written",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Words Written",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "aim_choice",
+   "fieldtype": "Select",
+   "label": "Aim Choice",
+   "options": "\nmore\nsimilar\nless"
+  },
+  {
+   "fieldname": "feedback_section",
+   "fieldtype": "Section Break",
+   "label": "Feedback"
+  },
+  {
+   "fieldname": "felt_productive",
+   "fieldtype": "Select",
+   "label": "Felt Productive",
+   "options": "\nproductive\nmixed\nnot_really"
+  },
+  {
+   "fieldname": "aim_adjust",
+   "fieldtype": "Select",
+   "label": "Aim Adjust",
+   "options": "\nincrease\nkeep\ndecrease"
+  },
+  {
+   "fieldname": "distraction_level",
+   "fieldtype": "Select",
+   "label": "Distraction Level",
+   "options": "\nfocused\na_bit\nquite"
+  },
+  {
+   "fieldname": "fade_adjust",
+   "fieldtype": "Select",
+   "label": "Fade Adjust",
+   "options": "\nincrease\nkeep\ndecrease"
+  },
+  {
+   "fieldname": "start_felt_long",
+   "fieldtype": "Select",
+   "label": "Start Felt Long",
+   "options": "\nyes\nno\nskip"
+  },
+  {
+   "fieldname": "continuity_section",
+   "fieldtype": "Section Break",
+   "label": "Continuity"
+  },
+  {
+   "fieldname": "next_focus_note",
+   "fieldtype": "Small Text",
+   "label": "Next Focus Note"
+  },
+  {
+   "fieldname": "prior_focus_note_action",
+   "fieldtype": "Select",
+   "label": "Prior Focus Note Action",
+   "options": "\nkept\nedited\nreplaced"
+  },
+  {
+   "default": "0",
+   "fieldname": "was_scheduled",
+   "fieldtype": "Check",
+   "label": "Was Scheduled"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-22 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Next Chapter",
+ "name": "Writing Session",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

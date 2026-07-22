@@ -33,7 +33,9 @@ const state = reactive({
 	chapters: [],
 	stages: [...STAGES],
 	wipLimits: {},
+	wordGates: {},
 	settings: {},
+	prefs: {},
 	search: '',
 	listMode: 'active',
 	stageFilter: 'All',
@@ -48,7 +50,9 @@ function applyBootstrap(data) {
 	state.chapters = data.chapters || []
 	state.stages = data.stages?.length ? data.stages : [...STAGES]
 	state.wipLimits = data.wip_limits || {}
+	state.wordGates = data.word_gates || {}
 	state.settings = data.settings || {}
+	state.prefs = data.prefs || {}
 	state.loaded = true
 	state.error = ''
 
@@ -191,6 +195,9 @@ export function useWorkspace() {
 		if (result?.chapter) {
 			replaceChapter(result.chapter)
 		}
+		if (result?.prefs) {
+			state.prefs = result.prefs
+		}
 		return result
 	}
 
@@ -202,6 +209,25 @@ export function useWorkspace() {
 		})
 		replaceChapter(chapter)
 		return chapter
+	}
+
+	async function fetchChapterStats(chapter) {
+		return call('next_chapter.api.session.chapter_stats', { chapter })
+	}
+
+	async function savePrefs(updates) {
+		const prefs = await call('next_chapter.api.session.save_prefs', updates)
+		state.prefs = prefs || {}
+		return prefs
+	}
+
+	function effectiveSetting(key, fallback = null) {
+		const pref = state.prefs?.[key]
+		if (pref !== undefined && pref !== null && pref !== '') return pref
+		if (state.settings?.[key] !== undefined && state.settings?.[key] !== null) {
+			return state.settings[key]
+		}
+		return fallback
 	}
 
 	function downloadIcs(name) {
@@ -248,6 +274,9 @@ export function useWorkspace() {
 		setSession,
 		completeWritingSession,
 		captureSideIdea,
+		fetchChapterStats,
+		savePrefs,
+		effectiveSetting,
 		downloadIcs,
 		formatDateTime,
 		formatTime,

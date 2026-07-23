@@ -389,19 +389,19 @@ export function useWorkspace() {
 		return dayjs(value).format('HH:mm')
 	}
 
-	/** Age from creation: days → weeks → months. */
+	/** Age from creation: “Aged x days|weeks|months”. */
 	function formatAge(value) {
 		if (!value) return ''
 		const created = dayjs(value)
 		if (!created.isValid()) return ''
 		const days = Math.max(0, dayjs().startOf('day').diff(created.startOf('day'), 'day'))
-		if (days <= 0) return 'Today'
-		if (days === 1) return '1 day'
-		if (days < 28) return `${days} days`
+		if (days <= 0) return 'Aged today'
+		if (days === 1) return 'Aged 1 day'
+		if (days < 28) return `Aged ${days} days`
 		const weeks = Math.floor(days / 7)
-		if (weeks < 8) return weeks === 1 ? '1 week' : `${weeks} weeks`
+		if (weeks < 8) return weeks === 1 ? 'Aged 1 week' : `Aged ${weeks} weeks`
 		const months = Math.max(1, Math.floor(days / 30))
-		return months === 1 ? '1 month' : `${months} months`
+		return months === 1 ? 'Aged 1 month' : `Aged ${months} months`
 	}
 
 	function plainSummary(html) {

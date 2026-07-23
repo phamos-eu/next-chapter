@@ -389,6 +389,21 @@ export function useWorkspace() {
 		return dayjs(value).format('HH:mm')
 	}
 
+	/** Age from creation: days → weeks → months. */
+	function formatAge(value) {
+		if (!value) return ''
+		const created = dayjs(value)
+		if (!created.isValid()) return ''
+		const days = Math.max(0, dayjs().startOf('day').diff(created.startOf('day'), 'day'))
+		if (days <= 0) return 'Today'
+		if (days === 1) return '1 day'
+		if (days < 28) return `${days} days`
+		const weeks = Math.floor(days / 7)
+		if (weeks < 8) return weeks === 1 ? '1 week' : `${weeks} weeks`
+		const months = Math.max(1, Math.floor(days / 30))
+		return months === 1 ? '1 month' : `${months} months`
+	}
+
 	function plainSummary(html) {
 		return String(html || '')
 			.replace(/<[^>]+>/g, ' ')
@@ -432,6 +447,7 @@ export function useWorkspace() {
 		downloadIcs,
 		formatDateTime,
 		formatTime,
+		formatAge,
 		plainSummary,
 		countWords,
 		errorMessage,

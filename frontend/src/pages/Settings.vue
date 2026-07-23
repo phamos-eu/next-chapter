@@ -51,6 +51,21 @@
               Comfortable matches the default idea overview title. Large and larger bump the name
               field only.
             </p>
+            <label class="flex items-start gap-2 text-sm text-ink-gray-7">
+              <input
+                v-model="form.idea_motif_fade"
+                type="checkbox"
+                class="mt-0.5"
+                @change="scheduleSave"
+              />
+              <span>
+                <span class="font-medium text-ink-gray-9">Idea motif fade</span>
+                <span class="mt-0.5 block text-xs text-ink-gray-5">
+                  Soft right-edge color and pattern on idea cards, the writing overview, and focus
+                  mode. Each idea keeps a stable look.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div v-else-if="tab === 'ideas'" class="space-y-4">
@@ -136,31 +151,34 @@
                   Hidden
                 </span>
               </div>
-              <ul class="min-h-0 flex-1 divide-y divide-outline-gray-1 overflow-y-auto">
-                <li v-for="chapter in previewIdeas" :key="chapter.name">
-                  <div class="flex items-start gap-3 px-4 py-3.5">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex flex-wrap items-center gap-2">
-                        <span class="truncate text-sm font-medium text-ink-gray-9">
-                          {{ chapter.title || 'Untitled' }}
-                        </span>
-                        <Badge :theme="STAGE_COLORS[chapter.writing_stage] || 'gray'" size="sm">
-                          {{ chapter.writing_stage }}
-                        </Badge>
-                      </div>
-                      <p class="mt-1 line-clamp-2 text-sm text-ink-gray-5">
-                        {{ previewBlurb(chapter) }}
-                      </p>
-                    </div>
-                    <div class="shrink-0 text-xs text-ink-gray-4">
-                      {{ chapter.next_write_on ? formatDateTime(chapter.next_write_on) : '' }}
-                    </div>
+              <div class="grid min-h-0 flex-1 gap-2 overflow-y-auto p-3 sm:grid-cols-2">
+                <div
+                  v-for="chapter in previewIdeas"
+                  :key="chapter.name"
+                  class="relative overflow-hidden rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-3"
+                >
+                  <div class="flex items-start justify-between gap-2">
+                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-ink-gray-9">
+                      {{ chapter.title || 'Untitled' }}
+                    </span>
+                    <Badge :theme="STAGE_COLORS[chapter.writing_stage] || 'gray'" size="sm">
+                      {{ chapter.writing_stage }}
+                    </Badge>
                   </div>
-                </li>
-                <li v-if="!previewIdeas.length" class="px-4 py-8 text-center text-sm text-ink-gray-5">
+                  <p class="mt-1 line-clamp-2 text-xs text-ink-gray-5">
+                    {{ previewBlurb(chapter) }}
+                  </p>
+                  <div class="mt-2 text-[11px] text-ink-gray-4">
+                    {{ formatAge(chapter.creation) }}
+                  </div>
+                </div>
+                <div
+                  v-if="!previewIdeas.length"
+                  class="col-span-full px-4 py-8 text-center text-sm text-ink-gray-5"
+                >
                   No active ideas to preview yet.
-                </li>
-              </ul>
+                </div>
+              </div>
               <div class="border-t border-outline-gray-1 px-4 py-2 text-[11px] text-ink-gray-4">
                 Showing up to {{ form.ideas_visible_limit }} active ideas · sort:
                 {{ sortLabel }}
@@ -208,7 +226,7 @@ import dayjs from 'dayjs'
 import AppShell from '@/components/AppShell.vue'
 import { STAGE_COLORS, useWorkspace } from '@/composables/useWorkspace'
 
-const { state, bootstrap, savePrefs, plainSummary, applyUiScale } = useWorkspace()
+const { state, bootstrap, savePrefs, plainSummary, formatAge, applyUiScale } = useWorkspace()
 
 const tab = ref('appearance')
 const tabs = [
@@ -220,6 +238,7 @@ const tabs = [
 const form = reactive({
 	ui_scale: 125,
 	overview_title_size: 'comfortable',
+	idea_motif_fade: true,
 	ideas_sort: 'modified_desc',
 	ideas_visible_limit: 20,
 	page_pile: false,
@@ -293,17 +312,13 @@ function previewBlurb(chapter) {
 		.slice(0, 140)
 }
 
-function formatDateTime(value) {
-	if (!value) return ''
-	return dayjs(value).format('D MMM, HH:mm')
-}
-
 function syncFromPrefs() {
 	const p = state.prefs || {}
 	form.ui_scale = Number(p.ui_scale || 125)
 	const titleSize = p.overview_title_size || 'comfortable'
 	form.overview_title_size =
 		titleSize === 'large' || titleSize === 'larger' ? titleSize : 'comfortable'
+	form.idea_motif_fade = Number(p.idea_motif_fade ?? 1) === 1
 	form.ideas_sort = p.ideas_sort || 'modified_desc'
 	form.ideas_visible_limit = Number(p.ideas_visible_limit || 20)
 	form.page_pile = Boolean(p.page_pile)
@@ -328,6 +343,7 @@ function scheduleSave() {
 			await savePrefs({
 				ui_scale: Math.max(90, Math.min(140, Number(form.ui_scale) || 125)),
 				overview_title_size: form.overview_title_size || 'comfortable',
+				idea_motif_fade: form.idea_motif_fade ? 1 : 0,
 				ideas_sort: form.ideas_sort,
 				ideas_visible_limit: Math.max(1, Number(form.ideas_visible_limit) || 20),
 				page_pile: form.page_pile ? 1 : 0,

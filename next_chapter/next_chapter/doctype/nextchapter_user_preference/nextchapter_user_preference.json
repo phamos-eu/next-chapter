@@ -17,9 +17,11 @@
   "ideas_section",
   "ideas_sort",
   "ideas_visible_limit",
+  "ideas_layout",
   "appearance_section",
   "ui_scale",
   "overview_title_size",
+  "idea_motif_fade",
   "last_breath_gap_jitter"
  ],
  "fields": [
@@ -106,6 +108,14 @@
    "non_negative": 1
   },
   {
+   "default": "list",
+   "description": "Ideas overview layout: single list or multi-column cards.",
+   "fieldname": "ideas_layout",
+   "fieldtype": "Select",
+   "label": "Ideas Layout",
+   "options": "list\ncolumns"
+  },
+  {
    "fieldname": "appearance_section",
    "fieldtype": "Section Break",
    "label": "Appearance"
@@ -127,6 +137,13 @@
    "options": "comfortable\nlarge\nlarger"
   },
   {
+   "default": "1",
+   "description": "Soft right-edge color/pattern fade on idea cards, overview, and focus.",
+   "fieldname": "idea_motif_fade",
+   "fieldtype": "Check",
+   "label": "Idea Motif Fade"
+  },
+  {
    "description": "Breath phase-gap jitter used in the last session (kept different next time).",
    "fieldname": "last_breath_gap_jitter",
    "fieldtype": "Float",
@@ -135,7 +152,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-07-22 20:50:00.000000",
+ "modified": "2026-07-23 16:20:00.000000",
  "modified_by": "Administrator",
  "module": "Next Chapter",
  "name": "NextChapter User Preference",

@@ -54,6 +54,7 @@ CHAPTER_FIELDS = [
 	"spawned_from",
 	"highlighted_stats",
 	"next_focus_note",
+	"creation",
 	"modified",
 ]
 

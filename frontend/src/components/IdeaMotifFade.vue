@@ -15,23 +15,71 @@
           patternUnits="userSpaceOnUse"
           :patternTransform="`rotate(${rotate})`"
         >
-          <circle
-            v-for="(dot, i) in dots"
-            :key="i"
-            :cx="dot.cx"
-            :cy="dot.cy"
-            :r="dot.r"
-            :fill="color"
-            :opacity="dot.opacity"
-          />
-          <path
-            v-if="showLines"
-            :d="linePath"
-            fill="none"
-            :stroke="color"
-            stroke-width="0.6"
-            :opacity="lineOpacity"
-          />
+          <g :fill="color" :stroke="color">
+            <template v-for="(shape, i) in shapes" :key="i">
+              <circle
+                v-if="shape.kind === 'circle'"
+                :cx="shape.cx"
+                :cy="shape.cy"
+                :r="shape.r"
+                :opacity="shape.opacity"
+                stroke="none"
+              />
+              <rect
+                v-else-if="shape.kind === 'square'"
+                :x="shape.x"
+                :y="shape.y"
+                :width="shape.size"
+                :height="shape.size"
+                :rx="shape.rx"
+                :opacity="shape.opacity"
+                stroke="none"
+              />
+              <polygon
+                v-else-if="shape.kind === 'triangle'"
+                :points="shape.points"
+                :opacity="shape.opacity"
+                stroke="none"
+              />
+              <polygon
+                v-else-if="shape.kind === 'diamond'"
+                :points="shape.points"
+                :opacity="shape.opacity"
+                stroke="none"
+              />
+              <line
+                v-else-if="shape.kind === 'dash'"
+                :x1="shape.x1"
+                :y1="shape.y1"
+                :x2="shape.x2"
+                :y2="shape.y2"
+                :stroke-width="shape.width"
+                :opacity="shape.opacity"
+                stroke-linecap="round"
+                fill="none"
+              />
+              <path
+                v-else-if="shape.kind === 'arc'"
+                :d="shape.d"
+                fill="none"
+                :stroke-width="shape.width"
+                :opacity="shape.opacity"
+              />
+              <path
+                v-else-if="shape.kind === 'wave'"
+                :d="shape.d"
+                fill="none"
+                :stroke-width="shape.width"
+                :opacity="shape.opacity"
+              />
+              <polygon
+                v-else-if="shape.kind === 'cross'"
+                :points="shape.points"
+                :opacity="shape.opacity"
+                stroke="none"
+              />
+            </template>
+          </g>
         </pattern>
       </defs>
       <rect width="100%" height="100%" :fill="`url(#${patternId})`" />
@@ -48,6 +96,8 @@ const props = defineProps({
 	intensity: { type: String, default: 'card' },
 	enabled: { type: Boolean, default: true },
 })
+
+const KINDS = ['circle', 'square', 'triangle', 'diamond', 'dash', 'arc', 'wave', 'cross']
 
 function hashSeed(input) {
 	let h = 2166136261
@@ -68,23 +118,127 @@ function mulberry32(a) {
 	}
 }
 
+function makeShape(kind, rand, tile) {
+	const opacity = (0.14 + rand() * 0.28) * 1.15
+	const cx = rand() * tile
+	const cy = rand() * tile
+	if (kind === 'circle') {
+		return { kind, cx, cy, r: 0.8 + rand() * 2.4, opacity }
+	}
+	if (kind === 'square') {
+		const size = 1.2 + rand() * 3.2
+		return {
+			kind,
+			x: cx - size / 2,
+			y: cy - size / 2,
+			size,
+			rx: rand() > 0.5 ? 0.4 : 0,
+			opacity,
+		}
+	}
+	if (kind === 'triangle') {
+		const s = 1.6 + rand() * 3.2
+		return {
+			kind,
+			points: `${cx},${cy - s / 1.4} ${cx - s / 1.2},${cy + s / 1.6} ${cx + s / 1.2},${cy + s / 1.6}`,
+			opacity,
+		}
+	}
+	if (kind === 'diamond') {
+		const s = 1.2 + rand() * 2.8
+		return {
+			kind,
+			points: `${cx},${cy - s} ${cx + s},${cy} ${cx},${cy + s} ${cx - s},${cy}`,
+			opacity,
+		}
+	}
+	if (kind === 'dash') {
+		const len = 2 + rand() * 5
+		const ang = rand() * Math.PI
+		return {
+			kind,
+			x1: cx - Math.cos(ang) * len,
+			y1: cy - Math.sin(ang) * len,
+			x2: cx + Math.cos(ang) * len,
+			y2: cy + Math.sin(ang) * len,
+			width: 0.7 + rand() * 1.1,
+			opacity,
+		}
+	}
+	if (kind === 'arc') {
+		const r = 2 + rand() * 5
+		const a0 = rand() * Math.PI * 2
+		const a1 = a0 + 0.8 + rand() * 1.8
+		const x1 = cx + Math.cos(a0) * r
+		const y1 = cy + Math.sin(a0) * r
+		const x2 = cx + Math.cos(a1) * r
+		const y2 = cy + Math.sin(a1) * r
+		return {
+			kind,
+			d: `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`,
+			width: 0.7 + rand() * 1.2,
+			opacity,
+		}
+	}
+	if (kind === 'wave') {
+		const amp = 1 + rand() * 2.5
+		const y = cy
+		return {
+			kind,
+			d: `M 0 ${y} Q ${tile * 0.25} ${y - amp} ${tile * 0.5} ${y} T ${tile} ${y}`,
+			width: 0.6 + rand() * 1,
+			opacity,
+		}
+	}
+	// cross
+	const arm = 1.2 + rand() * 2.2
+	const t = 0.45 + rand() * 0.5
+	return {
+		kind: 'cross',
+		points: [
+			`${cx - t},${cy - arm}`,
+			`${cx + t},${cy - arm}`,
+			`${cx + t},${cy - t}`,
+			`${cx + arm},${cy - t}`,
+			`${cx + arm},${cy + t}`,
+			`${cx + t},${cy + t}`,
+			`${cx + t},${cy + arm}`,
+			`${cx - t},${cy + arm}`,
+			`${cx - t},${cy + t}`,
+			`${cx - arm},${cy + t}`,
+			`${cx - arm},${cy - t}`,
+			`${cx - t},${cy - t}`,
+		].join(' '),
+		opacity,
+	}
+}
+
 const motif = computed(() => {
 	const rand = mulberry32(hashSeed(props.seed))
+	// Stronger / more saturated than before (~15%)
 	const hue = Math.floor(rand() * 360)
-	const sat = 28 + Math.floor(rand() * 28)
-	const light = 62 + Math.floor(rand() * 16)
+	const sat = Math.min(78, Math.round((32 + Math.floor(rand() * 30)) * 1.15))
+	const light = Math.max(48, Math.round((60 + Math.floor(rand() * 16)) * 0.96))
 	const color = `hsl(${hue} ${sat}% ${light}%)`
-	const tile = 18 + Math.floor(rand() * 14)
-	const rotate = Math.floor(rand() * 60) - 30
-	const showLines = rand() > 0.35
-	const dots = Array.from({ length: 5 + Math.floor(rand() * 4) }, () => ({
-		cx: rand() * tile,
-		cy: rand() * tile,
-		r: 0.6 + rand() * 1.8,
-		opacity: 0.12 + rand() * 0.22,
-	}))
-	const linePath = `M 0 ${tile * 0.35} Q ${tile * 0.5} ${tile * (0.1 + rand() * 0.8)} ${tile} ${tile * 0.55}`
-	return { color, tile, rotate, showLines, dots, linePath, hue }
+	const tile = 16 + Math.floor(rand() * 18)
+	const rotate = Math.floor(rand() * 70) - 35
+	const primary = KINDS[Math.floor(rand() * KINDS.length)]
+	let secondary = KINDS[Math.floor(rand() * KINDS.length)]
+	if (secondary === primary) {
+		secondary = KINDS[(KINDS.indexOf(primary) + 3) % KINDS.length]
+	}
+	const count = 4 + Math.floor(rand() * 5)
+	const shapes = []
+	for (let i = 0; i < count; i++) {
+		const kind = i % 3 === 0 ? secondary : primary
+		shapes.push(makeShape(kind, rand, tile))
+	}
+	// Occasional third accent shape for more diversity
+	if (rand() > 0.45) {
+		const tertiary = KINDS[Math.floor(rand() * KINDS.length)]
+		shapes.push(makeShape(tertiary, rand, tile))
+	}
+	return { color, tile, rotate, shapes, hue, sat, light }
 })
 
 const patternId = computed(
@@ -93,30 +247,28 @@ const patternId = computed(
 
 const isSurface = computed(() => props.intensity === 'surface')
 
+/** Was 40%; extend ~15pp further toward the middle → 55%. */
 const shellStyle = computed(() => ({
-	width: '40%',
+	width: '55%',
 }))
 
 const washStyle = computed(() => {
 	const { hue, sat, light } = motif.value
-	const alpha = isSurface.value ? 0.1 : 0.22
-	const edge = isSurface.value ? 0.04 : 0.1
+	const alpha = (isSurface.value ? 0.1 : 0.22) * 1.15
+	const edge = (isSurface.value ? 0.04 : 0.1) * 1.15
 	return {
-		background: `linear-gradient(to left, hsl(${hue} ${sat}% ${light}% / ${alpha}) 0%, hsl(${hue} ${sat}% ${light}% / ${edge}) 55%, transparent 100%)`,
+		background: `linear-gradient(to left, hsl(${hue} ${sat}% ${light}% / ${alpha}) 0%, hsl(${hue} ${sat}% ${light}% / ${edge}) 58%, transparent 100%)`,
 	}
 })
 
 const patternStyle = computed(() => ({
-	opacity: isSurface.value ? 0.28 : 0.55,
-	maskImage: 'linear-gradient(to left, black 0%, transparent 100%)',
-	WebkitMaskImage: 'linear-gradient(to left, black 0%, transparent 100%)',
+	opacity: (isSurface.value ? 0.28 : 0.55) * 1.15,
+	maskImage: 'linear-gradient(to left, black 0%, rgba(0,0,0,0.55) 42%, transparent 100%)',
+	WebkitMaskImage: 'linear-gradient(to left, black 0%, rgba(0,0,0,0.55) 42%, transparent 100%)',
 }))
 
 const color = computed(() => motif.value.color)
 const tile = computed(() => motif.value.tile)
 const rotate = computed(() => motif.value.rotate)
-const showLines = computed(() => motif.value.showLines)
-const dots = computed(() => motif.value.dots)
-const linePath = computed(() => motif.value.linePath)
-const lineOpacity = computed(() => (isSurface.value ? 0.18 : 0.28))
+const shapes = computed(() => motif.value.shapes)
 </script>

@@ -17,6 +17,18 @@
         </div>
       </div>
 
+      <div
+        v-if="showIdeasSearch"
+        class="border-b border-outline-gray-1 px-2 py-2"
+      >
+        <TextInput
+          v-model="state.search"
+          type="text"
+          placeholder="Search ideas…"
+          class="w-full"
+        />
+      </div>
+
       <nav class="flex flex-1 flex-col gap-4 overflow-y-auto p-2">
         <div>
           <div class="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-ink-gray-4">
@@ -109,14 +121,16 @@
 
 <script setup>
 import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { Button, FeatherIcon } from 'frappe-ui'
+import { useRoute, useRouter } from 'vue-router'
+import { Button, FeatherIcon, TextInput } from 'frappe-ui'
 import { useWorkspace } from '@/composables/useWorkspace'
 
 const router = useRouter()
+const route = useRoute()
 const { state, bootstrap } = useWorkspace()
 
 const storyName = computed(() => state.story?.company_name || '')
+const showIdeasSearch = computed(() => route.name === 'Ideas')
 
 const ideaCount = computed(
 	() =>

@@ -80,13 +80,20 @@
         <div class="min-h-0 flex-1 overflow-hidden p-5">
           <div v-if="overviewTab === 'writing'" class="flex h-full min-h-0 flex-col">
             <div
-              class="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+              class="relative min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
               :style="{ fontSize: `${focusFontSize}px` }"
             >
-              <div v-if="plainContent" class="whitespace-pre-wrap">{{ plainContent }}</div>
-              <p v-else class="text-ink-gray-4">
-                No writing yet. Start a session to begin — or use Edit for a quick change.
-              </p>
+              <IdeaMotifFade
+                :seed="chapter?.name"
+                intensity="surface"
+                :enabled="motifFadeEnabled"
+              />
+              <div class="relative z-[1]">
+                <div v-if="plainContent" class="whitespace-pre-wrap">{{ plainContent }}</div>
+                <p v-else class="text-ink-gray-4">
+                  No writing yet. Start a session to begin — or use Edit for a quick change.
+                </p>
+              </div>
             </div>
             <div class="mt-3 shrink-0 text-xs text-ink-gray-5">
               {{ wordCount }} words
@@ -238,6 +245,14 @@
                 · {{ timelineIdeaCount }}
               </span>
             </p>
+            <button
+              type="button"
+              class="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-3 py-3 text-xs text-ink-gray-6 transition hover:border-[#c4bdb0] hover:bg-[#faf8f5] hover:text-ink-gray-8"
+              @click="openAddInspired"
+            >
+              <FeatherIcon name="plus" class="h-3.5 w-3.5" />
+              Add idea
+            </button>
             <div
               v-if="!timelineGroups.length"
               class="rounded-lg border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-3 py-4 text-center text-xs text-ink-gray-5"
@@ -333,6 +348,30 @@
       </div>
     </div>
 
+    <Dialog v-model="addInspiredOpen" :options="{ title: 'Add inspired idea' }">
+      <template #body-content>
+        <p class="mb-3 text-xs text-ink-gray-5">
+          Capture a thought that came from this idea. The first line becomes the title.
+        </p>
+        <textarea
+          ref="addInspiredInput"
+          v-model="addInspiredText"
+          rows="6"
+          class="w-full resize-none rounded-xl border border-[#ddd8d0] bg-[#f7f5f1] p-3 text-sm leading-relaxed text-ink-gray-8 outline-none focus:border-[#c4bdb0]"
+          placeholder="Write your thoughts…"
+        />
+      </template>
+      <template #actions>
+        <Button variant="subtle" label="Cancel" @click="addInspiredOpen = false" />
+        <Button
+          variant="solid"
+          label="Add"
+          :disabled="!addInspiredText.trim() || addInspiredSaving"
+          @click="confirmAddInspired"
+        />
+      </template>
+    </Dialog>
+
     <Dialog v-model="hideOpen" :options="{ title: 'Hide this idea' }">
       <template #body-content>
         <p class="mb-1 text-sm font-medium text-ink-gray-9">{{ chapter?.title }}</p>
@@ -424,6 +463,7 @@ import {
 } from 'frappe-ui'
 import dayjs from 'dayjs'
 import AppShell from '@/components/AppShell.vue'
+import IdeaMotifFade from '@/components/IdeaMotifFade.vue'
 import {
 	HIGHLIGHTABLE_STATS,
 	PAGE_PILE_STAGES,
@@ -443,11 +483,13 @@ const {
 	downloadIcs,
 	fetchChapterStats,
 	fetchChapterTimeline,
+	captureSideIdea,
 	savePrefs,
 	countWords,
 	effectiveSetting,
 	formatDateTime,
 	chapterByName,
+	errorMessage,
 } = useWorkspace()
 
 const chapter = computed(
@@ -467,6 +509,13 @@ const overviewTitleSize = computed(() => {
 	if (size === 'large' || size === 'larger') return size
 	return 'comfortable'
 })
+
+const motifFadeEnabled = computed(() => Number(state.prefs?.idea_motif_fade ?? 1) === 1)
+
+const addInspiredOpen = ref(false)
+const addInspiredText = ref('')
+const addInspiredSaving = ref(false)
+const addInspiredInput = ref(null)
 
 const highlightedKeys = ref([])
 const doneScheduleOpen = ref(false)
@@ -762,6 +811,29 @@ function ideaSnippet(idea) {
 function openSpawnedIdea(idea) {
 	if (!idea?.name) return
 	router.push(`/ideas/${idea.name}`)
+}
+
+function openAddInspired() {
+	addInspiredText.value = ''
+	addInspiredOpen.value = true
+	nextTick(() => addInspiredInput.value?.focus())
+}
+
+async function confirmAddInspired() {
+	const text = addInspiredText.value.trim()
+	if (!chapter.value || !text || addInspiredSaving.value) return
+	addInspiredSaving.value = true
+	try {
+		await captureSideIdea({ parent: chapter.value.name, text })
+		timeline.value = await fetchChapterTimeline(chapter.value.name)
+		addInspiredOpen.value = false
+		addInspiredText.value = ''
+		toast.success('Inspired idea added')
+	} catch (e) {
+		toast.error(errorMessage(e, 'Could not add idea'))
+	} finally {
+		addInspiredSaving.value = false
+	}
 }
 
 watch(

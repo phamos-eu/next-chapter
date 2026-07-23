@@ -173,13 +173,18 @@
 
         <!-- Current page (top of stack) -->
         <div
-          class="relative z-10 flex h-full min-h-0 flex-col rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-transform duration-300"
+          class="relative z-10 flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#ddd8d0] bg-[#f7f5f2] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-transform duration-300"
           :class="pagePileOn && pageIndex > 0 ? 'ml-3 mt-2' : ''"
         >
+          <IdeaMotifFade
+            :seed="chapter?.name"
+            intensity="surface"
+            :enabled="motifFadeEnabled"
+          />
           <textarea
             ref="focusInput"
             v-model="activePageText"
-            class="min-h-0 flex-1 resize-none border-0 bg-transparent leading-relaxed text-ink-gray-9 outline-none"
+            class="relative z-[1] min-h-0 flex-1 resize-none border-0 bg-transparent leading-relaxed text-ink-gray-9 outline-none"
             :style="{ fontSize: `${focusFontSize}px` }"
             placeholder="Write. Nothing else is here."
             @input="onFocusInput"
@@ -476,6 +481,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useRoute, useRouter } from 'vue-router'
 import { Button, FormControl, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
+import IdeaMotifFade from '@/components/IdeaMotifFade.vue'
 import SessionPlanCalendar from '@/components/SessionPlanCalendar.vue'
 import { PAGE_PILE_STAGES, useWorkspace } from '@/composables/useWorkspace'
 
@@ -538,6 +544,8 @@ let breathTimer = null
 let countdownTimer = null
 let draftTimer = null
 let noteTimers = {}
+
+const motifFadeEnabled = computed(() => Number(state.prefs?.idea_motif_fade ?? 1) === 1)
 
 const chapter = computed(
 	() => state.chapters.find((c) => c.name === route.params.name) || null,

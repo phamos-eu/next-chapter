@@ -1,14 +1,14 @@
 <template>
   <AppShell>
-    <div class="flex min-h-0 flex-1 overflow-hidden">
+    <div class="flex min-h-0 flex-1 overflow-hidden bg-gray-50 dark:bg-gray-100">
       <!-- Center: header + cards -->
       <section class="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header
-          class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-outline-gray-1 px-5 py-3"
+          class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-3 dark:border-gray-700 dark:bg-gray-100"
         >
           <div>
-            <h1 class="text-xl font-semibold text-ink-gray-9">Ideas</h1>
-            <p class="text-sm text-ink-gray-5">
+            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Ideas</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               Catch rough thoughts here. Open one when you want to write it out.
             </p>
           </div>
@@ -17,7 +17,7 @@
 
         <div
           v-if="state.stageFilter === 'Done' && state.listMode === 'active'"
-          class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#ddd8d0] bg-[#f3f1ed] px-5 py-2.5 text-sm text-ink-gray-7"
+          class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-gray-100 px-5 py-2.5 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-200 dark:text-gray-800"
         >
           <p>
             Only {{ DONE_PREVIEW_LIMIT }} are shown here — the rest live in History.
@@ -29,10 +29,10 @@
           v-if="!filteredChapters.length"
           class="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center"
         >
-          <div class="text-base font-medium text-ink-gray-8">
+          <div class="text-base font-medium text-gray-800 dark:text-gray-900">
             {{ state.listMode === 'hidden' ? 'Nothing hidden right now' : 'No ideas yet' }}
           </div>
-          <p class="max-w-sm text-sm text-ink-gray-5">
+          <p class="max-w-sm text-sm text-gray-500 dark:text-gray-400">
             {{
               state.listMode === 'hidden'
                 ? 'Snoozed ideas and ones beyond your visible limit appear here.'
@@ -59,7 +59,7 @@
               v-for="chapter in filteredChapters"
               :key="chapter.name"
               type="button"
-              class="idea-card relative flex flex-col overflow-hidden rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-3.5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition hover:border-[#c4bdb0] hover:bg-white"
+              class="idea-card relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-3.5 text-left shadow-sm transition hover:border-gray-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:border-gray-600"
               :class="fitActive ? 'min-h-0' : 'min-h-[7.5rem]'"
               @click="openIdea(chapter)"
             >
@@ -70,7 +70,7 @@
               />
               <div class="relative z-[1] flex min-h-0 flex-1 flex-col">
                 <div class="flex items-start justify-between gap-2">
-                  <span class="min-w-0 flex-1 truncate text-sm font-medium text-ink-gray-9">
+                  <span class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-white">
                     {{ chapter.title || 'Untitled' }}
                   </span>
                   <Badge
@@ -82,12 +82,12 @@
                   </Badge>
                 </div>
                 <p
-                  class="mt-1 text-sm text-ink-gray-5"
+                  class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                   :class="fitActive ? 'min-h-0 flex-1 overflow-hidden' : 'line-clamp-2'"
                 >
                   {{ plainSummary(chapter.summary) || 'No notes yet' }}
                 </p>
-                <div class="mt-auto flex shrink-0 justify-end pt-2 text-xs text-ink-gray-4">
+                <div class="mt-auto flex shrink-0 justify-end pt-2 text-xs text-gray-400 dark:text-gray-500">
                   {{ formatAge(chapter.creation) }}
                 </div>
               </div>
@@ -98,21 +98,21 @@
 
       <!-- Right: filters / layout -->
       <aside
-        class="flex w-56 shrink-0 flex-col border-l border-[#ddd8d0] bg-[#efece7]"
+        class="flex w-56 shrink-0 flex-col border-l border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-200"
       >
-        <div class="border-b border-[#ddd8d0] px-4 py-3">
-          <div class="font-medium text-ink-gray-9">Browse</div>
-          <div class="text-xs text-ink-gray-5">Filter and arrange ideas</div>
+        <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <div class="font-medium text-gray-900 dark:text-white">Browse</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">Filter and arrange ideas</div>
         </div>
         <div class="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
           <div>
-            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-gray-5">
+            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Status
             </div>
             <TabButtons v-model="state.listMode" :buttons="listModes" class="w-full" />
           </div>
           <div>
-            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-gray-5">
+            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Layout
             </div>
             <TabButtons
@@ -121,7 +121,7 @@
               class="w-full"
               @update:model-value="onLayoutChange"
             />
-            <p class="mt-2 text-[11px] leading-snug text-ink-gray-5">
+            <p class="mt-2 text-[11px] leading-snug text-gray-500 dark:text-gray-400">
               {{
                 fitActive
                   ? 'Active fits every idea on screen.'
@@ -130,7 +130,7 @@
             </p>
           </div>
           <div>
-            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-gray-5">
+            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Stage
             </div>
             <div class="flex flex-col gap-1">
@@ -138,11 +138,11 @@
                 v-for="stage in ['All', ...state.stages]"
                 :key="stage"
                 type="button"
-                class="rounded-lg border px-2.5 py-1.5 text-left text-xs transition"
+                class="rounded-lg border px-2.5 py-1.5 text-left text-xs transition dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-700"
                 :class="
                   state.stageFilter === stage
-                    ? 'border-ink-gray-9 bg-ink-gray-9 font-medium text-white'
-                    : 'border-[#ddd8d0] bg-[#faf8f5] text-ink-gray-7 hover:border-[#c4bdb0] hover:bg-white'
+                    ? 'border-gray-900 bg-gray-900 font-medium text-white dark:border-white dark:bg-white dark:text-gray-900'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                 "
                 @click="state.stageFilter = stage"
               >
@@ -166,22 +166,22 @@ import { DONE_PREVIEW_LIMIT, STAGE_COLORS, useWorkspace } from '@/composables/us
 
 const router = useRouter()
 const {
-	state,
-	filteredChapters,
-	createIdea,
-	formatAge,
-	plainSummary,
-	savePrefs,
+  state,
+  filteredChapters,
+  createIdea,
+  formatAge,
+  plainSummary,
+  savePrefs,
 } = useWorkspace()
 
 const listModes = [
-	{ label: 'Active', value: 'active' },
-	{ label: 'Hidden', value: 'hidden' },
+  { label: 'Active', value: 'active' },
+  { label: 'Hidden', value: 'hidden' },
 ]
 
 const layoutModes = [
-	{ label: 'List', value: 'list' },
-	{ label: 'Columns', value: 'columns' },
+  { label: 'List', value: 'list' },
+  { label: 'Columns', value: 'columns' },
 ]
 
 const ideasLayout = ref('list')
@@ -195,124 +195,124 @@ const motifFadeEnabled = computed(() => Number(state.prefs?.idea_motif_fade ?? 1
 const fitActive = computed(() => state.listMode === 'active')
 
 const fit = computed(() => {
-	const count = filteredChapters.value.length || 1
-	const w = paneWidth.value || 800
-	const h = paneHeight.value || 500
-	const gap = 12
-	const mode = ideasLayout.value === 'columns' ? 'columns' : 'list'
+  const count = filteredChapters.value.length || 1
+  const w = paneWidth.value || 800
+  const h = paneHeight.value || 500
+  const gap = 12
+  const mode = ideasLayout.value === 'columns' ? 'columns' : 'list'
 
-	let cols = mode === 'list' ? 1 : 2
-	if (!fitActive.value) {
-		// Comfortable fixed sizing with scroll
-		if (mode === 'columns') {
-			cols = Math.min(count, Math.max(2, Math.floor(w / 240)))
-		}
-		return { cols, gap, stretch: false }
-	}
+  let cols = mode === 'list' ? 1 : 2
+  if (!fitActive.value) {
+    // Comfortable fixed sizing with scroll
+    if (mode === 'columns') {
+      cols = Math.min(count, Math.max(2, Math.floor(w / 240)))
+    }
+    return { cols, gap, stretch: false }
+  }
 
-	if (mode === 'columns') {
-		const maxCols = Math.min(count, Math.max(2, Math.floor(w / 180)))
-		while (cols < maxCols) {
-			const rows = Math.ceil(count / cols)
-			const rowH = (h - gap * (rows - 1)) / rows
-			if (rowH >= 96) break
-			cols += 1
-		}
-		while (cols < count) {
-			const rows = Math.ceil(count / cols)
-			const rowH = (h - gap * (rows - 1)) / rows
-			if (rowH >= 72) break
-			cols += 1
-		}
-	}
+  if (mode === 'columns') {
+    const maxCols = Math.min(count, Math.max(2, Math.floor(w / 180)))
+    while (cols < maxCols) {
+      const rows = Math.ceil(count / cols)
+      const rowH = (h - gap * (rows - 1)) / rows
+      if (rowH >= 96) break
+      cols += 1
+    }
+    while (cols < count) {
+      const rows = Math.ceil(count / cols)
+      const rowH = (h - gap * (rows - 1)) / rows
+      if (rowH >= 72) break
+      cols += 1
+    }
+  }
 
-	return { cols, gap, stretch: true }
+  return { cols, gap, stretch: true }
 })
 
 const gridStyle = computed(() => {
-	const base = {
-		gridTemplateColumns: `repeat(${fit.value.cols}, minmax(0, 1fr))`,
-		gap: `${fit.value.gap}px`,
-	}
-	if (fit.value.stretch) {
-		return {
-			...base,
-			gridAutoRows: '1fr',
-			height: '100%',
-		}
-	}
-	return {
-		...base,
-		gridAutoRows: 'minmax(7.5rem, auto)',
-	}
+  const base = {
+    gridTemplateColumns: `repeat(${fit.value.cols}, minmax(0, 1fr))`,
+    gap: `${fit.value.gap}px`,
+  }
+  if (fit.value.stretch) {
+    return {
+      ...base,
+      gridAutoRows: '1fr',
+      height: '100%',
+    }
+  }
+  return {
+    ...base,
+    gridAutoRows: 'minmax(7.5rem, auto)',
+  }
 })
 
 function syncLayoutFromPrefs() {
-	const layout = state.prefs?.ideas_layout
-	ideasLayout.value = layout === 'columns' ? 'columns' : 'list'
+  const layout = state.prefs?.ideas_layout
+  ideasLayout.value = layout === 'columns' ? 'columns' : 'list'
 }
 
 async function onLayoutChange(value) {
-	ideasLayout.value = value === 'columns' ? 'columns' : 'list'
-	try {
-		await savePrefs({ ideas_layout: ideasLayout.value })
-	} catch {
-		/* keep local choice */
-	}
+  ideasLayout.value = value === 'columns' ? 'columns' : 'list'
+  try {
+    await savePrefs({ ideas_layout: ideasLayout.value })
+  } catch {
+    /* keep local choice */
+  }
 }
 
 function measure() {
-	const el = gridEl.value
-	if (!el) return
-	paneWidth.value = el.clientWidth
-	paneHeight.value = el.clientHeight
+  const el = gridEl.value
+  if (!el) return
+  paneWidth.value = el.clientWidth
+  paneHeight.value = el.clientHeight
 }
 
 function openIdea(chapter) {
-	state.active = chapter.name
-	router.push(`/ideas/${chapter.name}`)
+  state.active = chapter.name
+  router.push(`/ideas/${chapter.name}`)
 }
 
 async function onAdd() {
-	try {
-		const chapter = await createIdea('New idea')
-		toast.success('Idea added')
-		router.push(`/ideas/${chapter.name}`)
-	} catch (e) {
-		toast.error(e.messages?.[0] || e.message || 'Could not add idea')
-	}
+  try {
+    const chapter = await createIdea('New idea')
+    toast.success('Idea added')
+    router.push(`/ideas/${chapter.name}`)
+  } catch (e) {
+    toast.error(e.messages?.[0] || e.message || 'Could not add idea')
+  }
 }
 
 watch(
-	() => state.prefs?.ideas_layout,
-	() => syncLayoutFromPrefs(),
+  () => state.prefs?.ideas_layout,
+  () => syncLayoutFromPrefs(),
 )
 
 watch([filteredChapters, () => state.listMode], () =>
-	nextTick(() => {
-		attachObserver()
-		measure()
-	}),
+  nextTick(() => {
+    attachObserver()
+    measure()
+  }),
 )
 
 function attachObserver() {
-	resizeObserver?.disconnect()
-	resizeObserver = null
-	if (!gridEl.value || typeof ResizeObserver === 'undefined') return
-	resizeObserver = new ResizeObserver(() => measure())
-	resizeObserver.observe(gridEl.value)
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  if (!gridEl.value || typeof ResizeObserver === 'undefined') return
+  resizeObserver = new ResizeObserver(() => measure())
+  resizeObserver.observe(gridEl.value)
 }
 
 onMounted(() => {
-	syncLayoutFromPrefs()
-	nextTick(() => {
-		attachObserver()
-		measure()
-	})
+  syncLayoutFromPrefs()
+  nextTick(() => {
+    attachObserver()
+    measure()
+  })
 })
 
 onBeforeUnmount(() => {
-	resizeObserver?.disconnect()
-	resizeObserver = null
+  resizeObserver?.disconnect()
+  resizeObserver = null
 })
 </script>

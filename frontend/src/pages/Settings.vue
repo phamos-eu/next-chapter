@@ -1,372 +1,409 @@
 <template>
   <AppShell>
-    <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header class="border-b border-outline-gray-1 px-5 py-3">
-        <div class="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 class="text-xl font-semibold text-ink-gray-9">Settings</h1>
-            <p class="text-sm text-ink-gray-5">
-              Adjust personal preferences and preview how the Ideas overview will look.
-            </p>
-          </div>
-          <p class="text-xs text-ink-gray-4">{{ saveState }}</p>
-        </div>
-        <div class="mt-3">
-          <TabButtons v-model="tab" :buttons="tabs" />
-        </div>
+    <div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-gray-50 dark:bg-gray-100">
+      <header class="border-b border-gray-200 px-5 py-3 dark:border-gray-700">
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Settings</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Configure NextChapter to fit your workflow.
+        </p>
       </header>
 
-      <div class="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <!-- Controls -->
-        <div
-          class="min-h-0 w-full shrink-0 overflow-y-auto border-b border-outline-gray-1 p-5 lg:w-[22rem] lg:border-b-0 lg:border-r"
-        >
-          <div v-if="tab === 'appearance'" class="space-y-4">
-            <p class="text-xs text-ink-gray-5">
-              Scale text and UI for easier reading. Changes apply across NextChapter and update the
-              preview on the right.
-            </p>
-            <FormControl
-              v-model="form.ui_scale"
-              type="select"
-              label="UI scale"
-              :options="scaleOptions"
-              @update:model-value="onScaleChange"
-            />
-            <p class="text-sm text-ink-gray-7">
-              Sample at this scale:
-              <span class="font-medium text-ink-gray-9">The quick brown idea</span>
-            </p>
-            <p class="text-xs text-ink-gray-5">
-              Default is 125% — sized for comfortable reading on typical desks.
-            </p>
-            <FormControl
-              v-model="form.overview_title_size"
-              type="select"
-              label="Overview title size"
-              :options="titleSizeOptions"
-              @update:model-value="scheduleSave"
-            />
-            <p class="text-xs text-ink-gray-5">
-              Comfortable matches the default idea overview title. Large and larger bump the name
-              field only.
-            </p>
-            <label class="flex items-start gap-2 text-sm text-ink-gray-7">
-              <input
-                v-model="form.idea_motif_fade"
-                type="checkbox"
-                class="mt-0.5"
-                @change="scheduleSave"
+      <div class="min-h-0 flex-1 overflow-y-auto p-6">
+        <div class="mx-auto max-w-2xl space-y-8">
+          <!-- Appearance -->
+          <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
+            <div class="space-y-4">
+              <FormControl
+                v-model="uiScale"
+                type="select"
+                label="UI Scale"
+                :options="uiScaleOptions"
+                @update:model-value="onUiScaleChange"
               />
-              <span>
-                <span class="font-medium text-ink-gray-9">Idea motif fade</span>
-                <span class="mt-0.5 block text-xs text-ink-gray-5">
-                  Soft right-edge color and pattern on idea cards, the writing overview, and focus
-                  mode. Each idea keeps a stable look.
-                </span>
-              </span>
-            </label>
-          </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Adjust the overall size of the interface (90% to 140%).
+              </p>
 
-          <div v-else-if="tab === 'ideas'" class="space-y-4">
-            <p class="text-xs text-ink-gray-5">
-              Sort and how many ideas stay Active. Overflow ideas move to Hidden automatically.
-              These controls stay here — not on the Ideas list.
-            </p>
-            <FormControl
-              v-model="form.ideas_sort"
-              type="select"
-              label="Sort order"
-              :options="sortOptions"
-              @update:model-value="scheduleSave"
-            />
-            <FormControl
-              v-model="form.ideas_visible_limit"
-              type="number"
-              label="Visible ideas limit"
-              @update:model-value="scheduleSave"
-            />
-          </div>
+              <label class="flex items-center gap-2">
+                <input
+                  v-model="motifFade"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  @change="onMotifFadeChange"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Enable idea motif fade</span>
+              </label>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Subtle background patterns on idea cards based on their content.
+              </p>
 
-          <div v-else class="space-y-4">
-            <p class="text-xs text-ink-gray-5">Focus writing preferences for sessions and the overview Edit dialog.</p>
-            <label class="flex items-center gap-2 text-sm text-ink-gray-7">
-              <input v-model="form.page_pile" type="checkbox" @change="scheduleSave" />
-              Page pile writing mode (stage 3+)
-            </label>
-            <FormControl
-              v-model="form.edit_idle_secs"
-              type="number"
-              label="Edit dialog idle auto-close (seconds)"
-              @update:model-value="scheduleSave"
-            />
-            <FormControl
-              v-model="form.focus_font_preview"
-              type="number"
-              label="Focus font size preview (px)"
-              @update:model-value="bumpPreview"
-            />
-            <p class="text-[11px] text-ink-gray-4">
-              Focus font size is a site default; this slider only previews the writing slate below.
-            </p>
-          </div>
-
-          <a
-            class="mt-6 inline-flex text-xs text-ink-gray-5 underline hover:text-ink-gray-8"
-            href="/app/nextchapter-settings"
-          >
-            Open site defaults on Desk
-          </a>
-        </div>
-
-        <!-- Live preview -->
-        <div class="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f3f1ed]/60 p-4">
-          <div class="mb-2 flex items-center justify-between gap-2">
-            <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
-              Preview — {{ previewLabel }}
+              <FormControl
+                v-model="overviewTitleSize"
+                type="select"
+                label="Overview title size"
+                :options="titleSizeOptions"
+                @update:model-value="onOverviewTitleSizeChange"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Size of the title in the idea overview.
+              </p>
             </div>
-            <div class="text-[11px] text-ink-gray-4">Uses your scale ({{ form.ui_scale }}%)</div>
           </div>
 
-          <div
-            class="min-h-0 flex-1 overflow-hidden rounded-xl border border-[#ddd8d0] bg-surface-white shadow-sm"
-            :style="previewRootStyle"
-          >
-            <!-- Ideas overview preview -->
-            <div v-if="tab === 'appearance' || tab === 'ideas'" class="flex h-full flex-col">
-              <div class="border-b border-outline-gray-1 px-4 py-3">
-                <div class="text-xl font-semibold text-ink-gray-9">Ideas</div>
-                <p class="text-sm text-ink-gray-5">
-                  Catch rough thoughts here. Open one when you want to write it out.
-                </p>
-              </div>
-              <div class="flex flex-wrap items-center gap-2 border-b border-outline-gray-1 px-4 py-2">
-                <div
-                  class="rounded border border-outline-gray-2 px-2 py-1 text-sm text-ink-gray-4"
-                >
-                  Search ideas…
-                </div>
-                <span class="rounded bg-surface-gray-2 px-2 py-0.5 text-xs font-medium">Active</span>
-                <span class="rounded border border-outline-gray-2 px-2 py-0.5 text-xs text-ink-gray-5">
-                  Hidden
-                </span>
-              </div>
-              <div class="grid min-h-0 flex-1 gap-2 overflow-y-auto p-3 sm:grid-cols-2">
-                <div
-                  v-for="chapter in previewIdeas"
-                  :key="chapter.name"
-                  class="relative overflow-hidden rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-3"
-                >
-                  <div class="flex items-start justify-between gap-2">
-                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-ink-gray-9">
-                      {{ chapter.title || 'Untitled' }}
-                    </span>
-                    <Badge :theme="STAGE_COLORS[chapter.writing_stage] || 'gray'" size="sm">
-                      {{ chapter.writing_stage }}
-                    </Badge>
-                  </div>
-                  <p class="mt-1 line-clamp-2 text-xs text-ink-gray-5">
-                    {{ previewBlurb(chapter) }}
-                  </p>
-                  <div class="mt-2 text-[11px] text-ink-gray-4">
-                    {{ formatAge(chapter.creation) }}
-                  </div>
-                </div>
-                <div
-                  v-if="!previewIdeas.length"
-                  class="col-span-full px-4 py-8 text-center text-sm text-ink-gray-5"
-                >
-                  No active ideas to preview yet.
-                </div>
-              </div>
-              <div class="border-t border-outline-gray-1 px-4 py-2 text-[11px] text-ink-gray-4">
-                Showing up to {{ form.ideas_visible_limit }} active ideas · sort:
-                {{ sortLabel }}
-              </div>
-            </div>
+          <!-- Ideas -->
+          <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Ideas</h2>
+            <div class="space-y-4">
+              <FormControl
+                v-model="ideasLayout"
+                type="select"
+                label="Default layout"
+                :options="layoutOptions"
+                @update:model-value="onIdeasLayoutChange"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                How ideas are arranged in the Ideas view.
+              </p>
 
-            <!-- Writing slate preview -->
-            <div v-else class="flex h-full flex-col bg-[#f3f1ed]">
-              <div class="border-b border-[#ddd8d0] bg-[#f3f1ed] px-4 py-3">
-                <div class="text-2xl font-semibold tracking-tight text-ink-gray-9">
-                  {{ previewIdeas[0]?.title || 'Sample idea' }}
-                </div>
-                <div class="mt-2 flex gap-2">
-                  <span class="rounded border border-[#ddd8d0] px-2 py-1 text-xs">Edit</span>
-                  <span
-                    class="rounded bg-ink-gray-9 px-2 py-1 text-xs text-surface-white"
-                  >
-                    Start writing session
-                  </span>
-                </div>
-              </div>
-              <div class="min-h-0 flex-1 overflow-y-auto p-4">
-                <div
-                  class="min-h-[10rem] rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-4 leading-relaxed text-ink-gray-8"
-                  :style="{ fontSize: `${form.focus_font_preview}px` }"
-                >
-                  {{
-                    previewBlurb(previewIdeas[0]) ||
-                    'Your writing appears here — scale and focus size update this preview live.'
-                  }}
-                </div>
-              </div>
+              <FormControl
+                v-model="ideasSort"
+                type="select"
+                label="Sort ideas by"
+                :options="sortOptions"
+                @update:model-value="onIdeasSortChange"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Default sorting for the Active ideas list.
+              </p>
+
+              <FormControl
+                v-model="ideasVisibleLimit"
+                type="number"
+                label="Visible ideas limit"
+                @update:model-value="onIdeasVisibleLimitChange"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Maximum number of ideas to show in Active view. Others are auto-hidden.
+              </p>
+            </div>
+          </div>
+
+          <!-- Writing -->
+          <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Writing</h2>
+            <div class="space-y-4">
+              <FormControl
+                v-model="focusFontSize"
+                type="number"
+                label="Focus font size"
+                @update:model-value="onFocusFontSizeChange"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Font size in pixels for the writing area.
+              </p>
+
+              <FormControl
+                v-model="editIdleSecs"
+                type="number"
+                label="Edit idle timeout"
+                @update:model-value="onEditIdleSecsChange"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Seconds of inactivity before the Edit dialog auto-closes (0 to disable).
+              </p>
+
+              <label class="flex items-center gap-2">
+                <input
+                  v-model="pagePile"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  @change="onPagePileChange"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Enable page pile mode</span>
+              </label>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Stack-based writing mode for advanced stages.
+              </p>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
+            <div class="space-y-4">
+              <label class="flex items-center gap-2">
+                <input
+                  v-model="notifySessionReminder"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  @change="onNotifySessionReminderChange"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Session reminders</span>
+              </label>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Get notified before scheduled writing sessions.
+              </p>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20">
+            <h2 class="mb-4 text-lg font-semibold text-red-800 dark:text-red-400">Danger Zone</h2>
+            <div class="space-y-4">
+              <button
+                type="button"
+                class="flex w-full items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/40"
+                @click="showResetDialog = true"
+              >
+                <FeatherIcon name="alert-triangle" class="h-4 w-4" />
+                Reset all preferences
+              </button>
+              <p class="text-xs text-red-600 dark:text-red-400">
+                This will reset all your personal settings to defaults.
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <Dialog v-model="showResetDialog" :options="{ title: 'Reset all preferences?' }">
+      <template #body-content>
+        <p class="text-sm text-gray-700 dark:text-gray-300">
+          This will reset all your personal settings (appearance, layout, writing preferences) to their default values.
+        </p>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          This action cannot be undone.
+        </p>
+      </template>
+      <template #actions>
+        <Button variant="subtle" label="Cancel" @click="showResetDialog = false" />
+        <Button
+          variant="solid"
+          label="Reset all preferences"
+          class="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
+          @click="resetAllPreferences"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog v-model="showSavedDialog" :options="{ title: 'Settings saved' }">
+      <template #body-content>
+        <p class="text-sm text-gray-700 dark:text-gray-300">
+          Your preferences have been saved successfully.
+        </p>
+      </template>
+      <template #actions>
+        <Button variant="solid" label="OK" @click="showSavedDialog = false" />
+      </template>
+    </Dialog>
   </AppShell>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Badge, FormControl, TabButtons, toast } from 'frappe-ui'
-import dayjs from 'dayjs'
+import { computed, ref, watch } from 'vue'
+import { Button, Dialog, FeatherIcon, FormControl, toast } from 'frappe-ui'
 import AppShell from '@/components/AppShell.vue'
-import { STAGE_COLORS, useWorkspace } from '@/composables/useWorkspace'
+import { useWorkspace } from '@/composables/useWorkspace'
 
-const { state, bootstrap, savePrefs, plainSummary, formatAge, applyUiScale } = useWorkspace()
+const { state, savePrefs } = useWorkspace()
 
-const tab = ref('appearance')
-const tabs = [
-	{ label: 'Appearance', value: 'appearance' },
-	{ label: 'Ideas', value: 'ideas' },
-	{ label: 'Writing', value: 'writing' },
+// Dialogs
+const showResetDialog = ref(false)
+const showSavedDialog = ref(false)
+
+// Appearance
+const uiScale = ref(state.prefs?.ui_scale || 125)
+const uiScaleOptions = [
+  { label: '90%', value: 90 },
+  { label: '100%', value: 100 },
+  { label: '110%', value: 110 },
+  { label: '125% (default)', value: 125 },
+  { label: '140%', value: 140 },
 ]
 
-const form = reactive({
-	ui_scale: 125,
-	overview_title_size: 'comfortable',
-	idea_motif_fade: true,
-	ideas_sort: 'modified_desc',
-	ideas_visible_limit: 20,
-	page_pile: false,
-	edit_idle_secs: 45,
-	focus_font_preview: 18,
-})
-const saveState = ref('Changes save automatically')
-let saveTimer = null
+const motifFade = ref(Number(state.prefs?.idea_motif_fade ?? 1) === 1)
 
-const scaleOptions = [
-	{ label: '90% — compact', value: 90 },
-	{ label: '100% — browser default', value: 100 },
-	{ label: '110% — comfortable', value: 110 },
-	{ label: '120% — larger', value: 120 },
-	{ label: '125% — default', value: 125 },
-	{ label: '130% — extra large', value: 130 },
-	{ label: '140% — maximum', value: 140 },
-]
-
+const overviewTitleSize = ref(state.prefs?.overview_title_size || 'comfortable')
 const titleSizeOptions = [
-	{ label: 'Comfortable — default', value: 'comfortable' },
-	{ label: 'Large', value: 'large' },
-	{ label: 'Larger', value: 'larger' },
+  { label: 'Comfortable', value: 'comfortable' },
+  { label: 'Large', value: 'large' },
+  { label: 'Larger', value: 'larger' },
 ]
 
+// Ideas
+const ideasLayout = ref(state.prefs?.ideas_layout || 'list')
+const layoutOptions = [
+  { label: 'List', value: 'list' },
+  { label: 'Columns', value: 'columns' },
+]
+
+const ideasSort = ref(state.prefs?.ideas_sort || 'modified_desc')
 const sortOptions = [
-	{ label: 'Recently edited first', value: 'modified_desc' },
-	{ label: 'Title A–Z', value: 'title_asc' },
-	{ label: 'Growth stage', value: 'stage_asc' },
-	{ label: 'Sequence', value: 'sequence_asc' },
+  { label: 'Recently edited', value: 'modified_desc' },
+  { label: 'Oldest edited', value: 'modified_asc' },
+  { label: 'Title A-Z', value: 'title_asc' },
+  { label: 'Title Z-A', value: 'title_desc' },
+  { label: 'Stage order', value: 'stage_asc' },
+  { label: 'Sequence', value: 'sequence_asc' },
 ]
 
-const previewLabel = computed(() =>
-	tab.value === 'writing' ? 'Idea overview' : 'Ideas list',
-)
+const ideasVisibleLimit = ref(state.prefs?.ideas_visible_limit || 20)
 
-const sortLabel = computed(() => {
-	const hit = sortOptions.find((o) => o.value === form.ideas_sort)
-	return hit?.label || form.ideas_sort
-})
+// Writing
+const focusFontSize = ref(state.prefs?.focus_font_size || 18)
+const editIdleSecs = ref(state.prefs?.edit_idle_secs || 45)
+const pagePile = ref(Number(state.prefs?.page_pile ?? 0) === 1)
 
-const previewRootStyle = computed(() => {
-	const scale = Math.max(90, Math.min(140, Number(form.ui_scale) || 125)) / 100
-	return { fontSize: `${16 * scale}px` }
-})
+// Notifications
+const notifySessionReminder = ref(Number(state.prefs?.notify_session_reminder ?? 1) === 1)
 
-const previewIdeas = computed(() => {
-	const sort = form.ideas_sort || 'modified_desc'
-	const limit = Math.max(1, Number(form.ideas_visible_limit) || 20)
-	const stageRank = Object.fromEntries(state.stages.map((s, i) => [s, i]))
-	const list = state.chapters.filter((c) => !c.is_hidden).slice()
-	list.sort((a, b) => {
-		if (sort === 'title_asc') return (a.title || '').localeCompare(b.title || '')
-		if (sort === 'stage_asc') {
-			return (stageRank[a.writing_stage] ?? 99) - (stageRank[b.writing_stage] ?? 99)
-		}
-		if (sort === 'sequence_asc') return (a.sequence || 0) - (b.sequence || 0)
-		return dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf()
-	})
-	return list.slice(0, Math.min(limit, 8))
-})
-
-function previewBlurb(chapter) {
-	if (!chapter) return ''
-	const fromSummary = plainSummary(chapter.summary)
-	if (fromSummary) return fromSummary
-	return String(chapter.content || '')
-		.replace(/<[^>]+>/g, ' ')
-		.replace(/\s+/g, ' ')
-		.trim()
-		.slice(0, 140)
-}
-
-function syncFromPrefs() {
-	const p = state.prefs || {}
-	form.ui_scale = Number(p.ui_scale || 125)
-	const titleSize = p.overview_title_size || 'comfortable'
-	form.overview_title_size =
-		titleSize === 'large' || titleSize === 'larger' ? titleSize : 'comfortable'
-	form.idea_motif_fade = Number(p.idea_motif_fade ?? 1) === 1
-	form.ideas_sort = p.ideas_sort || 'modified_desc'
-	form.ideas_visible_limit = Number(p.ideas_visible_limit || 20)
-	form.page_pile = Boolean(p.page_pile)
-	form.edit_idle_secs = Number(p.edit_idle_secs || 45)
-	form.focus_font_preview = Number(state.settings.focus_font_size || 18)
-}
-
-function onScaleChange() {
-	applyUiScale(form.ui_scale)
-	scheduleSave()
-}
-
-function bumpPreview() {
-	/* local preview only */
-}
-
-function scheduleSave() {
-	saveState.value = 'Saving…'
-	clearTimeout(saveTimer)
-	saveTimer = setTimeout(async () => {
-		try {
-			await savePrefs({
-				ui_scale: Math.max(90, Math.min(140, Number(form.ui_scale) || 125)),
-				overview_title_size: form.overview_title_size || 'comfortable',
-				idea_motif_fade: form.idea_motif_fade ? 1 : 0,
-				ideas_sort: form.ideas_sort,
-				ideas_visible_limit: Math.max(1, Number(form.ideas_visible_limit) || 20),
-				page_pile: form.page_pile ? 1 : 0,
-				edit_idle_secs: Math.max(5, Number(form.edit_idle_secs) || 45),
-			})
-			applyUiScale(form.ui_scale)
-			saveState.value = 'Saved'
-		} catch (e) {
-			saveState.value = 'Could not save'
-			toast.error(e?.messages?.[0] || e?.message || 'Could not save settings')
-		}
-	}, 400)
-}
-
+// Watch for external changes (e.g., from other tabs)
 watch(
-	() => state.prefs,
-	() => syncFromPrefs(),
-	{ deep: true },
+  () => state.prefs,
+  (newPrefs) => {
+    if (!newPrefs) return
+    uiScale.value = newPrefs.ui_scale || 125
+    motifFade.value = Number(newPrefs.idea_motif_fade ?? 1) === 1
+    overviewTitleSize.value = newPrefs.overview_title_size || 'comfortable'
+    ideasLayout.value = newPrefs.ideas_layout || 'list'
+    ideasSort.value = newPrefs.ideas_sort || 'modified_desc'
+    ideasVisibleLimit.value = newPrefs.ideas_visible_limit || 20
+    focusFontSize.value = newPrefs.focus_font_size || 18
+    editIdleSecs.value = newPrefs.edit_idle_secs || 45
+    pagePile.value = Number(newPrefs.page_pile ?? 0) === 1
+    notifySessionReminder.value = Number(newPrefs.notify_session_reminder ?? 1) === 1
+  },
+  { deep: true },
 )
 
-onMounted(async () => {
-	await bootstrap()
-	syncFromPrefs()
-	applyUiScale(form.ui_scale)
-})
+// Appearance handlers
+async function onUiScaleChange(value) {
+  try {
+    await savePrefs({ ui_scale: Number(value) })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save UI scale')
+  }
+}
+
+async function onMotifFadeChange() {
+  try {
+    await savePrefs({ idea_motif_fade: motifFade.value ? 1 : 0 })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save motif fade setting')
+  }
+}
+
+async function onOverviewTitleSizeChange(value) {
+  try {
+    await savePrefs({ overview_title_size: value })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save title size')
+  }
+}
+
+// Ideas handlers
+async function onIdeasLayoutChange(value) {
+  try {
+    await savePrefs({ ideas_layout: value })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save layout')
+  }
+}
+
+async function onIdeasSortChange(value) {
+  try {
+    await savePrefs({ ideas_sort: value })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save sort order')
+  }
+}
+
+async function onIdeasVisibleLimitChange(value) {
+  try {
+    await savePrefs({ ideas_visible_limit: Number(value) || 20 })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save visible limit')
+  }
+}
+
+// Writing handlers
+async function onFocusFontSizeChange(value) {
+  try {
+    await savePrefs({ focus_font_size: Number(value) || 18 })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save font size')
+  }
+}
+
+async function onEditIdleSecsChange(value) {
+  try {
+    await savePrefs({ edit_idle_secs: Number(value) || 45 })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save idle timeout')
+  }
+}
+
+async function onPagePileChange() {
+  try {
+    await savePrefs({ page_pile: pagePile.value ? 1 : 0 })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save page pile setting')
+  }
+}
+
+// Notifications handlers
+async function onNotifySessionReminderChange() {
+  try {
+    await savePrefs({ notify_session_reminder: notifySessionReminder.value ? 1 : 0 })
+    showSavedDialog.value = true
+  } catch (e) {
+    toast.error('Failed to save notification setting')
+  }
+}
+
+// Danger zone
+async function resetAllPreferences() {
+  try {
+    const defaults = {
+      ui_scale: 125,
+      idea_motif_fade: 1,
+      overview_title_size: 'comfortable',
+      ideas_layout: 'list',
+      ideas_sort: 'modified_desc',
+      ideas_visible_limit: 20,
+      focus_font_size: 18,
+      edit_idle_secs: 45,
+      page_pile: 0,
+      notify_session_reminder: 1,
+    }
+    await savePrefs(defaults)
+    showResetDialog.value = false
+    toast.success('All preferences reset to defaults')
+    
+    // Update local refs
+    uiScale.value = defaults.ui_scale
+    motifFade.value = true
+    overviewTitleSize.value = defaults.overview_title_size
+    ideasLayout.value = defaults.ideas_layout
+    ideasSort.value = defaults.ideas_sort
+    ideasVisibleLimit.value = defaults.ideas_visible_limit
+    focusFontSize.value = defaults.focus_font_size
+    editIdleSecs.value = defaults.edit_idle_secs
+    pagePile.value = false
+    notifySessionReminder.value = true
+  } catch (e) {
+    toast.error('Failed to reset preferences')
+  }
+}
 </script>

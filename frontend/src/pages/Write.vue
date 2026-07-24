@@ -525,7 +525,7 @@ const doneReassignTo = ref('')
 const draft = reactive({
 	title: '',
 	content: '',
-	writing_stage: 'Capture',
+	writing_stage: '∞',
 	next_write_on: '',
 })
 const saveState = ref('All changes save automatically')
@@ -843,7 +843,7 @@ watch(
 		state.active = ch.name
 		draft.title = ch.title || ''
 		draft.content = ch.content || ''
-		draft.writing_stage = ch.writing_stage || 'Capture'
+		draft.writing_stage = ch.writing_stage || '∞'
 		draft.next_write_on = ch.next_write_on
 			? dayjs(ch.next_write_on).format('YYYY-MM-DDTHH:mm')
 			: ''

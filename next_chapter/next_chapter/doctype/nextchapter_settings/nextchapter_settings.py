@@ -45,16 +45,6 @@ STAGE_WIP_FIELD = {
 	"5": "wip_5",
 	"3": "wip_3",
 	"1": "wip_1",
-	# New 10-stage pipeline
-	"Capture": "clarification_limit",
-	"Clarification": "clarification_limit",
-	"Incubation": "incubation_limit",
-	"Evaluation": "evaluation_limit",
-	"Prioritization": "prioritization_limit",
-	"Development": "development_limit",
-	"Validation": "validation_limit",
-	"Commitment": "commitment_limit",
-	"Executing": "executing_limit",
 }
 
 STAGE_MIN_WORDS_FIELD = {
@@ -63,16 +53,6 @@ STAGE_MIN_WORDS_FIELD = {
 	"5": "min_words_5",
 	"3": "min_words_3",
 	"1": "min_words_1",
-	# New 10-stage pipeline
-	"Capture": "min_words_clarification",
-	"Clarification": "min_words_clarification",
-	"Incubation": "min_words_incubation",
-	"Evaluation": "min_words_evaluation",
-	"Prioritization": "min_words_prioritization",
-	"Development": "min_words_development",
-	"Validation": "min_words_validation",
-	"Commitment": "min_words_commitment",
-	"Executing": "min_words_executing",
 }
 
 DEFAULT_RUNWAY = [

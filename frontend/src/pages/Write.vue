@@ -38,7 +38,7 @@
             <div class="flex shrink-0 gap-2 pt-2">
               <Button variant="subtle" label="Edit" @click="openEdit" />
               <Button
-                v-if="draft.status !== 'Done'"
+                v-if="draft.writing_stage !== 'Done'"
                 variant="solid"
                 label="Start Focus"
                 @click="router.push(`/session/${chapter.name}`)"
@@ -186,15 +186,15 @@
         </div>
         <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           <FormControl
-            v-model="draft.status"
+            v-model="draft.writing_stage"
             type="select"
             label="Growth stage"
             :options="stageOptions"
             @update:model-value="onStageChange"
           />
-          <p v-if="STAGE_META[draft.status]" class="text-xs text-ink-gray-5">
-            {{ STAGE_META[draft.status].metaphor }} —
-            {{ STAGE_META[draft.status].job }}
+          <p v-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-5">
+            {{ STAGE_META[draft.writing_stage].metaphor }} —
+            {{ STAGE_META[draft.writing_stage].job }}
           </p>
           <label
             v-if="pagePileAvailable"
@@ -203,7 +203,7 @@
             <input v-model="pagePile" type="checkbox" @change="onPagePile" />
             Page pile writing mode
           </label>
-          <p v-else-if="STAGE_META[draft.status]" class="text-xs text-ink-gray-4">
+          <p v-else-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-4">
             Page pile unlocks at stage 3.
           </p>
           <div class="rounded-lg border border-[#ddd8d0] bg-[#faf8f5] p-3">
@@ -566,7 +566,7 @@ const hideOptions = [
 
 const pagePile = ref(false)
 const pagePileAvailable = computed(() =>
-	PAGE_PILE_STAGES.includes(draft.status),
+	PAGE_PILE_STAGES.includes(draft.writing_stage),
 )
 const focusFontSize = computed(() => Number(effectiveSetting('focus_font_size', 18)))
 const maxWords = computed(() => Number(state.settings.max_words || 0))
@@ -585,7 +585,7 @@ const stageOptions = computed(() =>
 
 const nextGate = computed(() => {
 	const order = state.stages
-	const i = order.indexOf(draft.status)
+	const i = order.indexOf(draft.writing_stage)
 	if (i < 0 || i >= order.length - 1) return null
 	const stage = order[i + 1]
 	if (stage === 'Done') return null
@@ -843,7 +843,7 @@ watch(
 		state.active = ch.name
 		draft.title = ch.title || ''
 		draft.content = ch.content || ''
-		draft.status = ch.writing_stage || '∞'
+		draft.writing_stage = ch.writing_stage || '∞'
 		draft.next_write_on = ch.next_write_on
 			? dayjs(ch.next_write_on).format('YYYY-MM-DDTHH:mm')
 			: ''
@@ -887,7 +887,7 @@ async function onStageChange(stage) {
 			doneScheduleOpen.value = true
 		}
 	} catch {
-		draft.status = chapter.value.writing_stage
+		draft.writing_stage = chapter.value.writing_stage
 	}
 }
 

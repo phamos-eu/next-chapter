@@ -44,7 +44,6 @@ CHAPTER_FIELDS = [
 	"title",
 	"sequence",
 	"writing_stage",
-	"status",
 	"summary",
 	"content",
 	"hidden_until",
@@ -89,16 +88,6 @@ def _parse_highlighted_stats(raw) -> list[str]:
 
 def _serialize(doc_or_row) -> dict:
 	data = {field: doc_or_row.get(field) for field in CHAPTER_FIELDS}
-
-	# Ensure status field is populated from writing_stage if not set
-	if not data.get("status") and data.get("writing_stage"):
-		# Map old writing_stage to new status
-		stage_mapping = {
-			"\u221e": "Capture", "9": "Clarification", "7": "Incubation",
-			"5": "Evaluation", "3": "Prioritization", "1": "Development",
-			"Done": "Done"
-		}
-		data["status"] = stage_mapping.get(data["writing_stage"], data["writing_stage"])
 	data["summary"] = data.get("summary") or ""
 	data["content"] = data.get("content") or ""
 	data["last_session_words"] = int(data.get("last_session_words") or 0)

@@ -28,6 +28,7 @@ REQUIRED = [
 	APP / "next_chapter" / "doctype" / "implementation_chapter" / "implementation_chapter.json",
 	APP / "next_chapter" / "doctype" / "nextchapter_settings" / "nextchapter_settings.json",
 	APP / "next_chapter" / "page" / "next_chapter" / "next_chapter.json",
+	APP / "next_chapter" / "page" / "next_chapter" / "next_chapter.js",
 	APP / "next_chapter" / "workspace" / "next_chapter" / "next_chapter.json",
 	APP / "workspace_sidebar" / "next_chapter.json",
 	ROOT / "README.md",
@@ -44,7 +45,7 @@ def main() -> int:
 			errors.append(f"missing: {path.relative_to(ROOT)}")
 
 	modules = (APP / "modules.txt").read_text(encoding="utf-8").strip()
-	# Frappe scrubs module titles: "Next Chapter" \u2192 next_chapter (package folder).
+	# Frappe scrubs module titles: "Next Chapter" → next_chapter (package folder).
 	if modules != "Next Chapter":
 		errors.append(f"modules.txt expected 'Next Chapter', got {modules!r}")
 
@@ -75,7 +76,7 @@ def main() -> int:
 	spa_html = APP / "www" / "next-chapter.html"
 	spa_boot = APP / "www" / "next_chapter.py"
 	if not spa_html.is_file():
-		errors.append("missing www/next-chapter.html \u2014 run yarn build in frontend/")
+		errors.append("missing www/next-chapter.html — run yarn build in frontend/")
 	else:
 		html = spa_html.read_text(encoding="utf-8")
 		if 'id="app"' not in html or "/assets/next_chapter/frontend/" not in html:
@@ -93,7 +94,7 @@ def main() -> int:
 			errors.append("www/next_chapter.py must not call the old dashboard API")
 	# Underscore HTML would register /next_chapter instead of /next-chapter.
 	if (APP / "www" / "next_chapter.html").is_file():
-		errors.append("remove www/next_chapter.html \u2014 it steals/conflicts; use next-chapter.html")
+		errors.append("remove www/next_chapter.html — it steals/conflicts; use next-chapter.html")
 
 	frontend_pkg = ROOT / "frontend" / "package.json"
 	if not frontend_pkg.is_file():
@@ -167,9 +168,7 @@ def main() -> int:
 				if required not in fields:
 					errors.append(f"Chapter missing field: {required}")
 			stage_field = next(f for f in data["fields"] if f["fieldname"] == "writing_stage")
-			# Check for new 10-stage pipeline
-			new_stages = ["Capture", "Clarification", "Incubation", "Evaluation", "Prioritization", "Development", "Validation", "Commitment", "Executing", "Done"]
-			for stage in new_stages:
+			for stage in ("∞", "9", "7", "5", "3", "1", "Done"):
 				if stage not in (stage_field.get("options") or ""):
 					errors.append(f"Chapter writing_stage missing {stage}")
 			if data.get("sort_field") != "creation":
@@ -178,28 +177,12 @@ def main() -> int:
 			if not data.get("issingle"):
 				errors.append("NextChapter Settings must be a Single DocType")
 			fields = {f["fieldname"] for f in data["fields"]}
-			# Check for new WIP limit fields
-			new_wip_fields = [
-				"clarification_limit",
-				"incubation_limit",
-				"evaluation_limit",
-				"prioritization_limit",
-				"development_limit",
-				"validation_limit",
-				"commitment_limit",
-				"executing_limit",
-			]
-			new_word_gate_fields = [
-				"min_words_clarification",
-				"min_words_incubation",
-				"min_words_evaluation",
-				"min_words_prioritization",
-				"min_words_development",
-				"min_words_validation",
-				"min_words_commitment",
-				"min_words_executing",
-			]
-			for required in [
+			for required in (
+				"wip_9",
+				"wip_7",
+				"wip_5",
+				"wip_3",
+				"wip_1",
 				"default_session_mins",
 				"breath_count",
 				"inhale_seconds",
@@ -215,13 +198,18 @@ def main() -> int:
 				"fade_idle_max_secs",
 				"fade_drag",
 				"bubble_label_chars",
+				"min_words_9",
+				"min_words_7",
+				"min_words_5",
+				"min_words_3",
+				"min_words_1",
 				"max_words",
 				"in_development",
 				"edit_idle_secs",
 				"page_words",
 				"runway_checklist",
 				"body_checklist",
-			] + new_wip_fields + new_word_gate_fields:
+			):
 				if required not in fields:
 					errors.append(f"Settings missing field: {required}")
 		if rel.endswith("nextchapter_ritual_item.json"):
@@ -316,15 +304,6 @@ def main() -> int:
 		"createWebHistory('/next-chapter')",
 		"frappe-ui",
 		"Could not open NextChapter",
-		"Capture",
-		"Clarification",
-		"Incubation",
-		"Evaluation",
-		"Prioritization",
-		"Development",
-		"Validation",
-		"Commitment",
-		"Executing",
 	):
 		if needle not in front:
 			errors.append(f"SPA source missing: {needle}")
@@ -343,7 +322,6 @@ def main() -> int:
 		"Writing Session",
 		"BEGIN:VCALENDAR",
 		"/next-chapter/ideas/",
-		"get_stages",
 	):
 		if needle not in api:
 			errors.append(f"chapter API missing: {needle}")
@@ -405,7 +383,7 @@ def main() -> int:
 			print(f"  - {err}")
 		return 1
 
-	print("SMOKE OK \u2014 v16 packaging, DocTypes, SPA boot, workspace/sidebar, README")
+	print("SMOKE OK — v16 packaging, DocTypes, SPA boot, workspace/sidebar, README")
 	print("Install on a Frappe v16 bench (Python 3.14+) for end-to-end UI checks.")
 	return 0
 

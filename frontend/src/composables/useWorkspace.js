@@ -1,267 +1,455 @@
-/**
- * Main workspace composable
- * Central state management for NextChapter
- */
-
 import { computed, reactive } from 'vue'
-import { call } from 'frappe-ui'
+import { call, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
 
-// Import constants
-import {
-  STAGES,
-  STAGE_COLORS,
-  STAGE_META,
-  PAGE_PILE_STAGES,
-  DONE_PREVIEW_LIMIT,
-  HIGHLIGHTABLE_STATS,
-} from './constants'
+export const STAGE_COLORS = {
+	'∞': 'gray',
+	'9': 'blue',
+	'7': 'cyan',
+	'5': 'orange',
+	'3': 'purple',
+	'1': 'green',
+	Done: 'green',
+}
 
-// Import sub-composables
-import { useChapter } from './useChapter'
-import { useSession } from './useSession'
+export const STAGE_META = {
+	'∞': { metaphor: 'Seed', job: 'Capture anything; no commitment' },
+	'9': { metaphor: 'Sprout', job: 'First filter — keep what still interests you' },
+	'7': { metaphor: 'Seedling', job: 'Clarify the point in a few sentences' },
+	'5': { metaphor: 'Young plant', job: 'Structure emerging' },
+	// Stage 3+: page-pile stack unlocks. Later maturity: page count + explicit Prev/Next chrome.
+	'3': {
+		metaphor: 'Growing',
+		job: 'Serious candidates',
+		page_pile: true,
+		future_page_nav: true,
+	},
+	'1': {
+		metaphor: 'Mature focus',
+		job: 'The one you write deeply',
+		page_pile: true,
+		future_page_nav: true,
+	},
+	Done: { metaphor: 'Harvest', job: 'Finished chapter' },
+}
 
-// Re-export everything for backward compatibility
-export {
-  STAGES,
-  STAGE_COLORS,
-  STAGE_META,
-  PAGE_PILE_STAGES,
-  DONE_PREVIEW_LIMIT,
-  HIGHLIGHTABLE_STATS,
-} from './constants'
+/** Stages where pile-of-pages focus mode may appear (not 9 / 7 / 5). */
+export const PAGE_PILE_STAGES = Object.keys(STAGE_META).filter(
+	(s) => STAGE_META[s]?.page_pile,
+)
 
-export {
-  formatDateTime,
-  formatTime,
-  formatAge,
-  plainSummary,
-  countWords,
-  formatNumber,
-  formatPercentage,
-  formatDuration,
-  trendArrow,
-  trendClass,
-  trendTitle,
-} from './useFormatters'
+export const STAGES = ['∞', '9', '7', '5', '3', '1', 'Done']
 
-export { useChapter, useSession }
+/** Done ideas shown on Ideas / Growth Funnel before pointing to History. */
+export const DONE_PREVIEW_LIMIT = 10
 
-// Main state
+/** Stable keys for stats that can be highlighted on an idea overview. */
+export const HIGHLIGHTABLE_STATS = [
+	{ key: 'total_sessions', label: 'Sessions (total)', group: 'Consistency' },
+	{ key: 'avg_sessions_per_week', label: 'Avg / week', group: 'Consistency' },
+	{ key: 'best_quiet', label: 'Best / quiet week', group: 'Consistency' },
+	{ key: 'total_words', label: 'Words written (total)', group: 'Output' },
+	{ key: 'planned_vs_actual', label: 'Last planned → actual', group: 'Output' },
+	{ key: 'recent_sessions', label: 'Recent sessions', group: 'Output' },
+	{ key: 'total_focus_mins', label: 'Total focus (mins)', group: 'Time' },
+	{ key: 'avg_session_mins', label: 'Avg session', group: 'Time' },
+	{ key: 'longest_session_mins', label: 'Longest session', group: 'Time' },
+	{ key: 'scheduled_sessions', label: 'Scheduled sessions', group: 'Planning' },
+	{ key: 'focus_note_keep_rate', label: 'Focus-note keep rate', group: 'Planning' },
+	{ key: 'aim_mix', label: 'Aim mix (more/sim/less)', group: 'Planning' },
+]
+
 const state = reactive({
-  loaded: false,
-  loading: false,
-  error: '',
-  needsSetup: false,
-  story: null,
-  chapters: [],
-  stages: [],
-  wipLimits: {},
-  wordGates: {},
-  settings: {},
-  prefs: {},
-  search: '',
-  listMode: 'active',
-  stageFilter: 'All',
-  active: null,
+	loaded: false,
+	loading: false,
+	error: '',
+	needsSetup: false,
+	story: null,
+	chapters: [],
+	stages: [...STAGES],
+	wipLimits: {},
+	wordGates: {},
+	settings: {},
+	prefs: {},
+	search: '',
+	listMode: 'active',
+	stageFilter: 'All',
+	active: null,
 })
 
 let bootstrapPromise = null
 
-/**
- * Apply bootstrap data to state
- */
-function applyBootstrap(data) {
-  state.needsSetup = Boolean(data.needs_setup)
-  state.story = data.story || null
-  state.chapters = (data.chapters || []).map(_serialize)
-  state.stages = data.stages?.length ? data.stages : [...STAGES]
-  state.wipLimits = data.wip_limits || {}
-  state.wordGates = data.word_gates || {}
-  state.settings = data.settings || {}
-  state.prefs = data.prefs || {}
-  state.loaded = true
-  state.error = ''
-  
-  // Apply UI scale
-  applyUiScale(state.prefs.ui_scale ?? 125)
-
-  // Clear active if chapter no longer exists
-  if (state.active && !state.chapters.some((c) => c.name === state.active)) {
-    state.active = null
-  }
-}
-
-/**
- * Serialize a chapter document/row
- */
-function _serialize(docOrRow) {
-  const data = {
-    name: docOrRow.name,
-    title: docOrRow.title || '',
-    sequence: docOrRow.sequence || 0,
-    writing_stage: docOrRow.writing_stage || '∞',
-    summary: docOrRow.summary || '',
-    content: docOrRow.content || '',
-    hidden_until: docOrRow.hidden_until,
-    auto_hidden: Number(docOrRow.auto_hidden || 0),
-    next_write_on: docOrRow.next_write_on,
-    write_duration_mins: docOrRow.write_duration_mins,
-    last_session_words: Number(docOrRow.last_session_words || 0),
-    spawned_from: docOrRow.spawned_from,
-    highlighted_stats: _parseHighlightedStats(docOrRow.highlighted_stats),
-    next_focus_note: docOrRow.next_focus_note || '',
-    creation: docOrRow.creation,
-    modified: docOrRow.modified,
-  }
-  
-  const hidden_until = data.hidden_until
-  const snoozed = Boolean(hidden_until && dayjs(hidden_until) > dayjs())
-  data.is_hidden = snoozed || Boolean(data.auto_hidden)
-  
-  return data
-}
-
-/**
- * Parse highlighted stats from raw value
- */
-function _parseHighlightedStats(raw) {
-  if (!raw) return []
-  if (Array.isArray(raw)) return raw.slice(0, 3)
-  
-  try {
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed)) return parsed.slice(0, 3)
-  } catch {
-    // Invalid JSON, return empty array
-  }
-  
-  return []
-}
-
-/**
- * Replace or add a chapter in the store
- */
-function _replaceChapter(chapter) {
-  const idx = state.chapters.findIndex((c) => c.name === chapter.name)
-  if (idx >= 0) {
-    state.chapters.splice(idx, 1, _serialize(chapter))
-  } else {
-    state.chapters.push(_serialize(chapter))
-  }
-}
-
-/**
- * Apply UI scale setting
- */
 function applyUiScale(scale) {
-  const pct = Math.max(90, Math.min(140, Number(scale) || 125))
-  if (typeof document !== 'undefined') {
-    document.documentElement.style.fontSize = `${(16 * pct) / 100}px`
-    document.documentElement.style.setProperty('--nc-ui-scale', String(pct / 100))
-  }
+	const pct = Math.max(90, Math.min(140, Number(scale) || 125))
+	if (typeof document !== 'undefined') {
+		document.documentElement.style.fontSize = `${(16 * pct) / 100}px`
+		document.documentElement.style.setProperty('--nc-ui-scale', String(pct / 100))
+	}
 }
 
-/**
- * Get error message from error object
- */
+function applyBootstrap(data) {
+	state.needsSetup = Boolean(data.needs_setup)
+	state.story = data.story || null
+	state.chapters = data.chapters || []
+	state.stages = data.stages?.length ? data.stages : [...STAGES]
+	state.wipLimits = data.wip_limits || {}
+	state.wordGates = data.word_gates || {}
+	state.settings = data.settings || {}
+	state.prefs = data.prefs || {}
+	state.loaded = true
+	state.error = ''
+	applyUiScale(state.prefs.ui_scale ?? 125)
+
+	if (state.active && !state.chapters.some((c) => c.name === state.active)) {
+		state.active = null
+	}
+}
+
+function replaceChapter(chapter) {
+	const idx = state.chapters.findIndex((c) => c.name === chapter.name)
+	if (idx >= 0) {
+		state.chapters.splice(idx, 1, chapter)
+	} else {
+		state.chapters.push(chapter)
+	}
+}
+
 function errorMessage(e, fallback = 'Something went wrong') {
-  return e?.messages?.[0] || e?.message || fallback
+	return e?.messages?.[0] || e?.message || fallback
 }
 
-/**
- * Bootstrap the workspace
- */
-async function bootstrap(force = false) {
-  if (state.loaded && !force) return state
-  if (bootstrapPromise && !force) return bootstrapPromise
-
-  state.loading = true
-  state.error = ''
-  
-  bootstrapPromise = (async () => {
-    try {
-      const data = await call('next_chapter.api.setup.get_bootstrap')
-      applyBootstrap(data || {})
-      return data
-    } catch (e) {
-      state.error = errorMessage(e, 'Could not load NextChapter')
-      state.loaded = false
-      throw e
-    } finally {
-      state.loading = false
-      bootstrapPromise = null
-    }
-  })()
-
-  return bootstrapPromise
-}
-
-/**
- * Complete setup wizard
- */
-async function completeSetup(
-  company_name,
-  company_purpose = null,
-  employees_now = null,
-  employees_1y = null,
-  employees_3y = null,
-  employees_7y = null,
-  company_stage = null,
-  erp_motivation = null,
-  priority_1 = null,
-  priority_2 = null,
-  priority_3 = null,
-) {
-  try {
-    const data = await call('next_chapter.api.setup.complete_setup', {
-      company_name,
-      company_purpose,
-      employees_now,
-      employees_1y,
-      employees_3y,
-      employees_7y,
-      company_stage,
-      erp_motivation,
-      priority_1,
-      priority_2,
-      priority_3,
-    })
-    applyBootstrap(data)
-    return data
-  } catch (e) {
-    throw e
-  }
-}
-
-/**
- * Main composable export
- */
 export function useWorkspace() {
-  // Get chapter-related functions
-  const chapterComposable = useChapter()
-  
-  // Get session-related functions
-  const sessionComposable = useSession()
+	const activeChapter = computed(
+		() => state.chapters.find((c) => c.name === state.active) || null,
+	)
 
-  return {
-    // State
-    state,
-    
-    // Bootstrap
-    bootstrap,
-    completeSetup,
-    
-    // From useChapter
-    ...chapterComposable,
-    
-    // From useSession
-    ...sessionComposable,
-    
-    // Utilities
-    applyUiScale,
-    errorMessage,
-  }
+	const filteredChapters = computed(() => {
+		const q = state.search.trim().toLowerCase()
+		const sort = state.prefs.ideas_sort || 'modified_desc'
+		const stageRank = Object.fromEntries(state.stages.map((s, i) => [s, i]))
+		const list = state.chapters.filter((c) => {
+			const hidden = Boolean(c.is_hidden)
+			if (state.listMode === 'hidden' ? !hidden : hidden) return false
+			// Done ideas are harvested — keep them out of Active unless filtering by Done
+			if (
+				state.listMode === 'active' &&
+				c.writing_stage === 'Done' &&
+				state.stageFilter !== 'Done'
+			) {
+				return false
+			}
+			if (state.stageFilter !== 'All' && c.writing_stage !== state.stageFilter) {
+				return false
+			}
+			if (!q) return true
+			const hay = `${c.title || ''} ${c.summary || ''}`.toLowerCase()
+			return hay.includes(q)
+		})
+		list.sort((a, b) => {
+			if (sort === 'title_asc') {
+				return (a.title || '').localeCompare(b.title || '')
+			}
+			if (sort === 'stage_asc') {
+				return (stageRank[a.writing_stage] ?? 99) - (stageRank[b.writing_stage] ?? 99)
+			}
+			if (sort === 'sequence_asc') {
+				return (a.sequence || 0) - (b.sequence || 0)
+			}
+			// modified_desc — recently edited first
+			return dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf()
+		})
+		// Done stage chip: preview only; full archive lives under History
+		if (state.listMode === 'active' && state.stageFilter === 'Done') {
+			return list.slice(0, DONE_PREVIEW_LIMIT)
+		}
+		return list
+	})
+
+	const historyChapters = computed(() =>
+		state.chapters
+			.filter((c) => c.writing_stage === 'Done')
+			.slice()
+			.sort(
+				(a, b) =>
+					dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf(),
+			),
+	)
+
+	const donePreviewTruncated = computed(() => {
+		if (state.listMode !== 'active' || state.stageFilter !== 'Done') return false
+		const total = state.chapters.filter(
+			(c) => !c.is_hidden && c.writing_stage === 'Done',
+		).length
+		return total > DONE_PREVIEW_LIMIT
+	})
+
+	const scheduledChapters = computed(() =>
+		state.chapters
+			.filter((c) => c.next_write_on && !c.is_hidden && c.writing_stage !== 'Done')
+			.slice()
+			.sort((a, b) => dayjs(a.next_write_on).valueOf() - dayjs(b.next_write_on).valueOf()),
+	)
+
+	function chapterByName(name) {
+		if (!name) return null
+		return state.chapters.find((c) => c.name === name) || null
+	}
+
+	function cardsForStage(stage, { previewDone = true } = {}) {
+		const list = state.chapters
+			.filter((c) => !c.is_hidden && c.writing_stage === stage)
+			.slice()
+			.sort(
+				(a, b) =>
+					dayjs(b.modified || 0).valueOf() - dayjs(a.modified || 0).valueOf(),
+			)
+		if (previewDone && stage === 'Done') {
+			return list.slice(0, DONE_PREVIEW_LIMIT)
+		}
+		return list
+	}
+
+	function doneStageTruncated() {
+		const total = state.chapters.filter(
+			(c) => !c.is_hidden && c.writing_stage === 'Done',
+		).length
+		return total > DONE_PREVIEW_LIMIT
+	}
+
+	async function bootstrap(force = false) {
+		if (state.loaded && !force) return state
+		if (bootstrapPromise && !force) return bootstrapPromise
+
+		state.loading = true
+		state.error = ''
+		bootstrapPromise = (async () => {
+			try {
+				const data = await call('next_chapter.api.setup.get_bootstrap')
+				applyBootstrap(data || {})
+				return data
+			} catch (e) {
+				state.error = errorMessage(e, 'Could not load NextChapter')
+				state.loaded = false
+				throw e
+			} finally {
+				state.loading = false
+				bootstrapPromise = null
+			}
+		})()
+
+		return bootstrapPromise
+	}
+
+	async function refreshVisibility() {
+		try {
+			const chapters = await call('next_chapter.api.chapter.reconcile_visible_ideas')
+			if (Array.isArray(chapters)) state.chapters = chapters
+		} catch {
+			/* non-fatal */
+		}
+	}
+
+	async function createIdea(title = 'New idea') {
+		const chapter = await call('next_chapter.api.chapter.create_chapter', {
+			title,
+		})
+		state.chapters.unshift(chapter)
+		state.active = chapter.name
+		state.listMode = 'active'
+		await refreshVisibility()
+		return chapter
+	}
+
+	async function saveChapter(fields) {
+		const payload = { ...fields }
+		if (payload.highlighted_stats != null) {
+			payload.update_highlighted_stats = 1
+			payload.highlighted_stats = JSON.stringify(payload.highlighted_stats)
+		}
+		const chapter = await call('next_chapter.api.chapter.save_chapter', payload)
+		replaceChapter(chapter)
+		await refreshVisibility()
+		return chapter
+	}
+
+	async function setStage(name, writing_stage) {
+		try {
+			const chapter = await call('next_chapter.api.chapter.set_stage', {
+				name,
+				writing_stage,
+			})
+			replaceChapter(chapter)
+			return chapter
+		} catch (e) {
+			toast.error(errorMessage(e, 'Could not move chapter'))
+			throw e
+		}
+	}
+
+	async function hideChapter(name, args = {}) {
+		const chapter = await call('next_chapter.api.chapter.hide_chapter', {
+			name,
+			until: args.until || null,
+			preset: args.preset || null,
+		})
+		replaceChapter(chapter)
+		if (state.active === name) {
+			const next = state.chapters.find((c) => !c.is_hidden)
+			state.active = next?.name || null
+		}
+		return chapter
+	}
+
+	async function unhideChapter(name) {
+		const chapter = await call('next_chapter.api.chapter.unhide_chapter', { name })
+		replaceChapter(chapter)
+		await refreshVisibility()
+		return chapter
+	}
+
+	async function setSession(name, next_write_on) {
+		if (!next_write_on) {
+			const chapter = await call('next_chapter.api.chapter.clear_writing_session', {
+				name,
+			})
+			replaceChapter(chapter)
+			return chapter
+		}
+		const chapter = await call('next_chapter.api.chapter.set_writing_session', {
+			name,
+			next_write_on,
+		})
+		replaceChapter(chapter)
+		return chapter
+	}
+
+	async function completeWritingSession(payload) {
+		const result = await call('next_chapter.api.chapter.complete_writing_session', payload)
+		if (result?.chapter) {
+			replaceChapter(result.chapter)
+		}
+		if (result?.prefs) {
+			state.prefs = result.prefs
+		}
+		await refreshVisibility()
+		return result
+	}
+
+	async function captureSideIdea({ parent, text, name = null }) {
+		const chapter = await call('next_chapter.api.chapter.capture_side_idea', {
+			parent,
+			text,
+			name,
+		})
+		replaceChapter(chapter)
+		return chapter
+	}
+
+	async function fetchChapterStats(chapter) {
+		return call('next_chapter.api.session.chapter_stats', { chapter })
+	}
+
+	async function fetchChapterTimeline(chapter) {
+		return call('next_chapter.api.session.chapter_timeline', { chapter })
+	}
+
+	async function savePrefs(updates) {
+		const result = await call('next_chapter.api.session.save_prefs', updates)
+		if (result?.prefs) {
+			state.prefs = result.prefs
+			if (Array.isArray(result.chapters)) state.chapters = result.chapters
+			if (updates.ui_scale != null) applyUiScale(result.prefs.ui_scale)
+			return result.prefs
+		}
+		state.prefs = result || {}
+		if (updates.ui_scale != null) applyUiScale(state.prefs.ui_scale)
+		return result
+	}
+
+	function effectiveSetting(key, fallback = null) {
+		const pref = state.prefs?.[key]
+		if (pref !== undefined && pref !== null && pref !== '') return pref
+		if (state.settings?.[key] !== undefined && state.settings?.[key] !== null) {
+			return state.settings[key]
+		}
+		return fallback
+	}
+
+	function downloadIcs(name) {
+		window.location.href = `/api/method/next_chapter.api.chapter.download_ics?name=${encodeURIComponent(name)}`
+	}
+
+	function formatDateTime(value) {
+		if (!value) return ''
+		return dayjs(value).format('D MMM YYYY, HH:mm')
+	}
+
+	function formatTime(value) {
+		if (!value) return ''
+		return dayjs(value).format('HH:mm')
+	}
+
+	/** Age from creation: “Aged x days|weeks|months”. */
+	function formatAge(value) {
+		if (!value) return ''
+		const created = dayjs(value)
+		if (!created.isValid()) return ''
+		const days = Math.max(0, dayjs().startOf('day').diff(created.startOf('day'), 'day'))
+		if (days <= 0) return 'Aged today'
+		if (days === 1) return 'Aged 1 day'
+		if (days < 28) return `Aged ${days} days`
+		const weeks = Math.floor(days / 7)
+		if (weeks < 8) return weeks === 1 ? 'Aged 1 week' : `Aged ${weeks} weeks`
+		const months = Math.max(1, Math.floor(days / 30))
+		return months === 1 ? 'Aged 1 month' : `Aged ${months} months`
+	}
+
+	function plainSummary(html) {
+		return String(html || '')
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim()
+	}
+
+	function countWords(text) {
+		const t = String(text || '')
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim()
+		if (!t) return 0
+		return t.split(/\s+/).length
+	}
+
+	return {
+		state,
+		activeChapter,
+		filteredChapters,
+		historyChapters,
+		donePreviewTruncated,
+		scheduledChapters,
+		chapterByName,
+		cardsForStage,
+		doneStageTruncated,
+		bootstrap,
+		createIdea,
+		saveChapter,
+		setStage,
+		hideChapter,
+		unhideChapter,
+		setSession,
+		completeWritingSession,
+		captureSideIdea,
+		fetchChapterStats,
+		fetchChapterTimeline,
+		savePrefs,
+		applyUiScale,
+		effectiveSetting,
+		downloadIcs,
+		formatDateTime,
+		formatTime,
+		formatAge,
+		plainSummary,
+		countWords,
+		errorMessage,
+	}
 }
-
-export default useWorkspace

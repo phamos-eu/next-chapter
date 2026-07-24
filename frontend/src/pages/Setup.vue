@@ -1,198 +1,155 @@
 <template>
-  <div class="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-center gap-2.5 border-b border-gray-200 px-5 py-4 dark:border-gray-700">
-      <div
-        class="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-gray-900 text-xs font-semibold text-white dark:bg-white dark:text-gray-900"
-      >
-        NC
+  <div class="flex min-h-screen items-center justify-center bg-surface-gray-1 p-6">
+    <div class="w-full max-w-lg rounded-xl border border-outline-gray-1 bg-surface-white p-6 shadow-sm">
+      <div class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
+        Get started
       </div>
-      <div class="min-w-0">
-        <div class="truncate text-base font-semibold text-gray-900 dark:text-white">NextChapter</div>
-        <div class="truncate text-xs text-gray-500 dark:text-gray-400">
-          Implementation Planning
-        </div>
+      <h1 class="mb-1 text-xl font-semibold text-ink-gray-9">{{ current.title }}</h1>
+      <p class="mb-4 text-sm text-ink-gray-5">{{ current.help }}</p>
+      <p class="mb-4 text-xs text-ink-gray-4">Step {{ step + 1 }} of {{ steps.length }}</p>
+
+      <div class="space-y-3">
+        <template v-if="step === 2">
+          <div class="grid grid-cols-2 gap-3">
+            <FormControl v-model="form.employees_now" type="number" label="Today" />
+            <FormControl v-model="form.employees_1y" type="number" label="In 1 year" />
+            <FormControl v-model="form.employees_3y" type="number" label="In 3 years" />
+            <FormControl v-model="form.employees_7y" type="number" label="In 7 years" />
+          </div>
+        </template>
+        <template v-else-if="step === 5">
+          <FormControl v-model="form.priority_1" type="text" label="First idea" placeholder="e.g. Ticketing" />
+          <FormControl v-model="form.priority_2" type="text" label="Second idea" placeholder="Optional" />
+          <FormControl v-model="form.priority_3" type="text" label="Third idea" placeholder="Optional" />
+        </template>
+        <template v-else>
+          <FormControl
+            v-model="form[current.field]"
+            :type="current.type"
+            :label="current.label"
+            :placeholder="current.placeholder"
+          />
+        </template>
+      </div>
+
+      <Alert v-if="error" class="mt-4" theme="red" :title="error" />
+
+      <div class="mt-6 flex items-center justify-between">
+        <Button v-if="step > 0" variant="subtle" @click="step -= 1">Back</Button>
+        <span v-else />
+        <Button variant="solid" :loading="saving" @click="next">
+          {{ step === steps.length - 1 ? 'Start writing' : 'Continue' }}
+        </Button>
       </div>
     </div>
-
-    <main class="flex min-w-0 flex-1 flex-col items-center justify-center p-6">
-      <div class="w-full max-w-md">
-        <div class="text-center">
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome to NextChapter
-          </h1>
-          <p class="mt-2 text-gray-500 dark:text-gray-400">
-            Let's set up your implementation story and create your first ideas.
-          </p>
-        </div>
-
-        <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
-          <!-- Company Context -->
-          <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-              Company Context
-            </h2>
-            <div class="space-y-4">
-              <FormControl
-                v-model="form.companyName"
-                type="text"
-                label="Company Name"
-                placeholder="Your company name"
-                required
-              />
-              <FormControl
-                v-model="form.companyPurpose"
-                type="textarea"
-                label="Company Purpose"
-                placeholder="What does your company do?"
-                rows="3"
-              />
-              <div class="grid grid-cols-2 gap-4">
-                <FormControl
-                  v-model="form.employeesNow"
-                  type="number"
-                  label="Current Employees"
-                  placeholder="0"
-                />
-                <FormControl
-                  v-model="form.employees1y"
-                  type="number"
-                  label="Employees in 1 Year"
-                  placeholder="0"
-                />
-              </div>
-              <div class="grid grid-cols-2 gap-4">
-                <FormControl
-                  v-model="form.employees3y"
-                  type="number"
-                  label="Employees in 3 Years"
-                  placeholder="0"
-                />
-                <FormControl
-                  v-model="form.employees7y"
-                  type="number"
-                  label="Employees in 7 Years"
-                  placeholder="0"
-                />
-              </div>
-              <FormControl
-                v-model="form.companyStage"
-                type="select"
-                label="Company Stage"
-                :options="stageOptions"
-              />
-              <FormControl
-                v-model="form.erpMotivation"
-                type="textarea"
-                label="ERP Motivation"
-                placeholder="Why are you implementing an ERP system?"
-                rows="3"
-              />
-            </div>
-          </div>
-
-          <!-- First Ideas -->
-          <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-              Your First Three Ideas
-            </h2>
-            <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              What are the top three priorities for your implementation? These will become your first ideas.
-            </p>
-            <div class="space-y-4">
-              <FormControl
-                v-model="form.priority1"
-                type="text"
-                label="Priority 1"
-                placeholder="First priority"
-                required
-              />
-              <FormControl
-                v-model="form.priority2"
-                type="text"
-                label="Priority 2"
-                placeholder="Second priority"
-              />
-              <FormControl
-                v-model="form.priority3"
-                type="text"
-                label="Priority 3"
-                placeholder="Third priority"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <Button
-              variant="subtle"
-              label="Skip for now"
-              @click="skipSetup"
-            />
-            <Button
-              type="submit"
-              variant="solid"
-              label="Complete Setup"
-              :disabled="!form.companyName || !form.priority1"
-            />
-          </div>
-        </form>
-      </div>
-    </main>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, FormControl, toast } from 'frappe-ui'
+import { Alert, Button, FormControl, call, toast } from 'frappe-ui'
 import { useWorkspace } from '@/composables/useWorkspace'
 
 const router = useRouter()
-const { completeSetup } = useWorkspace()
+const { bootstrap } = useWorkspace()
+const step = ref(0)
+const saving = ref(false)
+const error = ref('')
 
-const form = ref({
-  companyName: '',
-  companyPurpose: '',
-  employeesNow: '',
-  employees1y: '',
-  employees3y: '',
-  employees7y: '',
-  companyStage: '',
-  erpMotivation: '',
-  priority1: '',
-  priority2: '',
-  priority3: '',
+const form = reactive({
+	company_name: '',
+	company_purpose: '',
+	employees_now: '',
+	employees_1y: '',
+	employees_3y: '',
+	employees_7y: '',
+	company_stage: '',
+	erp_motivation: '',
+	priority_1: '',
+	priority_2: '',
+	priority_3: '',
 })
 
-const stageOptions = [
-  { label: 'Startup', value: 'Startup' },
-  { label: 'Growth', value: 'Growth' },
-  { label: 'Established', value: 'Established' },
-  { label: 'Enterprise', value: 'Enterprise' },
+const steps = [
+	{
+		title: 'What is your company called?',
+		help: "We'll use this as the name of your implementation story.",
+		field: 'company_name',
+		type: 'text',
+		label: 'Company name',
+		placeholder: 'e.g. Acme GmbH',
+	},
+	{
+		title: 'What does the company do?',
+		help: 'A short purpose statement is enough.',
+		field: 'company_purpose',
+		type: 'textarea',
+		label: 'Purpose',
+		placeholder: 'Why does the company exist?',
+	},
+	{
+		title: 'How many people — now and ahead?',
+		help: 'Rough numbers are fine.',
+	},
+	{
+		title: 'Where is the company today?',
+		help: 'A few sentences about the current stage.',
+		field: 'company_stage',
+		type: 'textarea',
+		label: 'Current stage',
+		placeholder: 'e.g. growing fast…',
+	},
+	{
+		title: 'Why change systems?',
+		help: 'What is pushing you toward a new ERP?',
+		field: 'erp_motivation',
+		type: 'textarea',
+		label: 'Motivation',
+		placeholder: 'What should get better?',
+	},
+	{
+		title: 'What would you like to tackle first?',
+		help: 'Name up to three starting ideas. You can add more later.',
+	},
 ]
 
-async function handleSubmit() {
-  try {
-    await completeSetup(
-      form.value.companyName,
-      form.value.companyPurpose,
-      form.value.employeesNow ? Number(form.value.employeesNow) : null,
-      form.value.employees1y ? Number(form.value.employees1y) : null,
-      form.value.employees3y ? Number(form.value.employees3y) : null,
-      form.value.employees7y ? Number(form.value.employees7y) : null,
-      form.value.companyStage,
-      form.value.erpMotivation,
-      form.value.priority1,
-      form.value.priority2,
-      form.value.priority3,
-    )
-    toast.success('Setup complete!')
-    router.push('/ideas')
-  } catch (e) {
-    toast.error(e.messages?.[0] || e.message || 'Failed to complete setup')
-  }
+const current = computed(() => steps[step.value])
+
+function validate() {
+	error.value = ''
+	if (step.value === 0 && !String(form.company_name || '').trim()) {
+		error.value = 'Please enter a company name.'
+		return false
+	}
+	if (step.value === 5) {
+		const titles = [form.priority_1, form.priority_2, form.priority_3].filter((t) =>
+			String(t || '').trim(),
+		)
+		if (!titles.length) {
+			error.value = 'Add at least one idea to begin.'
+			return false
+		}
+	}
+	return true
 }
 
-function skipSetup() {
-  router.push('/ideas')
+async function next() {
+	if (!validate()) return
+	if (step.value < steps.length - 1) {
+		step.value += 1
+		return
+	}
+	saving.value = true
+	try {
+		await call('next_chapter.api.setup.complete_setup', { ...form })
+		await bootstrap(true)
+		toast.success('Your story is ready')
+		router.replace('/ideas')
+	} catch (e) {
+		error.value = e.messages?.[0] || e.message || 'Could not create your story'
+	} finally {
+		saving.value = false
+	}
 }
 </script>

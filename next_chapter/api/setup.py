@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import get_datetime, now_datetime
 
-from next_chapter.api.chapter import CHAPTER_FIELDS, NEW_STAGES, OLD_STAGES, STAGES, _serialize
+from next_chapter.api.chapter import CHAPTER_FIELDS, STAGES, _serialize
 from next_chapter.next_chapter.doctype.implementation_story.implementation_story import (
 	get_active_story_name,
 )

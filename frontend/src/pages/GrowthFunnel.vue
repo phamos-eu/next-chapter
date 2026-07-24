@@ -145,7 +145,7 @@ const reassignOptions = computed(() =>
 		.filter(
 			(c) =>
 				c.name !== doneChapterName.value &&
-				c.status || c.writing_stage !== 'Done' &&
+				c.writing_stage !== 'Done' &&
 				!c.is_hidden,
 		)
 		.map((c) => ({ label: c.title || c.name, value: c.name })),
@@ -158,7 +158,7 @@ function cardsFor(stage) {
 function countLabel(stage) {
 	const shown = cardsFor(stage).length
 	const total = state.chapters.filter(
-		(c) => !c.is_hidden && c.status || c.writing_stage === stage,
+		(c) => !c.is_hidden && c.writing_stage === stage,
 	).length
 	const limit = Number(state.wipLimits[stage] || 0)
 	if (stage === 'Done' && total > DONE_PREVIEW_LIMIT) {
@@ -170,7 +170,7 @@ function countLabel(stage) {
 function isFull(stage) {
 	const limit = Number(state.wipLimits[stage] || 0)
 	const total = state.chapters.filter(
-		(c) => !c.is_hidden && c.status || c.writing_stage === stage,
+		(c) => !c.is_hidden && c.writing_stage === stage,
 	).length
 	return limit > 0 && total >= limit
 }

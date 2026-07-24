@@ -20,7 +20,7 @@
           class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#ddd8d0] bg-[#f3f1ed] px-5 py-2.5 text-sm text-ink-gray-7"
         >
           <p>
-            Only {{ DONE_PREVIEW_LIMIT }} are shown here — the rest live in History.
+            Only {{ DONE_PREVIEW_LIMIT }} are shown here \u2014 the rest live in History.
           </p>
           <Button variant="subtle" label="Open History" @click="router.push('/history')" />
         </div>
@@ -36,7 +36,7 @@
             {{
               state.listMode === 'hidden'
                 ? 'Snoozed ideas and ones beyond your visible limit appear here.'
-                : 'Add your first idea — a short name is enough to start.'
+                : 'Add your first idea \u2014 a short name is enough to start.'
             }}
           </p>
           <Button
@@ -135,7 +135,7 @@
             </div>
             <div class="flex flex-col gap-1">
               <button
-                v-for="stage in ['All', ...state.stages]"
+                v-for="stage in ['All', ...STAGES]"
                 :key="stage"
                 type="button"
                 class="rounded-lg border px-2.5 py-1.5 text-left text-xs transition"
@@ -162,7 +162,7 @@ import { useRouter } from 'vue-router'
 import { Badge, Button, TabButtons, toast } from 'frappe-ui'
 import AppShell from '@/components/AppShell.vue'
 import IdeaMotifFade from '@/components/IdeaMotifFade.vue'
-import { DONE_PREVIEW_LIMIT, STAGE_COLORS, useWorkspace } from '@/composables/useWorkspace'
+import { DONE_PREVIEW_LIMIT, STAGE_COLORS, STAGES, useWorkspace } from '@/composables/useWorkspace'
 
 const router = useRouter()
 const {

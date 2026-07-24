@@ -4,14 +4,14 @@
       <header class="border-b border-outline-gray-1 px-5 py-3">
         <h1 class="text-xl font-semibold text-ink-gray-9">Growth Funnel</h1>
         <p class="text-sm text-ink-gray-5">
-          Narrow ideas from unlimited capture to one focused chapter. Drag across stages —
+          Narrow ideas from unlimited capture to one focused chapter. Drag across stages \u2014
           WIP limits come from Settings.
         </p>
       </header>
 
       <div class="flex min-h-0 flex-1 gap-3 overflow-x-auto bg-surface-gray-1 p-3">
         <div
-          v-for="stage in state.stages"
+          v-for="stage in STAGES"
           :key="stage"
           class="flex w-56 shrink-0 flex-col rounded-lg border bg-surface-white"
           :class="isFull(stage) ? 'border-yellow-400' : 'border-outline-gray-1'"
@@ -22,11 +22,11 @@
             <div class="flex items-center justify-between text-sm font-semibold">
               <span>{{ stage }}</span>
               <span class="text-xs font-normal text-ink-gray-5">
-                {{ countLabel(stage) }}{{ isFull(stage) ? ' ⚠' : '' }}
+                {{ countLabel(stage) }}{{ isFull(stage) ? ' \u26a0' : '' }}
               </span>
             </div>
             <div v-if="STAGE_META[stage]" class="mt-0.5 text-[11px] text-ink-gray-5">
-              {{ STAGE_META[stage].metaphor }} · {{ STAGE_META[stage].job }}
+              {{ STAGE_META[stage].metaphor }} \u00b7 {{ STAGE_META[stage].job }}
             </div>
           </div>
           <div class="min-h-[8rem] flex-1 space-y-2 overflow-y-auto p-2">
@@ -49,7 +49,7 @@
               class="w-full rounded-md border border-dashed border-outline-gray-2 px-2 py-2 text-left text-xs text-ink-gray-6 hover:border-outline-gray-3 hover:bg-surface-gray-1"
               @click="router.push('/history')"
             >
-              Older Done ideas → History
+              Older Done ideas \u2192 History
             </button>
           </div>
         </div>
@@ -96,7 +96,7 @@
           v-model="doneReassignTo"
           class="mt-4"
           type="select"
-          label="Move slot to…"
+          label="Move slot to\u2026"
           :options="reassignOptions"
         />
       </template>
@@ -119,7 +119,7 @@ import { useRouter } from 'vue-router'
 import { Button, Dialog, FormControl, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
 import AppShell from '@/components/AppShell.vue'
-import { DONE_PREVIEW_LIMIT, STAGE_META, useWorkspace } from '@/composables/useWorkspace'
+import { DONE_PREVIEW_LIMIT, STAGE_META, STAGES, useWorkspace } from '@/composables/useWorkspace'
 
 const router = useRouter()
 const {
@@ -164,7 +164,7 @@ function countLabel(stage) {
 	if (stage === 'Done' && total > DONE_PREVIEW_LIMIT) {
 		return `${shown}/${total}`
 	}
-	return limit > 0 ? `${total}/${limit}` : `${total}/∞`
+	return limit > 0 ? `${total}/${limit}` : `${total}/Unlimited`
 }
 
 function isFull(stage) {

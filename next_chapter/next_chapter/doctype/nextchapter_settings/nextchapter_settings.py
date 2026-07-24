@@ -7,16 +7,22 @@ import frappe
 from frappe.model.document import Document
 
 DEFAULTS = {
-	"wip_9": 9,
-	"wip_7": 7,
-	"wip_5": 5,
-	"wip_3": 3,
-	"wip_1": 1,
-	"min_words_9": 50,
-	"min_words_7": 120,
-	"min_words_5": 250,
-	"min_words_3": 400,
-	"min_words_1": 600,
+	"clarification_limit": 9,
+	"incubation_limit": 7,
+	"evaluation_limit": 5,
+	"prioritization_limit": 3,
+	"development_limit": 3,
+	"validation_limit": 1,
+	"commitment_limit": 1,
+	"executing_limit": 0,
+	"min_words_clarification": 50,
+	"min_words_incubation": 120,
+	"min_words_evaluation": 250,
+	"min_words_prioritization": 400,
+	"min_words_development": 600,
+	"min_words_validation": 800,
+	"min_words_commitment": 1000,
+	"min_words_executing": 1200,
 	"max_words": 5000,
 	"default_session_mins": 60,
 	"reminder_mins": 15,
@@ -40,24 +46,32 @@ DEFAULTS = {
 }
 
 STAGE_WIP_FIELD = {
-	"9": "wip_9",
-	"7": "wip_7",
-	"5": "wip_5",
-	"3": "wip_3",
-	"1": "wip_1",
+	"Clarification": "clarification_limit",
+	"Incubation": "incubation_limit",
+	"Evaluation": "evaluation_limit",
+	"Prioritization": "prioritization_limit",
+	"Development": "development_limit",
+	"Validation": "validation_limit",
+	"Commitment": "commitment_limit",
+	"Executing": "executing_limit",
+	# Capture and Done have no limits (unlimited)
 }
 
 STAGE_MIN_WORDS_FIELD = {
-	"9": "min_words_9",
-	"7": "min_words_7",
-	"5": "min_words_5",
-	"3": "min_words_3",
-	"1": "min_words_1",
+	"Clarification": "min_words_clarification",
+	"Incubation": "min_words_incubation",
+	"Evaluation": "min_words_evaluation",
+	"Prioritization": "min_words_prioritization",
+	"Development": "min_words_development",
+	"Validation": "min_words_validation",
+	"Commitment": "min_words_commitment",
+	"Executing": "min_words_executing",
+	# Capture has no word gate (minimum words to enter)
 }
 
 DEFAULT_RUNWAY = [
 	"Silence notifications for the next hour",
-	"Close unrelated tabs — one idea only",
+	"Close unrelated tabs \u2014 one idea only",
 	"Phone face-down / out of reach",
 ]
 

@@ -156,7 +156,7 @@ def complete_setup(
 				"story": story.name,
 				"title": title,
 				"sequence": idx,
-				"writing_stage": "∞",
+				"writing_stage": "Capture",
 				"summary": "",
 				"content": "",
 				"write_duration_mins": settings.get("default_session_mins") or 60,

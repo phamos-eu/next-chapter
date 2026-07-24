@@ -28,13 +28,17 @@ from next_chapter.next_chapter.doctype.nextchapter_user_preference.nextchapter_u
 	get_user_prefs,
 )
 
+# New 10-stage pipeline
 STAGES = [
-	"∞",
-	"9",
-	"7",
-	"5",
-	"3",
-	"1",
+	"Capture",
+	"Clarification",
+	"Incubation",
+	"Evaluation",
+	"Prioritization",
+	"Development",
+	"Validation",
+	"Commitment",
+	"Executing",
 	"Done",
 ]
 ALLOWED_STAGES = set(STAGES)
@@ -126,7 +130,7 @@ def create_chapter(title: str | None = None, story: str | None = None):
 			"story": story_name,
 			"title": title,
 			"sequence": sequence,
-			"writing_stage": "∞",
+			"writing_stage": "Capture",
 			"summary": "",
 			"content": "",
 			"write_duration_mins": settings.get("default_session_mins") or 60,
@@ -145,7 +149,6 @@ def save_chapter(
 	writing_stage: str | None = None,
 	next_write_on: str | None = None,
 	write_duration_mins: int | None = None,
-	update_next_write_on: int | None = None,
 	highlighted_stats: str | None = None,
 	update_highlighted_stats: int | None = None,
 ):
@@ -404,7 +407,7 @@ def clear_writing_session(name: str):
 
 @frappe.whitelist()
 def capture_side_idea(parent: str, text: str, name: str | None = None):
-	"""Create or update an ∞-stage idea captured during a focus session."""
+	"""Create or update an Capture-stage idea captured during a focus session."""
 	if not parent:
 		frappe.throw(_("Parent chapter is required."), frappe.ValidationError)
 
@@ -415,7 +418,7 @@ def capture_side_idea(parent: str, text: str, name: str | None = None):
 
 	title = raw.split("\n", 1)[0].strip()
 	if len(title) > 80:
-		title = title[:77].rstrip() + "…"
+		title = title[:77].rstrip() + "\u2026"
 	if not title:
 		title = _("Captured idea")
 
@@ -443,7 +446,7 @@ def capture_side_idea(parent: str, text: str, name: str | None = None):
 			"story": parent_doc.story,
 			"title": title,
 			"sequence": sequence,
-			"writing_stage": "∞",
+			"writing_stage": "Capture",
 			"summary": raw,
 			"content": "",
 			"spawned_from": parent,
@@ -645,3 +648,9 @@ def _ics_escape(value: str) -> str:
 		.replace("\n", "\\n")
 		.replace("\r", "")
 	)
+
+
+@frappe.whitelist()
+def get_stages():
+	"""Return the list of available stages for the frontend."""
+	return {"stages": STAGES}

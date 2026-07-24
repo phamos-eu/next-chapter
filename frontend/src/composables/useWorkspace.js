@@ -3,42 +3,58 @@ import { call, toast } from 'frappe-ui'
 import dayjs from 'dayjs'
 
 export const STAGE_COLORS = {
-	'∞': 'gray',
-	'9': 'blue',
-	'7': 'cyan',
-	'5': 'orange',
-	'3': 'purple',
-	'1': 'green',
-	Done: 'green',
+	'Capture': 'gray',
+	'Clarification': 'blue',
+	'Incubation': 'cyan',
+	'Evaluation': 'orange',
+	'Prioritization': 'purple',
+	'Development': 'indigo',
+	'Validation': 'pink',
+	'Commitment': 'rose',
+	'Executing': 'teal',
+	'Done': 'green',
 }
 
 export const STAGE_META = {
-	'∞': { metaphor: 'Seed', job: 'Capture anything; no commitment' },
-	'9': { metaphor: 'Sprout', job: 'First filter — keep what still interests you' },
-	'7': { metaphor: 'Seedling', job: 'Clarify the point in a few sentences' },
-	'5': { metaphor: 'Young plant', job: 'Structure emerging' },
-	// Stage 3+: page-pile stack unlocks. Later maturity: page count + explicit Prev/Next chrome.
-	'3': {
+	'Capture': { metaphor: 'Seed', job: 'Capture anything; no commitment' },
+	'Clarification': { metaphor: 'Sprout', job: 'First filter — keep what still interests you' },
+	'Incubation': { metaphor: 'Seedling', job: 'Clarify the point in a few sentences' },
+	'Evaluation': { metaphor: 'Young plant', job: 'Structure emerging' },
+	'Prioritization': {
 		metaphor: 'Growing',
 		job: 'Serious candidates',
 		page_pile: true,
 		future_page_nav: true,
 	},
-	'1': {
-		metaphor: 'Mature focus',
-		job: 'The one you write deeply',
+	'Development': {
+		metaphor: 'Mature plant',
+		job: 'The one you develop deeply',
 		page_pile: true,
 		future_page_nav: true,
 	},
-	Done: { metaphor: 'Harvest', job: 'Finished chapter' },
+	'Validation': { metaphor: 'Review', job: 'Validate the approach' },
+	'Commitment': { metaphor: 'Decision', job: 'Commit to execution' },
+	'Executing': { metaphor: 'Action', job: 'Active execution' },
+	'Done': { metaphor: 'Harvest', job: 'Finished chapter' },
 }
 
-/** Stages where pile-of-pages focus mode may appear (not 9 / 7 / 5). */
+/** Stages where pile-of-pages focus mode may appear. */
 export const PAGE_PILE_STAGES = Object.keys(STAGE_META).filter(
 	(s) => STAGE_META[s]?.page_pile,
 )
 
-export const STAGES = ['∞', '9', '7', '5', '3', '1', 'Done']
+export const STAGES = [
+	'Capture',
+	'Clarification',
+	'Incubation',
+	'Evaluation',
+	'Prioritization',
+	'Development',
+	'Validation',
+	'Commitment',
+	'Executing',
+	'Done',
+]
 
 /** Done ideas shown on Ideas / Growth Funnel before pointing to History. */
 export const DONE_PREVIEW_LIMIT = 10
@@ -49,7 +65,7 @@ export const HIGHLIGHTABLE_STATS = [
 	{ key: 'avg_sessions_per_week', label: 'Avg / week', group: 'Consistency' },
 	{ key: 'best_quiet', label: 'Best / quiet week', group: 'Consistency' },
 	{ key: 'total_words', label: 'Words written (total)', group: 'Output' },
-	{ key: 'planned_vs_actual', label: 'Last planned → actual', group: 'Output' },
+	{ key: 'planned_vs_actual', label: 'Last planned \u2192 actual', group: 'Output' },
 	{ key: 'recent_sessions', label: 'Recent sessions', group: 'Output' },
 	{ key: 'total_focus_mins', label: 'Total focus (mins)', group: 'Time' },
 	{ key: 'avg_session_mins', label: 'Avg session', group: 'Time' },
@@ -389,7 +405,7 @@ export function useWorkspace() {
 		return dayjs(value).format('HH:mm')
 	}
 
-	/** Age from creation: “Aged x days|weeks|months”. */
+	/** Age from creation: \u201cAged x days|weeks|months\u201d. */
 	function formatAge(value) {
 		if (!value) return ''
 		const created = dayjs(value)

@@ -5,18 +5,27 @@
  "engine": "InnoDB",
  "field_order": [
   "wip_section",
-  "wip_9",
-  "wip_7",
-  "wip_5",
-  "column_break_wip",
-  "wip_3",
-  "wip_1",
+  "clarification_limit",
+  "incubation_limit",
+  "evaluation_limit",
+  "column_break_wip_1",
+  "prioritization_limit",
+  "development_limit",
+  "validation_limit",
+  "column_break_wip_2",
+  "commitment_limit",
+  "executing_limit",
   "gates_section",
-  "min_words_9",
-  "min_words_7",
-  "min_words_5",
-  "min_words_3",
-  "min_words_1",
+  "min_words_clarification",
+  "min_words_incubation",
+  "min_words_evaluation",
+  "column_break_gates_1",
+  "min_words_prioritization",
+  "min_words_development",
+  "min_words_validation",
+  "column_break_gates_2",
+  "min_words_commitment",
+  "min_words_executing",
   "max_words",
   "session_section",
   "default_session_mins",
@@ -53,43 +62,146 @@
   },
   {
    "default": "9",
-   "description": "0 means unlimited. Stage \u221e and Done are always unlimited.",
-   "fieldname": "wip_9",
+   "description": "0 means unlimited. Capture and Done are always unlimited.",
+   "fieldname": "clarification_limit",
    "fieldtype": "Int",
-   "label": "Stage 9 Limit",
+   "label": "Clarification Limit",
    "non_negative": 1
   },
   {
    "default": "7",
-   "fieldname": "wip_7",
+   "fieldname": "incubation_limit",
    "fieldtype": "Int",
-   "label": "Stage 7 Limit",
+   "label": "Incubation Limit",
    "non_negative": 1
   },
   {
    "default": "5",
-   "fieldname": "wip_5",
+   "fieldname": "evaluation_limit",
    "fieldtype": "Int",
-   "label": "Stage 5 Limit",
+   "label": "Evaluation Limit",
    "non_negative": 1
   },
   {
-   "fieldname": "column_break_wip",
+   "fieldname": "column_break_wip_1",
    "fieldtype": "Column Break"
   },
   {
    "default": "3",
-   "fieldname": "wip_3",
+   "fieldname": "prioritization_limit",
    "fieldtype": "Int",
-   "label": "Stage 3 Limit",
+   "label": "Prioritization Limit",
+   "non_negative": 1
+  },
+  {
+   "default": "3",
+   "fieldname": "development_limit",
+   "fieldtype": "Int",
+   "label": "Development Limit",
    "non_negative": 1
   },
   {
    "default": "1",
-   "fieldname": "wip_1",
+   "fieldname": "validation_limit",
    "fieldtype": "Int",
-   "label": "Stage 1 Limit",
+   "label": "Validation Limit",
    "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_wip_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "commitment_limit",
+   "fieldtype": "Int",
+   "label": "Commitment Limit",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "description": "0 means unlimited.",
+   "fieldname": "executing_limit",
+   "fieldtype": "Int",
+   "label": "Executing Limit",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "gates_section",
+   "fieldtype": "Section Break",
+   "label": "Stage Word Gates"
+  },
+  {
+   "default": "50",
+   "fieldname": "min_words_clarification",
+   "fieldtype": "Int",
+   "label": "Min Words for Clarification",
+   "non_negative": 1
+  },
+  {
+   "default": "120",
+   "fieldname": "min_words_incubation",
+   "fieldtype": "Int",
+   "label": "Min Words for Incubation",
+   "non_negative": 1
+  },
+  {
+   "default": "250",
+   "fieldname": "min_words_evaluation",
+   "fieldtype": "Int",
+   "label": "Min Words for Evaluation",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_gates_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "400",
+   "fieldname": "min_words_prioritization",
+   "fieldtype": "Int",
+   "label": "Min Words for Prioritization",
+   "non_negative": 1
+  },
+  {
+   "default": "600",
+   "fieldname": "min_words_development",
+   "fieldtype": "Int",
+   "label": "Min Words for Development",
+   "non_negative": 1
+  },
+  {
+   "default": "800",
+   "fieldname": "min_words_validation",
+   "fieldtype": "Int",
+   "label": "Min Words for Validation",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_gates_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1000",
+   "fieldname": "min_words_commitment",
+   "fieldtype": "Int",
+   "label": "Min Words for Commitment",
+   "non_negative": 1
+  },
+  {
+   "default": "1200",
+   "fieldname": "min_words_executing",
+   "fieldtype": "Int",
+   "label": "Min Words for Executing",
+   "non_negative": 1
+  },
+  {
+   "default": "5000",
+   "fieldname": "max_words",
+   "fieldtype": "Int",
+   "label": "Max Words (hard cap)",
+   "non_negative": 1,
+   "description": "0 = unlimited. Blocks content growth beyond this count."
   },
   {
    "fieldname": "session_section",
@@ -287,54 +399,6 @@
    "fieldtype": "Float",
    "label": "Breath Phase Gap (secs)",
    "non_negative": 1
-  },
-  {
-   "fieldname": "gates_section",
-   "fieldtype": "Section Break",
-   "label": "Stage Word Gates"
-  },
-  {
-   "fieldname": "min_words_9",
-   "fieldtype": "Int",
-   "label": "Min Words for Stage 9",
-   "default": "50",
-   "non_negative": 1
-  },
-  {
-   "fieldname": "min_words_7",
-   "fieldtype": "Int",
-   "label": "Min Words for Stage 7",
-   "default": "120",
-   "non_negative": 1
-  },
-  {
-   "fieldname": "min_words_5",
-   "fieldtype": "Int",
-   "label": "Min Words for Stage 5",
-   "default": "250",
-   "non_negative": 1
-  },
-  {
-   "fieldname": "min_words_3",
-   "fieldtype": "Int",
-   "label": "Min Words for Stage 3",
-   "default": "400",
-   "non_negative": 1
-  },
-  {
-   "fieldname": "min_words_1",
-   "fieldtype": "Int",
-   "label": "Min Words for Stage 1",
-   "default": "600",
-   "non_negative": 1
-  },
-  {
-   "fieldname": "max_words",
-   "fieldtype": "Int",
-   "label": "Max Words (hard cap)",
-   "default": "5000",
-   "non_negative": 1,
-   "description": "0 = unlimited. Blocks content growth beyond this count."
   }
  ],
  "issingle": 1,

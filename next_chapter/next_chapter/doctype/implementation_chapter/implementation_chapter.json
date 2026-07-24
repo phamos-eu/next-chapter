@@ -50,13 +50,13 @@
    "reqd": 1
   },
   {
-   "default": "∞",
+   "default": "Capture",
    "fieldname": "writing_stage",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Writing Stage",
-   "options": "∞\n9\n7\n5\n3\n1\nDone",
+   "options": "Capture\nClarification\nIncubation\nEvaluation\nPrioritization\nDevelopment\nValidation\nCommitment\nExecuting\nDone",
    "reqd": 1
   },
   {
@@ -71,7 +71,7 @@
   },
   {
    "default": "0",
-   "description": "Hidden because it fell outside the user’s visible Ideas limit.",
+   "description": "Hidden because it fell outside the user's visible Ideas limit.",
    "fieldname": "auto_hidden",
    "fieldtype": "Check",
    "label": "Auto Hidden"

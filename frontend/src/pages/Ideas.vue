@@ -75,10 +75,10 @@
                   </span>
                   <Badge
                     class="shrink-0"
-                    :theme="STAGE_COLORS[chapter.writing_stage] || 'gray'"
+                    :theme="STAGE_COLORS[chapter.status || chapter.writing_stage] || 'gray'"
                     size="sm"
                   >
-                    {{ chapter.writing_stage }}
+                    {{ chapter.status || chapter.writing_stage }}
                   </Badge>
                 </div>
                 <p

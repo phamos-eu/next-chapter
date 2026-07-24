@@ -1,17 +1,17 @@
 <template>
   <AppShell>
-    <div v-if="!chapter" class="flex flex-1 flex-col items-center justify-center gap-3 bg-[#f3f1ed]">
-      <p class="text-sm text-ink-gray-5">This idea could not be found.</p>
+    <div v-if="!chapter" class="flex flex-1 flex-col items-center justify-center gap-3 bg-gray-100 dark:bg-gray-200">
+      <p class="text-sm text-gray-500 dark:text-gray-400">This idea could not be found.</p>
       <Button variant="subtle" label="Back to Ideas" @click="router.push('/ideas')" />
     </div>
 
-    <div v-else class="flex min-h-0 flex-1 overflow-hidden bg-[#f3f1ed]">
+    <div v-else class="flex min-h-0 flex-1 overflow-hidden bg-gray-100 dark:bg-gray-200">
       <!-- Center: Writing | Statistics -->
       <section class="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div class="shrink-0 px-5 pt-3">
           <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
             <button
-              class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+              class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               @click="router.push('/ideas')"
             >
               <FeatherIcon name="arrow-left" class="h-3.5 w-3.5" />
@@ -20,17 +20,17 @@
             <button
               v-if="parentChapter"
               type="button"
-              class="inline-flex items-center gap-1 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+              class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               @click="router.push(`/ideas/${parentChapter.name}`)"
             >
               Came from
-              <span class="font-medium text-ink-gray-7">{{ parentChapter.title || 'Untitled' }}</span>
+              <span class="font-medium text-gray-700 dark:text-gray-300">{{ parentChapter.title || 'Untitled' }}</span>
             </button>
           </div>
           <div class="flex flex-wrap items-start justify-between gap-4">
             <TextInput
               v-model="draft.title"
-              class="overview-title min-w-0 flex-1 !border-0 !bg-transparent !px-0 !py-1"
+              class="overview-title min-w-0 flex-1 !border-0 !bg-transparent !px-0 !py-1 dark:!text-white"
               :class="`overview-title--${overviewTitleSize}`"
               placeholder="Give this idea a short name"
               @update:model-value="scheduleSave"
@@ -45,7 +45,7 @@
               />
             </div>
           </div>
-          <p v-if="state.settings.in_development" class="mt-1 text-xs text-amber-700">
+          <p v-if="state.settings.in_development" class="mt-1 text-xs text-amber-700 dark:text-amber-400">
             In Development — gates and ritual skips are unlocked.
           </p>
           <div
@@ -55,11 +55,11 @@
             <div
               v-for="row in pinnedStatRows"
               :key="row.key"
-              class="rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/90 px-3 py-2"
+              class="rounded-xl border border-gray-200 bg-white/90 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/90"
             >
-              <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ row.label }}</div>
               <div class="mt-0.5 flex items-center gap-1.5">
-                <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ row.value }}</span>
                 <span
                   v-if="row.trend"
                   class="inline-flex text-[11px] font-medium leading-none"
@@ -72,7 +72,7 @@
               </div>
             </div>
           </div>
-          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#ddd8d0] pb-0">
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-0 dark:border-gray-700">
             <TabButtons v-model="overviewTab" :buttons="overviewTabs" />
           </div>
         </div>
@@ -80,7 +80,7 @@
         <div class="min-h-0 flex-1 overflow-hidden p-5">
           <div v-if="overviewTab === 'writing'" class="flex h-full min-h-0 flex-col">
             <div
-              class="relative min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[#ddd8d0] bg-[#faf8f5] p-5 text-base leading-relaxed text-ink-gray-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+              class="relative min-h-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-5 text-base leading-relaxed text-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
               :style="{ fontSize: `${focusFontSize}px` }"
             >
               <IdeaMotifFade
@@ -90,12 +90,12 @@
               />
               <div class="relative z-[1]">
                 <div v-if="plainContent" class="whitespace-pre-wrap">{{ plainContent }}</div>
-                <p v-else class="text-ink-gray-4">
+                <p v-else class="text-gray-400 dark:text-gray-500">
                   No writing yet. Start a session to begin — or use Edit for a quick change.
                 </p>
               </div>
             </div>
-            <div class="mt-3 shrink-0 text-xs text-ink-gray-5">
+            <div class="mt-3 shrink-0 text-xs text-gray-500 dark:text-gray-400">
               {{ wordCount }} words
               <span v-if="nextGate">
                 · {{ Math.min(wordCount, nextGate.min) }}/{{ nextGate.min }} to reach stage
@@ -109,9 +109,9 @@
             v-else
             class="flex h-full min-h-0 flex-col overflow-hidden"
           >
-            <p class="mb-3 shrink-0 text-sm text-ink-gray-5">
+            <p class="mb-3 shrink-0 text-sm text-gray-500 dark:text-gray-400">
               Highlight up to 3 statistics to show on Writing.
-              <span class="text-ink-gray-4">{{ highlightedKeys.length }}/3 selected</span>
+              <span class="text-gray-400 dark:text-gray-500">{{ highlightedKeys.length }}/3 selected</span>
             </p>
             <div
               class="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-4"
@@ -119,9 +119,9 @@
               <div
                 v-for="col in statColumns"
                 :key="col.title"
-                class="min-h-0 rounded-xl border border-[#ddd8d0] bg-[#faf8f5]/80 p-3"
+                class="min-h-0 rounded-xl border border-gray-200 bg-white/80 p-3 dark:border-gray-700 dark:bg-gray-800/80"
               >
-                <div class="text-xs font-semibold uppercase tracking-wide text-ink-gray-5">
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {{ col.title }}
                 </div>
                 <div class="mt-2 space-y-2">
@@ -129,18 +129,18 @@
                     v-for="row in col.rows"
                     :key="row.key"
                     type="button"
-                    class="flex w-full items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-left transition"
+                    class="flex w-full items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-left transition dark:hover:bg-gray-700/80"
                     :class="
                       isHighlighted(row.key)
-                        ? 'bg-ink-gray-9/5 ring-1 ring-ink-gray-9/20'
-                        : 'hover:bg-[#efece7]/80'
+                        ? 'bg-gray-900/5 ring-1 ring-gray-900/20 dark:bg-white/10 dark:ring-white/20'
+                        : 'hover:bg-gray-100/80 dark:bg-gray-800/80'
                     "
                     @click="toggleHighlight(row.key)"
                   >
                     <div class="min-w-0">
-                      <div class="text-[11px] text-ink-gray-5">{{ row.label }}</div>
+                      <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ row.label }}</div>
                       <div class="flex items-center gap-1.5">
-                        <span class="text-sm font-medium text-ink-gray-9">{{ row.value }}</span>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">{{ row.value }}</span>
                         <span
                           v-if="row.trend"
                           class="inline-flex text-[11px] font-medium leading-none"
@@ -153,7 +153,7 @@
                     </div>
                     <span
                       class="mt-0.5 shrink-0 text-[10px] font-medium uppercase tracking-wide"
-                      :class="isHighlighted(row.key) ? 'text-ink-gray-8' : 'text-ink-gray-4'"
+                      :class="isHighlighted(row.key) ? 'text-gray-800 dark:text-white' : 'text-gray-400 dark:text-gray-500'"
                     >
                       {{ isHighlighted(row.key) ? 'On' : 'Pin' }}
                     </span>
@@ -161,7 +161,7 @@
                 </div>
                 <svg
                   v-if="col.spark?.length"
-                  class="mt-3 h-8 w-full text-ink-gray-6"
+                  class="mt-3 h-8 w-full text-gray-600 dark:text-gray-400"
                   viewBox="0 0 100 24"
                   preserveAspectRatio="none"
                 >
@@ -179,10 +179,10 @@
       </section>
 
       <!-- Right: Details + Inspired ideas -->
-      <aside class="flex w-72 shrink-0 flex-col border-l border-[#ddd8d0] bg-[#efece7]">
-        <div class="border-b border-[#ddd8d0] px-4 py-3">
-          <div class="font-medium text-ink-gray-9">Details</div>
-          <div class="text-xs text-ink-gray-5">{{ saveState }}</div>
+      <aside class="flex w-72 shrink-0 flex-col border-l border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-200">
+        <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <div class="font-medium text-gray-900 dark:text-white">Details</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">{{ saveState }}</div>
         </div>
         <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           <FormControl
@@ -192,22 +192,22 @@
             :options="stageOptions"
             @update:model-value="onStageChange"
           />
-          <p v-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-5">
+          <p v-if="STAGE_META[draft.writing_stage]" class="text-xs text-gray-500 dark:text-gray-400">
             {{ STAGE_META[draft.writing_stage].metaphor }} —
             {{ STAGE_META[draft.writing_stage].job }}
           </p>
           <label
             v-if="pagePileAvailable"
-            class="flex items-center gap-2 text-sm text-ink-gray-7"
+            class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
           >
             <input v-model="pagePile" type="checkbox" @change="onPagePile" />
             Page pile writing mode
           </label>
-          <p v-else-if="STAGE_META[draft.writing_stage]" class="text-xs text-ink-gray-4">
+          <p v-else-if="STAGE_META[draft.writing_stage]" class="text-xs text-gray-400 dark:text-gray-500">
             Page pile unlocks at stage 3.
           </p>
-          <div class="rounded-lg border border-[#ddd8d0] bg-[#faf8f5] p-3">
-            <div class="mb-2 text-sm font-medium">Next writing session</div>
+          <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+            <div class="mb-2 text-sm font-medium text-gray-900 dark:text-white">Next writing session</div>
             <FormControl
               v-model="draft.next_write_on"
               type="datetime-local"
@@ -237,17 +237,17 @@
             @click="hideOpen = true"
           />
 
-          <div class="border-t border-[#ddd8d0] pt-4">
-            <div class="mb-1 text-sm font-medium text-ink-gray-9">Inspired ideas</div>
-            <p class="mb-3 text-xs text-ink-gray-5">
+          <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+            <div class="mb-1 text-sm font-medium text-gray-900 dark:text-white">Inspired ideas</div>
+            <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
               Ideas that came out of writing this one.
-              <span v-if="timelineIdeaCount" class="text-ink-gray-4">
+              <span v-if="timelineIdeaCount" class="text-gray-400 dark:text-gray-500">
                 · {{ timelineIdeaCount }}
               </span>
             </p>
             <button
               type="button"
-              class="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-3 py-3 text-xs text-ink-gray-6 transition hover:border-[#c4bdb0] hover:bg-[#faf8f5] hover:text-ink-gray-8"
+              class="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-white/60 px-3 py-3 text-xs text-gray-600 transition hover:border-gray-400 hover:bg-white dark:border-gray-600 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"
               @click="openAddInspired"
             >
               <FeatherIcon name="plus" class="h-3.5 w-3.5" />
@@ -255,7 +255,7 @@
             </button>
             <div
               v-if="!timelineGroups.length"
-              class="rounded-lg border border-dashed border-[#ddd8d0] bg-[#faf8f5]/60 px-3 py-4 text-center text-xs text-ink-gray-5"
+              class="rounded-lg border border-dashed border-gray-300 bg-white/60 px-3 py-4 text-center text-xs text-gray-500 dark:border-gray-600 dark:bg-gray-800/60 dark:text-gray-400"
             >
               Side ideas from sessions will show up here as links.
             </div>
@@ -264,7 +264,7 @@
                 v-for="(group, gi) in timelineGroups"
                 :key="group.kind === 'session' ? group.session.name : `u-${gi}`"
               >
-                <div class="mb-1.5 text-xs text-ink-gray-5">
+                <div class="mb-1.5 text-xs text-gray-500 dark:text-gray-400">
                   <template v-if="group.kind === 'session'">
                     {{ formatSessionWhen(group.session) }}
                   </template>
@@ -274,25 +274,25 @@
                   <li v-for="idea in group.ideas" :key="idea.name">
                     <button
                       type="button"
-                      class="group flex w-full items-start gap-2 rounded-lg border border-[#ddd8d0] bg-[#faf8f5] px-2 py-1.5 text-left transition hover:border-[#c4bdb0] hover:bg-white"
+                      class="group flex w-full items-start gap-2 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:border-gray-600 dark:hover:bg-gray-700"
                       @click="openSpawnedIdea(idea)"
                     >
                       <span class="min-w-0 flex-1">
                         <span
-                          class="block truncate text-sm font-medium text-ink-gray-9 group-hover:underline"
+                          class="block truncate text-sm font-medium text-gray-900 group-hover:underline dark:text-white"
                         >
                           {{ idea.title }}
                         </span>
                         <span
                           v-if="ideaSnippet(idea)"
-                          class="mt-0.5 block line-clamp-2 text-xs text-ink-gray-5"
+                          class="mt-0.5 block line-clamp-2 text-xs text-gray-500 dark:text-gray-400"
                         >
                           {{ ideaSnippet(idea) }}
                         </span>
                       </span>
                       <FeatherIcon
                         name="chevron-right"
-                        class="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-gray-4"
+                        class="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
                       />
                     </button>
                   </li>
@@ -307,21 +307,21 @@
     <!-- Edit dialog — large from the start; page behind does not scroll -->
     <div
       v-if="editOpen"
-      class="fixed inset-0 z-50 flex items-stretch justify-center overflow-hidden bg-ink-gray-9/35 p-3 sm:p-5"
+      class="fixed inset-0 z-50 flex items-stretch justify-center overflow-hidden bg-gray-900/35 p-3 sm:p-5 dark:bg-gray-900/50"
     >
       <div
-        class="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#d4cfc6] bg-[#faf8f5] p-4 shadow-lg sm:p-5"
+        class="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-800 sm:p-5"
         @keydown="bumpEditIdle"
         @pointerdown="bumpEditIdle"
       >
         <div class="mb-3 flex shrink-0 items-center justify-between gap-3">
-          <div class="font-medium text-ink-gray-9">Edit writing</div>
+          <div class="font-medium text-gray-900 dark:text-white">Edit writing</div>
           <div
             class="edit-idle-countdown rounded-full px-2.5 py-1 text-xs tabular-nums"
             :class="[
               editCountdown !== null && editCountdown <= 3
-                ? 'bg-amber-100/80 text-amber-800'
-                : 'bg-[#efece7] text-ink-gray-6',
+                ? 'bg-amber-100/80 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
               editCountdownVisible ? 'edit-idle-countdown--visible' : '',
             ]"
             :aria-live="editCountdown !== null && editCountdown <= 3 ? 'polite' : 'off'"
@@ -336,7 +336,7 @@
         <textarea
           ref="editInput"
           v-model="editText"
-          class="min-h-0 w-full flex-1 resize-none rounded-xl border border-[#ddd8d0] bg-[#f7f5f1] p-4 leading-relaxed outline-none"
+          class="min-h-0 w-full flex-1 resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 leading-relaxed outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           :style="{ fontSize: `${focusFontSize}px` }"
           @input="bumpEditIdle"
           @scroll="bumpEditIdle"
@@ -350,14 +350,14 @@
 
     <Dialog v-model="addInspiredOpen" :options="{ title: 'Add inspired idea' }">
       <template #body-content>
-        <p class="mb-3 text-xs text-ink-gray-5">
+        <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
           Capture a thought that came from this idea. The first line becomes the title.
         </p>
         <textarea
           ref="addInspiredInput"
           v-model="addInspiredText"
           rows="6"
-          class="w-full resize-none rounded-xl border border-[#ddd8d0] bg-[#f7f5f1] p-3 text-sm leading-relaxed text-ink-gray-8 outline-none focus:border-[#c4bdb0]"
+          class="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm leading-relaxed text-gray-800 outline-none focus:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-gray-600"
           placeholder="Write your thoughts…"
         />
       </template>
@@ -374,8 +374,8 @@
 
     <Dialog v-model="hideOpen" :options="{ title: 'Hide this idea' }">
       <template #body-content>
-        <p class="mb-1 text-sm font-medium text-ink-gray-9">{{ chapter?.title }}</p>
-        <p class="mb-3 text-xs text-ink-gray-5">Show it again…</p>
+        <p class="mb-1 text-sm font-medium text-gray-900 dark:text-white">{{ chapter?.title }}</p>
+        <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">Show it again…</p>
         <div class="grid grid-cols-2 gap-2">
           <button
             v-for="opt in hideOptions"
@@ -385,15 +385,15 @@
             :class="[
               opt.value === 'Custom date' ? 'col-span-2' : '',
               hidePreset === opt.value
-                ? 'border-ink-gray-9 bg-ink-gray-9 text-white'
-                : 'border-[#ddd8d0] bg-[#faf8f5] text-ink-gray-8 hover:border-[#c4bdb0] hover:bg-white',
+                ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
+                : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-700',
             ]"
             @click="onHideTile(opt.value)"
           >
             <span class="block font-medium leading-snug">{{ opt.label }}</span>
             <span
               class="mt-0.5 block text-[11px] leading-snug"
-              :class="hidePreset === opt.value ? 'text-white/70' : 'text-ink-gray-5'"
+              :class="hidePreset === opt.value ? 'text-white/70 dark:text-gray-900/70' : 'text-gray-500 dark:text-gray-400'"
             >
               {{ opt.hint }}
             </span>
@@ -421,11 +421,11 @@
 
     <Dialog v-model="doneScheduleOpen" :options="{ title: 'Scheduled session still open' }">
       <template #body-content>
-        <p class="text-sm text-ink-gray-7">
+        <p class="text-sm text-gray-700 dark:text-gray-300">
           This idea is Done, but a writing slot remains on
-          <span class="font-medium text-ink-gray-9">{{ doneScheduleLabel }}</span>.
+          <span class="font-medium text-gray-900 dark:text-white">{{ doneScheduleLabel }}</span>.
         </p>
-        <p class="mt-2 text-sm text-ink-gray-5">
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Move that slot to another idea, or remove it.
         </p>
         <FormControl
@@ -453,61 +453,61 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-	Button,
-	Dialog,
-	FeatherIcon,
-	FormControl,
-	TabButtons,
-	TextInput,
-	toast,
+  Button,
+  Dialog,
+  FeatherIcon,
+  FormControl,
+  TabButtons,
+  TextInput,
+  toast,
 } from 'frappe-ui'
 import dayjs from 'dayjs'
 import AppShell from '@/components/AppShell.vue'
 import IdeaMotifFade from '@/components/IdeaMotifFade.vue'
 import {
-	HIGHLIGHTABLE_STATS,
-	PAGE_PILE_STAGES,
-	STAGE_META,
-	useWorkspace,
+  HIGHLIGHTABLE_STATS,
+  PAGE_PILE_STAGES,
+  STAGE_META,
+  useWorkspace,
 } from '@/composables/useWorkspace'
 
 const router = useRouter()
 const route = useRoute()
 const {
-	state,
-	saveChapter,
-	setStage,
-	hideChapter,
-	unhideChapter,
-	setSession,
-	downloadIcs,
-	fetchChapterStats,
-	fetchChapterTimeline,
-	captureSideIdea,
-	savePrefs,
-	countWords,
-	effectiveSetting,
-	formatDateTime,
-	chapterByName,
-	errorMessage,
+  state,
+  saveChapter,
+  setStage,
+  hideChapter,
+  unhideChapter,
+  setSession,
+  downloadIcs,
+  fetchChapterStats,
+  fetchChapterTimeline,
+  captureSideIdea,
+  savePrefs,
+  countWords,
+  effectiveSetting,
+  formatDateTime,
+  chapterByName,
+  errorMessage,
 } = useWorkspace()
 
 const chapter = computed(
-	() => state.chapters.find((c) => c.name === route.params.name) || null,
+  () => state.chapters.find((c) => c.name === route.params.name) || null,
 )
 
 const parentChapter = computed(() => chapterByName(chapter.value?.spawned_from))
 
 const overviewTab = ref('writing')
 const overviewTabs = [
-	{ label: 'Writing', value: 'writing' },
-	{ label: 'Statistics', value: 'statistics' },
+  { label: 'Writing', value: 'writing' },
+  { label: 'Statistics', value: 'statistics' },
 ]
 
 const overviewTitleSize = computed(() => {
-	const size = state.prefs?.overview_title_size || 'comfortable'
-	if (size === 'large' || size === 'larger') return size
-	return 'comfortable'
+  const size = state.prefs?.overview_title_size || 'comfortable'
+  if (size === 'large' || size === 'larger') return size
+  return 'comfortable'
 })
 
 const motifFadeEnabled = computed(() => Number(state.prefs?.idea_motif_fade ?? 1) === 1)
@@ -523,10 +523,10 @@ const doneScheduleWhen = ref('')
 const doneReassignTo = ref('')
 
 const draft = reactive({
-	title: '',
-	content: '',
-	writing_stage: '∞',
-	next_write_on: '',
+  title: '',
+  content: '',
+  writing_stage: '∞',
+  next_write_on: '',
 })
 const saveState = ref('All changes save automatically')
 let saveTimer = null
@@ -540,14 +540,14 @@ const editInput = ref(null)
 const editSecondsLeft = ref(0)
 /** Idle length (seconds) for the current Edit open; used for fade-in threshold. */
 const editIdleTotal = ref(45)
-/** Set only in the final 3s for the stronger “Closing in…” state. */
+/** Set only in the final 3s for the stronger "Closing in…" state. */
 const editCountdown = ref(null)
 /** Visible after 30% of idle time has elapsed, then CSS fades in. */
 const editCountdownVisible = computed(() => {
-	const idle = editIdleTotal.value
-	if (!editOpen.value || idle <= 0) return false
-	const elapsed = idle - editSecondsLeft.value
-	return elapsed >= idle * 0.3
+  const idle = editIdleTotal.value
+  if (!editOpen.value || idle <= 0) return false
+  const elapsed = idle - editSecondsLeft.value
+  return elapsed >= idle * 0.3
 })
 let editIdleTimer = null
 let editTickTimer = null
@@ -557,501 +557,500 @@ const hideOpen = ref(false)
 const hidePreset = ref('Later today')
 const hideCustom = ref('')
 const hideOptions = [
-	{ label: 'Later today', value: 'Later today', hint: 'This evening' },
-	{ label: 'Tomorrow', value: 'Tomorrow', hint: 'Next morning' },
-	{ label: 'Next week', value: 'Next week', hint: 'In seven days' },
-	{ label: 'Next month', value: 'Next month', hint: 'In thirty days' },
-	{ label: 'Custom date', value: 'Custom date', hint: 'Pick date & time' },
+  { label: 'Later today', value: 'Later today', hint: 'This evening' },
+  { label: 'Tomorrow', value: 'Tomorrow', hint: 'Next morning' },
+  { label: 'Next week', value: 'Next week', hint: 'In seven days' },
+  { label: 'Next month', value: 'Next month', hint: 'In thirty days' },
+  { label: 'Custom date', value: 'Custom date', hint: 'Pick date & time' },
 ]
 
 const pagePile = ref(false)
 const pagePileAvailable = computed(() =>
-	PAGE_PILE_STAGES.includes(draft.writing_stage),
+  PAGE_PILE_STAGES.includes(draft.writing_stage),
 )
 const focusFontSize = computed(() => Number(effectiveSetting('focus_font_size', 18)))
 const maxWords = computed(() => Number(state.settings.max_words || 0))
 
 const plainContent = computed(() =>
-	String(draft.content || '')
-		.replace(/<[^>]+>/g, '\n')
-		.replace(/\n+/g, '\n')
-		.trim(),
+  String(draft.content || '')
+    .replace(/<[^>]+>/g, '\n')
+    .replace(/\n+/g, '\n')
+    .trim(),
 )
 const wordCount = computed(() => countWords(draft.content))
 
 const stageOptions = computed(() =>
-	state.stages.map((s) => ({ label: s, value: s })),
+  state.stages.map((s) => ({ label: s, value: s })),
 )
 
 const nextGate = computed(() => {
-	const order = state.stages
-	const i = order.indexOf(draft.writing_stage)
-	if (i < 0 || i >= order.length - 1) return null
-	const stage = order[i + 1]
-	if (stage === 'Done') return null
-	const min = Number(state.wordGates[stage] || 0)
-	if (!min) return null
-	return { stage, min }
+  const order = state.stages
+  const i = order.indexOf(draft.writing_stage)
+  if (i < 0 || i >= order.length - 1) return null
+  const stage = order[i + 1]
+  if (stage === 'Done') return null
+  const min = Number(state.wordGates[stage] || 0)
+  if (!min) return null
+  return { stage, min }
 })
 
 const timelineIdeaCount = computed(() => Number(timeline.value?.total_ideas || 0))
 
 /** Groups that have at least one captured idea (sessions without captures stay out). */
 const timelineGroups = computed(() => {
-	const groups = timeline.value?.groups || []
-	return groups.filter((g) => (g.ideas || []).length > 0)
+  const groups = timeline.value?.groups || []
+  return groups.filter((g) => (g.ideas || []).length > 0)
 })
 
 const statLookup = computed(() => {
-	const c = stats.value?.consistency || {}
-	const o = stats.value?.output || {}
-	const t = stats.value?.time || {}
-	const p = stats.value?.planning || {}
-	const tr = stats.value?.trends || {}
-	const aim = p.aim_mix || {}
-	return {
-		total_sessions: {
-			label: 'Sessions (total)',
-			value: c.total_sessions ?? '—',
-			trend: tr.total_sessions,
-		},
-		avg_sessions_per_week: {
-			label: 'Avg / week',
-			value: c.avg_sessions_per_week ?? '—',
-			trend: tr.avg_sessions_per_week,
-		},
-		best_quiet: {
-			label: 'Best / quiet week',
-			value: `${c.best_week ?? '—'} / ${c.quietest_week ?? '—'}`,
-			trend: tr.best_quiet,
-		},
-		total_words: {
-			label: 'Words written (total)',
-			value: o.total_words ?? '—',
-			trend: tr.total_words,
-		},
-		planned_vs_actual: {
-			label: 'Last planned → actual',
-			value: formatPairs(o.planned_vs_actual),
-			trend: tr.planned_vs_actual,
-		},
-		recent_sessions: {
-			label: 'Recent sessions',
-			value: (o.words_trend || []).length || '—',
-			trend: tr.recent_sessions,
-		},
-		total_focus_mins: {
-			label: 'Total focus (mins)',
-			value: t.total_focus_mins ?? '—',
-			trend: tr.total_focus_mins,
-		},
-		avg_session_mins: {
-			label: 'Avg session',
-			value: t.avg_session_mins ?? '—',
-			trend: tr.avg_session_mins,
-		},
-		longest_session_mins: {
-			label: 'Longest session',
-			value: t.longest_session_mins ?? '—',
-			trend: tr.longest_session_mins,
-		},
-		scheduled_sessions: {
-			label: 'Scheduled sessions',
-			value: p.scheduled_sessions ?? '—',
-			trend: tr.scheduled_sessions,
-		},
-		focus_note_keep_rate: {
-			label: 'Focus-note keep rate',
-			value:
-				p.focus_note_keep_rate == null
-					? '—'
-					: `${Math.round(p.focus_note_keep_rate * 100)}%`,
-			trend: tr.focus_note_keep_rate,
-		},
-		aim_mix: {
-			label: 'Aim mix (more/sim/less)',
-			value: `${aim.more || 0}/${aim.similar || 0}/${aim.less || 0}`,
-			trend: tr.aim_mix,
-		},
-	}
+  const c = stats.value?.consistency || {}
+  const o = stats.value?.output || {}
+  const t = stats.value?.time || {}
+  const p = stats.value?.planning || {}
+  const tr = stats.value?.trends || {}
+  const aim = p.aim_mix || {}
+  return {
+    total_sessions: {
+      label: 'Sessions (total)',
+      value: c.total_sessions ?? '—',
+      trend: tr.total_sessions,
+    },
+    avg_sessions_per_week: {
+      label: 'Avg / week',
+      value: c.avg_sessions_per_week ?? '—',
+      trend: tr.avg_sessions_per_week,
+    },
+    best_quiet: {
+      label: 'Best / quiet week',
+      value: `${c.best_week ?? '—'} / ${c.quietest_week ?? '—'}`,
+      trend: tr.best_quiet,
+    },
+    total_words: {
+      label: 'Words written (total)',
+      value: o.total_words ?? '—',
+      trend: tr.total_words,
+    },
+    planned_vs_actual: {
+      label: 'Last planned → actual',
+      value: formatPairs(o.planned_vs_actual),
+      trend: tr.planned_vs_actual,
+    },
+    recent_sessions: {
+      label: 'Recent sessions',
+      value: (o.words_trend || []).length || '—',
+      trend: tr.recent_sessions,
+    },
+    total_focus_mins: {
+      label: 'Total focus (mins)',
+      value: t.total_focus_mins ?? '—',
+      trend: tr.total_focus_mins,
+    },
+    avg_session_mins: {
+      label: 'Avg session',
+      value: t.avg_session_mins ?? '—',
+      trend: tr.avg_session_mins,
+    },
+    longest_session_mins: {
+      label: 'Longest session',
+      value: t.longest_session_mins ?? '—',
+      trend: tr.longest_session_mins,
+    },
+    scheduled_sessions: {
+      label: 'Scheduled sessions',
+      value: p.scheduled_sessions ?? '—',
+      trend: tr.scheduled_sessions,
+    },
+    focus_note_keep_rate: {
+      label: 'Focus-note keep rate',
+      value:
+        p.focus_note_keep_rate == null
+          ? '—'
+          : `${Math.round(p.focus_note_keep_rate * 100)}%`,
+      trend: tr.focus_note_keep_rate,
+    },
+    aim_mix: {
+      label: 'Aim mix (more/sim/less)',
+      value: `${aim.more || 0}/${aim.similar || 0}/${aim.less || 0}`,
+      trend: tr.aim_mix,
+    },
+  }
 })
 
 const pinnedStatRows = computed(() =>
-	highlightedKeys.value
-		.map((key) => {
-			const row = statLookup.value[key]
-			if (!row) return null
-			return { key, ...row }
-		})
-		.filter(Boolean),
+  highlightedKeys.value
+    .map((key) => {
+      const row = statLookup.value[key]
+      if (!row) return null
+      return { key, ...row }
+    })
+    .filter(Boolean),
 )
 
 const statColumns = computed(() => {
-	const o = stats.value?.output || {}
-	const groups = {}
-	for (const meta of HIGHLIGHTABLE_STATS) {
-		if (!groups[meta.group]) groups[meta.group] = []
-		const row = statLookup.value[meta.key] || {
-			label: meta.label,
-			value: '—',
-			trend: null,
-		}
-		groups[meta.group].push({ key: meta.key, ...row })
-	}
-	return Object.entries(groups).map(([title, rows]) => ({
-		title,
-		rows,
-		spark: title === 'Output' ? o.words_trend || [] : null,
-	}))
+  const o = stats.value?.output || {}
+  const groups = {}
+  for (const meta of HIGHLIGHTABLE_STATS) {
+    if (!groups[meta.group]) groups[meta.group] = []
+    const row = statLookup.value[meta.key] || {
+      label: meta.label,
+      value: '—',
+      trend: null,
+    }
+    groups[meta.group].push({ key: meta.key, ...row })
+  }
+  return Object.entries(groups).map(([title, rows]) => ({
+    title,
+    rows,
+    spark: title === 'Output' ? o.words_trend || [] : null,
+  }))
 })
 
 const doneScheduleLabel = computed(() =>
-	doneScheduleWhen.value ? formatDateTime(doneScheduleWhen.value) : '',
+  doneScheduleWhen.value ? formatDateTime(doneScheduleWhen.value) : '',
 )
 
 const reassignOptions = computed(() =>
-	state.chapters
-		.filter(
-			(c) =>
-				c.name !== chapter.value?.name &&
-				c.writing_stage !== 'Done' &&
-				!c.is_hidden,
-		)
-		.map((c) => ({ label: c.title || c.name, value: c.name })),
+  state.chapters
+    .filter(
+      (c) =>
+        c.name !== chapter.value?.name &&
+        c.writing_stage !== 'Done' &&
+        !c.is_hidden,
+    )
+    .map((c) => ({ label: c.title || c.name, value: c.name })),
 )
 
 function isHighlighted(key) {
-	return highlightedKeys.value.includes(key)
+  return highlightedKeys.value.includes(key)
 }
 
 async function toggleHighlight(key) {
-	const next = [...highlightedKeys.value]
-	const idx = next.indexOf(key)
-	if (idx >= 0) next.splice(idx, 1)
-	else if (next.length < 3) next.push(key)
-	else return
-	highlightedKeys.value = next
-	if (!chapter.value) return
-	saveState.value = 'Saving…'
-	await saveChapter({ name: chapter.value.name, highlighted_stats: next })
-	saveState.value = 'Saved'
+  const next = [...highlightedKeys.value]
+  const idx = next.indexOf(key)
+  if (idx >= 0) next.splice(idx, 1)
+  else if (next.length < 3) next.push(key)
+  else return
+  highlightedKeys.value = next
+  if (!chapter.value) return
+  saveState.value = 'Saving…'
+  await saveChapter({ name: chapter.value.name, highlighted_stats: next })
+  saveState.value = 'Saved'
 }
 
 function formatPairs(pairs) {
-	if (!pairs?.length) return '—'
-	const [a, b] = pairs[0]
-	return `${a} → ${b}`
+  if (!pairs?.length) return '—'
+  const [a, b] = pairs[0]
+  return `${a} → ${b}`
 }
 
 function trendArrow(trend) {
-	if (trend === 'up') return '↑'
-	if (trend === 'down') return '↓'
-	if (trend === 'flat') return '→'
-	return ''
+  if (trend === 'up') return '↑'
+  if (trend === 'down') return '↓'
+  if (trend === 'flat') return '→'
+  return ''
 }
 
 function trendClass(trend) {
-	// Faint green / red / blue
-	if (trend === 'up') return 'text-emerald-600/45'
-	if (trend === 'down') return 'text-rose-600/45'
-	if (trend === 'flat') return 'text-sky-600/45'
-	return 'text-ink-gray-4'
+  if (trend === 'up') return 'text-emerald-600/45 dark:text-emerald-400/45'
+  if (trend === 'down') return 'text-rose-600/45 dark:text-rose-400/45'
+  if (trend === 'flat') return 'text-sky-600/45 dark:text-sky-400/45'
+  return 'text-gray-400 dark:text-gray-500'
 }
 
 function trendTitle(trend) {
-	if (trend === 'up') return 'Improving'
-	if (trend === 'down') return 'Declining'
-	if (trend === 'flat') return 'Steady'
-	return ''
+  if (trend === 'up') return 'Improving'
+  if (trend === 'down') return 'Declining'
+  if (trend === 'flat') return 'Steady'
+  return ''
 }
 
 function sparkPoints(values) {
-	if (!values.length) return ''
-	const max = Math.max(...values, 1)
-	return values
-		.map((v, i) => {
-			const x = (i / Math.max(values.length - 1, 1)) * 100
-			const y = 22 - (v / max) * 20
-			return `${x},${y}`
-		})
-		.join(' ')
+  if (!values.length) return ''
+  const max = Math.max(...values, 1)
+  return values
+    .map((v, i) => {
+      const x = (i / Math.max(values.length - 1, 1)) * 100
+      const y = 22 - (v / max) * 20
+      return `${x},${y}`
+    })
+    .join(' ')
 }
 
 function formatSessionWhen(session) {
-	const when = session?.ended_on || session?.started_on || session?.creation
-	return when ? formatDateTime(when) : 'Session'
+  const when = session?.ended_on || session?.started_on || session?.creation
+  return when ? formatDateTime(when) : 'Session'
 }
 
 function formatSessionMeta(session) {
-	const parts = []
-	const mins = Number(session?.duration_mins || 0)
-	if (mins) parts.push(`${Math.round(mins)} min`)
-	const words = Number(session?.words_written || 0)
-	if (words) parts.push(`${words} words`)
-	const n = (timeline.value?.ideas || []).filter((i) => i.session === session?.name)
-		.length
-	if (n) parts.push(`${n} captured`)
-	return parts.join(' · ')
+  const parts = []
+  const mins = Number(session?.duration_mins || 0)
+  if (mins) parts.push(`${Math.round(mins)} min`)
+  const words = Number(session?.words_written || 0)
+  if (words) parts.push(`${words} words`)
+  const n = (timeline.value?.ideas || []).filter((i) => i.session === session?.name)
+    .length
+  if (n) parts.push(`${n} captured`)
+  return parts.join(' · ')
 }
 
 function ideaSnippet(idea) {
-	const summary = String(idea?.summary || '')
-		.replace(/<[^>]+>/g, ' ')
-		.replace(/\s+/g, ' ')
-		.trim()
-	if (!summary) return ''
-	const title = String(idea?.title || '').trim()
-	if (summary === title || summary.startsWith(title)) {
-		const rest = summary.slice(title.length).replace(/^[\s.…—-]+/, '')
-		return rest || ''
-	}
-	return summary
+  const summary = String(idea?.summary || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!summary) return ''
+  const title = String(idea?.title || '').trim()
+  if (summary === title || summary.startsWith(title)) {
+    const rest = summary.slice(title.length).replace(/^[\s.…—-]+/, '')
+    return rest || ''
+  }
+  return summary
 }
 
 function openSpawnedIdea(idea) {
-	if (!idea?.name) return
-	router.push(`/ideas/${idea.name}`)
+  if (!idea?.name) return
+  router.push(`/ideas/${idea.name}`)
 }
 
 function openAddInspired() {
-	addInspiredText.value = ''
-	addInspiredOpen.value = true
-	nextTick(() => addInspiredInput.value?.focus())
+  addInspiredText.value = ''
+  addInspiredOpen.value = true
+  nextTick(() => addInspiredInput.value?.focus())
 }
 
 async function confirmAddInspired() {
-	const text = addInspiredText.value.trim()
-	if (!chapter.value || !text || addInspiredSaving.value) return
-	addInspiredSaving.value = true
-	try {
-		await captureSideIdea({ parent: chapter.value.name, text })
-		timeline.value = await fetchChapterTimeline(chapter.value.name)
-		addInspiredOpen.value = false
-		addInspiredText.value = ''
-		toast.success('Inspired idea added')
-	} catch (e) {
-		toast.error(errorMessage(e, 'Could not add idea'))
-	} finally {
-		addInspiredSaving.value = false
-	}
+  const text = addInspiredText.value.trim()
+  if (!chapter.value || !text || addInspiredSaving.value) return
+  addInspiredSaving.value = true
+  try {
+    await captureSideIdea({ parent: chapter.value.name, text })
+    timeline.value = await fetchChapterTimeline(chapter.value.name)
+    addInspiredOpen.value = false
+    addInspiredText.value = ''
+    toast.success('Inspired idea added')
+  } catch (e) {
+    toast.error(errorMessage(e, 'Could not add idea'))
+  } finally {
+    addInspiredSaving.value = false
+  }
 }
 
 watch(
-	chapter,
-	async (ch) => {
-		if (!ch) return
-		state.active = ch.name
-		draft.title = ch.title || ''
-		draft.content = ch.content || ''
-		draft.writing_stage = ch.writing_stage || '∞'
-		draft.next_write_on = ch.next_write_on
-			? dayjs(ch.next_write_on).format('YYYY-MM-DDTHH:mm')
-			: ''
-		highlightedKeys.value = Array.isArray(ch.highlighted_stats)
-			? [...ch.highlighted_stats].slice(0, 3)
-			: []
-		pagePile.value = Boolean(state.prefs.page_pile)
-		try {
-			stats.value = await fetchChapterStats(ch.name)
-		} catch {
-			stats.value = null
-		}
-		try {
-			timeline.value = await fetchChapterTimeline(ch.name)
-		} catch {
-			timeline.value = null
-		}
-	},
-	{ immediate: true },
+  chapter,
+  async (ch) => {
+    if (!ch) return
+    state.active = ch.name
+    draft.title = ch.title || ''
+    draft.content = ch.content || ''
+    draft.writing_stage = ch.writing_stage || '∞'
+    draft.next_write_on = ch.next_write_on
+      ? dayjs(ch.next_write_on).format('YYYY-MM-DDTHH:mm')
+      : ''
+    highlightedKeys.value = Array.isArray(ch.highlighted_stats)
+      ? [...ch.highlighted_stats].slice(0, 3)
+      : []
+    pagePile.value = Boolean(state.prefs.page_pile)
+    try {
+      stats.value = await fetchChapterStats(ch.name)
+    } catch {
+      stats.value = null
+    }
+    try {
+      timeline.value = await fetchChapterTimeline(ch.name)
+    } catch {
+      timeline.value = null
+    }
+  },
+  { immediate: true },
 )
 
 function scheduleSave() {
-	if (!chapter.value) return
-	saveState.value = 'Saving…'
-	clearTimeout(saveTimer)
-	saveTimer = setTimeout(async () => {
-		await saveChapter({ name: chapter.value.name, title: draft.title })
-		saveState.value = 'Saved'
-	}, 600)
+  if (!chapter.value) return
+  saveState.value = 'Saving…'
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(async () => {
+    await saveChapter({ name: chapter.value.name, title: draft.title })
+    saveState.value = 'Saved'
+  }, 600)
 }
 
 async function onStageChange(stage) {
-	if (!chapter.value) return
-	const scheduled = chapter.value.next_write_on
-	try {
-		await setStage(chapter.value.name, stage)
-		saveState.value = 'Saved'
-		if (stage === 'Done' && scheduled) {
-			doneScheduleWhen.value = scheduled
-			doneReassignTo.value = ''
-			doneScheduleOpen.value = true
-		}
-	} catch {
-		draft.writing_stage = chapter.value.writing_stage
-	}
+  if (!chapter.value) return
+  const scheduled = chapter.value.next_write_on
+  try {
+    await setStage(chapter.value.name, stage)
+    saveState.value = 'Saved'
+    if (stage === 'Done' && scheduled) {
+      doneScheduleWhen.value = scheduled
+      doneReassignTo.value = ''
+      doneScheduleOpen.value = true
+    }
+  } catch {
+    draft.writing_stage = chapter.value.writing_stage
+  }
 }
 
 async function resolveDoneSchedule(action) {
-	if (!chapter.value) return
-	try {
-		if (action === 'move' && doneReassignTo.value) {
-			const when = dayjs(doneScheduleWhen.value).format('YYYY-MM-DD HH:mm:ss')
-			await setSession(doneReassignTo.value, when)
-			await setSession(chapter.value.name, null)
-			draft.next_write_on = ''
-			toast.success('Slot moved to the other idea')
-		} else {
-			await setSession(chapter.value.name, null)
-			draft.next_write_on = ''
-			toast.success('Schedule removed')
-		}
-	} finally {
-		doneScheduleOpen.value = false
-	}
+  if (!chapter.value) return
+  try {
+    if (action === 'move' && doneReassignTo.value) {
+      const when = dayjs(doneScheduleWhen.value).format('YYYY-MM-DD HH:mm:ss')
+      await setSession(doneReassignTo.value, when)
+      await setSession(chapter.value.name, null)
+      draft.next_write_on = ''
+      toast.success('Slot moved to the other idea')
+    } else {
+      await setSession(chapter.value.name, null)
+      draft.next_write_on = ''
+      toast.success('Schedule removed')
+    }
+  } finally {
+    doneScheduleOpen.value = false
+  }
 }
 
 async function onSessionChange(value) {
-	if (!chapter.value) return
-	const sql = value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : ''
-	await setSession(chapter.value.name, sql || null)
+  if (!chapter.value) return
+  const sql = value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : ''
+  await setSession(chapter.value.name, sql || null)
 }
 
 async function onPagePile() {
-	await savePrefs({ page_pile: pagePile.value ? 1 : 0 })
+  await savePrefs({ page_pile: pagePile.value ? 1 : 0 })
 }
 
 function openEdit() {
-	editText.value = plainContent.value
-	editOpen.value = true
-	bumpEditIdle()
-	nextTick(() => editInput.value?.focus())
+  editText.value = plainContent.value
+  editOpen.value = true
+  bumpEditIdle()
+  nextTick(() => editInput.value?.focus())
 }
 
 function editIdleSecs() {
-	const fromPref = Number(effectiveSetting('edit_idle_secs', 45))
-	return Math.max(5, fromPref || 45)
+  const fromPref = Number(effectiveSetting('edit_idle_secs', 45))
+  return Math.max(5, fromPref || 45)
 }
 
 function syncEditCountdownDisplay() {
-	const left = Math.max(0, Math.ceil((editDeadline - Date.now()) / 1000))
-	editSecondsLeft.value = left
-	editCountdown.value = left <= 3 && left > 0 ? left : null
-	if (left <= 0) {
-		clearInterval(editTickTimer)
-		editTickTimer = null
-		closeEdit(true)
-	}
+  const left = Math.max(0, Math.ceil((editDeadline - Date.now()) / 1000))
+  editSecondsLeft.value = left
+  editCountdown.value = left <= 3 && left > 0 ? left : null
+  if (left <= 0) {
+    clearInterval(editTickTimer)
+    editTickTimer = null
+    closeEdit(true)
+  }
 }
 
 function bumpEditIdle() {
-	if (!editOpen.value) return
-	const idle = editIdleSecs()
-	editIdleTotal.value = idle
-	editDeadline = Date.now() + idle * 1000
-	clearTimeout(editIdleTimer)
-	clearInterval(editTickTimer)
-	syncEditCountdownDisplay()
-	editTickTimer = setInterval(syncEditCountdownDisplay, 250)
-	editIdleTimer = setTimeout(() => closeEdit(true), idle * 1000)
+  if (!editOpen.value) return
+  const idle = editIdleSecs()
+  editIdleTotal.value = idle
+  editDeadline = Date.now() + idle * 1000
+  clearTimeout(editIdleTimer)
+  clearInterval(editTickTimer)
+  syncEditCountdownDisplay()
+  editTickTimer = setInterval(syncEditCountdownDisplay, 250)
+  editIdleTimer = setTimeout(() => closeEdit(true), idle * 1000)
 }
 
 async function closeEdit(save) {
-	if (!editOpen.value) return
-	clearTimeout(editIdleTimer)
-	clearInterval(editTickTimer)
-	editIdleTimer = null
-	editTickTimer = null
-	editCountdown.value = null
-	editSecondsLeft.value = 0
-	editIdleTotal.value = 45
-	editOpen.value = false
-	if (save && chapter.value) {
-		const html = `<p>${String(editText.value || '')
-			.split(/\n+/)
-			.map((p) =>
-				p.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
-			)
-			.join('</p><p>')}</p>`
-		await saveChapter({ name: chapter.value.name, content: html })
-		draft.content = html
-		saveState.value = 'Saved'
-	}
+  if (!editOpen.value) return
+  clearTimeout(editIdleTimer)
+  clearInterval(editTickTimer)
+  editIdleTimer = null
+  editTickTimer = null
+  editCountdown.value = null
+  editSecondsLeft.value = 0
+  editIdleTotal.value = 45
+  editOpen.value = false
+  if (save && chapter.value) {
+    const html = `<p>${String(editText.value || '')
+      .split(/\n+/)
+      .map((p) =>
+        p.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+      )
+      .join('</p><p>')}</p>`
+    await saveChapter({ name: chapter.value.name, content: html })
+    draft.content = html
+    saveState.value = 'Saved'
+  }
 }
 
 async function onUnhide() {
-	await unhideChapter(chapter.value.name)
-	toast.success('Idea is visible again')
+  await unhideChapter(chapter.value.name)
+  toast.success('Idea is visible again')
 }
 
 async function onHideTile(value) {
-	hidePreset.value = value
-	if (value === 'Custom date') return
-	await confirmHide()
+  hidePreset.value = value
+  if (value === 'Custom date') return
+  await confirmHide()
 }
 
 async function confirmHide() {
-	const map = {
-		'Later today': 'later_today',
-		Tomorrow: 'tomorrow',
-		'Next week': 'next_week',
-		'Next month': 'next_month',
-	}
-	const args =
-		hidePreset.value === 'Custom date'
-			? { until: dayjs(hideCustom.value).format('YYYY-MM-DD HH:mm:ss') }
-			: { preset: map[hidePreset.value] }
-	await hideChapter(chapter.value.name, args)
-	hideOpen.value = false
-	toast.success('Idea hidden')
-	router.push('/ideas')
+  const map = {
+    'Later today': 'later_today',
+    Tomorrow: 'tomorrow',
+    'Next week': 'next_week',
+    'Next month': 'next_month',
+  }
+  const args =
+    hidePreset.value === 'Custom date'
+      ? { until: dayjs(hideCustom.value).format('YYYY-MM-DD HH:mm:ss') }
+      : { preset: map[hidePreset.value] }
+  await hideChapter(chapter.value.name, args)
+  hideOpen.value = false
+  toast.success('Idea hidden')
+  router.push('/ideas')
 }
 
 onBeforeUnmount(() => {
-	clearTimeout(saveTimer)
-	clearTimeout(editIdleTimer)
-	clearInterval(editTickTimer)
+  clearTimeout(saveTimer)
+  clearTimeout(editIdleTimer)
+  clearInterval(editTickTimer)
 })
 </script>
 
 <style scoped>
 .overview-title :deep(input) {
-	line-height: 1.2;
-	font-weight: 600;
-	letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 /* Default / comfortable — current slightly-reduced overview title */
 .overview-title--comfortable :deep(input) {
-	min-height: 2.75rem;
-	font-size: 1.875rem;
+  min-height: 2.75rem;
+  font-size: 1.875rem;
 }
 .overview-title--large :deep(input) {
-	min-height: 3rem;
-	font-size: 2.25rem;
+  min-height: 3rem;
+  font-size: 2.25rem;
 }
 .overview-title--larger :deep(input) {
-	min-height: 3.25rem;
-	font-size: 2.75rem;
+  min-height: 3.25rem;
+  font-size: 2.75rem;
 }
 @media (min-width: 640px) {
-	.overview-title--comfortable :deep(input) {
-		min-height: 3.25rem;
-		font-size: 2.25rem;
-	}
-	.overview-title--large :deep(input) {
-		min-height: 3.5rem;
-		font-size: 2.75rem;
-	}
-	.overview-title--larger :deep(input) {
-		min-height: 3.75rem;
-		font-size: 3.25rem;
-	}
+  .overview-title--comfortable :deep(input) {
+    min-height: 3.25rem;
+    font-size: 2.25rem;
+  }
+  .overview-title--large :deep(input) {
+    min-height: 3.5rem;
+    font-size: 2.75rem;
+  }
+  .overview-title--larger :deep(input) {
+    min-height: 3.75rem;
+    font-size: 3.25rem;
+  }
 }
 .edit-idle-countdown {
-	opacity: 0;
-	transition: opacity 0.5s ease;
-	pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
 }
 .edit-idle-countdown--visible {
-	opacity: 1;
+  opacity: 1;
 }
 </style>

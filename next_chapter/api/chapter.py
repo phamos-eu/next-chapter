@@ -37,13 +37,14 @@ STAGES = [
 	"1",
 	"Done",
 ]
-ALLOWED_STAGES = set(STAGES)
+ALLOWED_STAGES = set(NEW_STAGES + OLD_STAGES)
 
 CHAPTER_FIELDS = [
 	"name",
 	"title",
 	"sequence",
 	"writing_stage",
+	"status",
 	"summary",
 	"content",
 	"hidden_until",
@@ -92,6 +93,21 @@ def _serialize(doc_or_row) -> dict:
 	data["content"] = data.get("content") or ""
 	data["last_session_words"] = int(data.get("last_session_words") or 0)
 	data["auto_hidden"] = int(data.get("auto_hidden") or 0)
+	
+	# Ensure status is populated, fall back to writing_stage if not set
+	if not data.get("status") and data.get("writing_stage"):
+		stage_mapping = {
+			"\u221e": "Capture",
+			"9": "Clarification",
+			"7": "Incubation",
+			"5": "Evaluation",
+			"3": "Prioritization",
+			"1": "Development",
+			"Done": "Done",
+		}
+		data["status"] = stage_mapping.get(data["writing_stage"], data["writing_stage"])
+	elif not data.get("status"):
+		data["status"] = "Capture"
 	data["highlighted_stats"] = _parse_highlighted_stats(data.get("highlighted_stats"))
 	data["next_focus_note"] = data.get("next_focus_note") or ""
 	hidden_until = data.get("hidden_until")

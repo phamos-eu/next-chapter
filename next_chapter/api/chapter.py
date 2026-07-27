@@ -37,7 +37,7 @@ STAGES = [
 	"1",
 	"Done",
 ]
-ALLOWED_STAGES = set(NEW_STAGES + OLD_STAGES)
+ALLOWED_STAGES = set(STAGES)
 
 CHAPTER_FIELDS = [
 	"name",
